@@ -24,6 +24,9 @@ To generate a ``code.json`` file for your GitHub organization:
 
     $ ./scraper/gen_code_gov_json.py --agency <agency_name> --organization <organzation full name> --github-orgs <list of github org usernames ...>
 
+    # Example
+    $ ./scraper/gen_code_gov_json.py --agency DOE --organization "Lawrence Livermore National Laboratory" --github-orgs chaos esgf flux-framework glvis llnl mfem rose-compiler zfsonlinux
+
 
 ## License
 
