@@ -215,7 +215,7 @@ if __name__ == '__main__':
     }
 
     logger.info('Converting to string...')
-    str_code_json = json.dumps(code_json)
+    str_code_json = json.dumps(code_json, indent=4)
     print(str_code_json)
 
     logger.info('Writing to file...')
