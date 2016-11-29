@@ -78,6 +78,8 @@ if __name__ == '__main__':
     parser.add_argument('--github-orgs', type=str, nargs='+', help='GitHub Organizations')
     parser.add_argument('--github-repos', type=str, nargs='+', help='GitHub Repositories')
 
+    parser.add_argument('--to-csv', action='store_true', help='Toggle output to CSV')
+
     args = parser.parse_args()
 
     agency = args.agency
@@ -102,6 +104,11 @@ if __name__ == '__main__':
     print(str_org_projects)
     with open('code.json', 'w') as fp:
         fp.write(str_org_projects)
+
+    if args.to_csv:
+        with open('code.csv', 'w') as fp:
+            for project in code_json['projects']:
+                fp.write(to_doe_csv(project) + '\n')
 
     logger.info('Agency: %s', agency)
     logger.info('Organization: %s', organization)
