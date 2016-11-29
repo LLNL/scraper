@@ -13,9 +13,9 @@ To get started, you will need a GitHub Personal Auth Token to make requests to
 the GitHub API. This should be set in your environment or shell ``rc`` file with
 the name ``GITHUB_API_TOKEN``:
 
-    $ export GITHUB_API_TOKEN=1234567890abcdef1234567890abcdef
+    $ export GITHUB_API_TOKEN=XYZ
 
-    $ echo "export GITHUB_API_TOKEN=1234567890abcdef1234567890abcdef" >> ~/.bashrc
+    $ echo "export GITHUB_API_TOKEN=XYZ" >> ~/.bashrc
 
 
 To generate a ``code.json`` file for your GitHub organization:
