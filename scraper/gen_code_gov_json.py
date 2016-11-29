@@ -56,6 +56,17 @@ def process_organization(org_name):
 
     return projects
 
+def process_repository(repository_name):
+     """
+     Returns a Code.gov standard JSON of GitHub organization projects
+     """
+     org, name = repository_name.split('/')
+     repo = gh.repository(org, name)
+
+     project = CodeGovProject.from_github3(repo)
+
+     return project
+
 
 if __name__ == '__main__':
 
@@ -65,16 +76,27 @@ if __name__ == '__main__':
     parser.add_argument('--organization', type=str, nargs='?', default='UNKNOWN', help='Organization Name')
 
     parser.add_argument('--github-orgs', type=str, nargs='+', help='GitHub Organizations')
+    parser.add_argument('--github-repos', type=str, nargs='+', help='GitHub Repositories')
+
     args = parser.parse_args()
 
     agency = args.agency
     organization = args.organization
-    org_names = args.github_orgs
+    org_names = args.github_orgs or []
+    repo_names = args.github_repos or []
+
+    logger.debug('Agency: %s', agency)
+    logger.debug('Organization: %s', organization)
+    logger.debug('GitHub.com Organizations: %s', org_names)
+    logger.debug('GitHub.com Repositories: %s', repo_names)
 
     code_json = CodeGovMetadata(agency, organization)
 
     for org_name in org_names:
         code_json['projects'].extend(process_organization(org_name))
+
+    for repo_name in repo_names:
+        code_json['projects'].append(process_repository(repo_name))
 
     str_org_projects = code_json.to_json()
     print(str_org_projects)
