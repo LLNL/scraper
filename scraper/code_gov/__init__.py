@@ -3,7 +3,6 @@
 
 import json
 import logging
-import os
 
 import github3
 
