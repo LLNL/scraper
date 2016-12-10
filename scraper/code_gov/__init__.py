@@ -176,7 +176,7 @@ class CodeGovProject(dict):
         project['downloadURL'] = ''
 
         # languages: [array] A list of strings with the names of the programming languages in use on the project.
-        project['languages'] = [l for l, _ in repository.iter_languages()]
+        project['languages'] = [l for l, _ in repository.languages()]
 
         # partners: [array] A list of strings containing the acronyms of agencies partnering on the project.
         project['partners'] = []
