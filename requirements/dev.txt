@@ -1,4 +1,8 @@
 -r production.txt
 
+# Development tools
 ipython
+
+# Testing tools
 bandit
+flake8
