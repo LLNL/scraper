@@ -57,16 +57,17 @@ def process_organization(org_name):
 
     return projects
 
+
 def process_repository(repository_name):
-     """
-     Returns a Code.gov standard JSON of GitHub organization projects
-     """
-     org, name = repository_name.split('/')
-     repo = gh.repository(org, name)
+    """
+    Returns a Code.gov standard JSON of GitHub organization projects
+    """
+    org, name = repository_name.split('/')
+    repo = gh.repository(org, name)
 
-     project = CodeGovProject.from_github3(repo)
+    project = CodeGovProject.from_github3(repo)
 
-     return project
+    return project
 
 
 if __name__ == '__main__':
