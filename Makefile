@@ -1,0 +1,2 @@
+test:
+	bandit -r scraper/
