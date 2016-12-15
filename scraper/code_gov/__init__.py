@@ -6,6 +6,7 @@ import logging
 
 import github3
 import gitlab
+import stashy
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
@@ -229,5 +230,21 @@ class CodeGovProject(dict):
         project['exemption'] = None
         project['updated']['metadataLastUpdated'] = repository.last_activity_at
         # project['updated']['lastCommit'] = repository.pushed_at.isoformat()
+
+        return project
+
+    @classmethod
+    def from_stashy(klass, repository):
+        """
+        Create CodeGovProject object from stashy Repository
+
+        Handles crafting Code.gov Project for Bitbucket Server repositories
+        """
+        if not isinstance(repository, stashy.repos.Repository):
+            raise TypeError('Repository must be a stashy Repository object')
+
+        project = klass()
+
+        ## Other processing --
 
         return project
