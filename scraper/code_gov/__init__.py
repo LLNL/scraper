@@ -5,6 +5,7 @@ import json
 import logging
 
 import github3
+import gitlab
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
@@ -194,5 +195,39 @@ class CodeGovProject(dict):
         #   sourceCodeLastModified: [string] A field intended for closed-source software and software outside of a VCS. The date in YYYY-MM-DD or ISO 8601 format that the source code or package was last updated.
         project['updated']['metadataLastUpdated'] = repository.updated_at.isoformat()
         project['updated']['lastCommit'] = repository.pushed_at.isoformat()
+
+        return project
+
+    @classmethod
+    def from_gitlab(klass, repository):
+        """
+        Create CodeGovProject object from GitLab Repository
+        """
+        if not isinstance(repository, gitlab.objects.Project):
+            raise TypeError('Repository must be a gitlab Repository object')
+
+        project = klass()
+        project['name'] = repository.name
+        project['description'] = repository.description
+        project['license'] = None
+        project['openSourceProject'] = 1
+        project['governmentWideReuseProject'] = 1
+        project['tags'] = repository.tag_list
+        project['contact'] = {
+            'email': '',
+            'name': '',
+            'twitter': '',
+            'phone': '',
+        }
+        project['status'] = ''
+        project['vcs'] = 'git'
+        project['repository'] = repository.web_url
+        project['homepage'] = ''
+        project['downloadURL'] = ''
+        project['languages'] = []
+        project['partners'] = []
+        project['exemption'] = None
+        project['updated']['metadataLastUpdated'] = repository.last_activity_at
+        # project['updated']['lastCommit'] = repository.pushed_at.isoformat()
 
         return project
