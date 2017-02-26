@@ -35,25 +35,6 @@ def process_organization(org_name):
     for project in projects:
         project['contact']['email'] = org.email
 
-    # code_json = CodeGovMetadata(agency, org.name)
-    # code_json['projects'] = projects
-    #
-    # logger.info('Converting to string...')
-    # str_code_json = code_json.to_json()
-    # print(str_code_json)
-    #
-    # logger.info('Writing to file...')
-    # filename = 'github-%s-code.json' % (org_name)
-    # with open(filename, 'w') as fp:
-    #     fp.write(str_code_json)
-    #
-    # filename = 'github-%s-code.csv' % (org_name)
-    # with open(filename, 'w') as fp:
-    #     for project in projects:
-    #         fp.write(to_doe_csv(project) + '\n')
-    #
-    # logger.info('Finished writing to: %s', filename)
-
     return projects
 
 
