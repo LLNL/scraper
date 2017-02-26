@@ -7,8 +7,8 @@ import os
 
 import github3
 
-from code_gov import CodeGovMetadata, CodeGovProject
-from code_gov.doe import to_doe_csv
+from scraper.code_gov import CodeGovMetadata, CodeGovProject
+from scraper.code_gov.doe import to_doe_csv
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
@@ -27,7 +27,7 @@ def process_organization(org_name):
     """
     org = gh.organization(org_name)
 
-    repos = org.iter_repos(type='public')
+    repos = org.repositories(type='public')
     projects = [CodeGovProject.from_github3(r) for r in repos]
     logger.debug('Number of projects: %d', len(projects))
 

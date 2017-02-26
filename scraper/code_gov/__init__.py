@@ -294,7 +294,7 @@ class CodeGovProject(dict):
         project['vcs'] = 'git'
 
         # repository: [string] The URL of the public project repository
-        project['repository'] = repository.['links']['self'][0]['href']
+        project['repository'] = repository['links']['self'][0]['href']
 
         # homepage: [string] The URL of the public project homepage
         project['homepage'] = repository.homepage
