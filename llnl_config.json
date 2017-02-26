@@ -1,0 +1,23 @@
+{
+    "agency": "DOE",
+    "organization": "Lawrence Livermore National Laboratory",
+    "github_orgs": [
+        "chaos",
+        "esgf",
+        "flux-framework",
+        "glvis",
+        "llnl",
+        "mfem",
+        "pruners",
+        "rose-compiler",
+        "zfsonlinux"
+    ],
+    "github_repos": [
+        "dun/conman",
+        "dun/munge",
+        "hpc/dcp",
+        "hpc/mpifileutils",
+        "hpc/openlorenz",
+        "hpc/Spindle"
+    ]
+}
