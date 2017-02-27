@@ -1,6 +1,15 @@
 #! /usr/bin/env python
 # -*- coding: UTF-8 -*-
 
+SEPARATOR = ';'
+
+def to_cell(string):
+    string = str(string)
+    string = string.replace('\n', ' ')  # Newlines will break CSV cells
+    string = string.replace('\r', ' ')  # Newlines will break CSV cells
+    string = string.replace(SEPARATOR, '')
+    return string
+
 
 def to_doe_csv(project):
     """
@@ -34,31 +43,31 @@ def to_doe_csv(project):
         - Date of Last Commit to Project Repository
         - Last Modified Date of Source Code or Package
     """
-    return ';'.join([
+    return SEPARATOR.join([
         '',
         '',
         '',
         '',
-        str(project['name']),
-        str(project['description']),
-        str(project['license']),
-        str(project['openSourceProject']),
-        str(project['governmentWideReuseProject']),
-        str(project['exemption']),
-        str(project['tags']),
-        str(project['contact']['email']),
-        str(project['contact']['name']),
-        str(project['contact']['twitter']),
-        str(project['contact']['phone']),
-        str(project['status']),
-        str(project['vcs']),
-        str(project['repository']),
-        str(project['homepage']),
-        str(project['downloadURL']),
-        str(project['languages']),
-        str(project['partners']),
-        str(project['partners']),
-        str(project['updated']['metadataLastUpdated']),
-        str(project['updated']['lastCommit']),
-        str(project['updated']['sourceCodeLastModified']),
+        to_cell(project['name']),
+        to_cell(project['description']),
+        to_cell(project['license']),
+        to_cell(project['openSourceProject']),
+        to_cell(project['governmentWideReuseProject']),
+        to_cell(project['exemption']),
+        to_cell(project['tags']),
+        to_cell(project['contact']['email']),
+        to_cell(project['contact']['name']),
+        to_cell(project['contact']['twitter']),
+        to_cell(project['contact']['phone']),
+        to_cell(project['status']),
+        to_cell(project['vcs']),
+        to_cell(project['repository']),
+        to_cell(project['homepage']),
+        to_cell(project['downloadURL']),
+        to_cell(project['languages']),
+        to_cell(project['partners']),
+        to_cell(project['partners']),
+        to_cell(project['updated']['metadataLastUpdated']),
+        to_cell(project['updated']['lastCommit']),
+        to_cell(project['updated']['sourceCodeLastModified']),
     ])
