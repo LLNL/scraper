@@ -2,11 +2,13 @@
 # -*- coding: UTF-8 -*-
 
 import argparse
+import getpass
 import json
 import logging
 import os
 
 import github3
+import stashy
 
 from scraper.code_gov import CodeGovMetadata, CodeGovProject
 from scraper.code_gov.doe import to_doe_csv
@@ -51,6 +53,22 @@ def process_repository(repository_name):
     return project
 
 
+def connect_to_bitbucket(server_url):
+    username = getpass.getuser()
+    password = getpass.getpass('%s Password: ' % (server_url))
+    return stashy.connect(server_url, username, password)
+
+
+def process_bitbucket(bitbucket):
+    if not isinstance(bitbucket, stashy.client.Stash):
+        raise TypeError('argument must be a Stash Client object')
+
+    repos = bitbucket.repos.all()
+    projects = [CodeGovProject.from_stashy(r) for r in repos]
+
+    return projects
+
+
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Process some integers.')
@@ -75,14 +93,19 @@ if __name__ == '__main__':
         config_json = {}
 
     agency = config_json.get('agency', 'UNKNOWN')
-    organization = config_json.get('organization', 'UNKNOWN')
-    github_orgs = config_json.get('github_orgs', [])
-    github_repos = config_json.get('github_repos', [])
-
     agency = args.agency or agency
+
+    organization = config_json.get('organization', 'UNKNOWN')
     organization = args.organization or organization
+
+    github_orgs = config_json.get('github_orgs', [])
     github_orgs.extend(args.github_orgs)
+
+    github_repos = config_json.get('github_repos', [])
     github_repos.extend(args.github_repos)
+
+    bitbucket_servers = config_json.get('bitbucket_servers', [])
+    bitbucket_servers = [connect_to_bitbucket(s) for s in bitbucket_servers]
 
     logger.debug('Agency: %s', agency)
     logger.debug('Organization: %s', organization)
@@ -96,6 +119,9 @@ if __name__ == '__main__':
 
     for repo_name in github_repos:
         code_json['projects'].append(process_repository(repo_name))
+
+    for bitbucket in bitbucket_servers:
+        code_json['projects'].extend(process_bitbucket(bitbucket))
 
     str_org_projects = code_json.to_json()
     print(str_org_projects)
