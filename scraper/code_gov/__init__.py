@@ -297,7 +297,7 @@ class CodeGovProject(dict):
         project['repository'] = repository['links']['self'][0]['href']
 
         # homepage: [string] The URL of the public project homepage
-        project['homepage'] = repository.homepage
+        project['homepage'] = ''
 
         # downloadURL: [string] The URL where a distribution of the project can be found.
         project['downloadURL'] = ''
