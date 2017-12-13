@@ -345,7 +345,9 @@ class CodeGovProject(dict):
         project['description'] = repository['description']
 
         # *license: [null or string] The URL of the project license, if available. null should be used if not.
-        project['license'] = ', '.join(repository['licenses'])
+        licenses = set(repository['licenses'])
+        licenses.discard(None)
+        project['license'] = ', '.join(licenses)
 
         # *openSourceProject: [integer] A value indicating whether or not the project is open source.
         #   0: The project is not open source.
@@ -384,7 +386,7 @@ class CodeGovProject(dict):
         project['vcs'] = 'git'
 
         # repository: [string] The URL of the public project repository
-        project['repository'] = repository['repository_link']
+        project['repository'] = repository.get('repository_link', '')
 
         # homepage: [string] The URL of the public project homepage
         project['homepage'] = ''
