@@ -69,6 +69,16 @@ def process_bitbucket(bitbucket):
     return projects
 
 
+def process_doecode(doecode_json_filename):
+    """
+    Converts a DOECode .json file into DOECode projects
+    """
+    doecode_json = json.load(open(doecode_json_filename))
+    projects = [CodeGovProject.from_doecode(p) for p in doecode_json['records']]
+
+    return projects
+
+
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Process some integers.')
@@ -82,6 +92,8 @@ if __name__ == '__main__':
     parser.add_argument('--github-repos', type=str, nargs='+', default=[], help='GitHub Repositories')
 
     parser.add_argument('--to-csv', action='store_true', help='Toggle output to CSV')
+
+    parser.add_argument('--doecode-json', type=str, nargs='?', default='', help='Path to DOECode .json file')
 
     args = parser.parse_args()
 
@@ -107,6 +119,8 @@ if __name__ == '__main__':
     bitbucket_servers = config_json.get('bitbucket_servers', [])
     bitbucket_servers = [connect_to_bitbucket(s) for s in bitbucket_servers]
 
+    doecode_json = args.doecode_json
+
     logger.debug('Agency: %s', agency)
     logger.debug('Organization: %s', organization)
     logger.debug('GitHub.com Organizations: %s', github_orgs)
@@ -122,6 +136,8 @@ if __name__ == '__main__':
 
     for bitbucket in bitbucket_servers:
         code_json['projects'].extend(process_bitbucket(bitbucket))
+
+    code_json['projects'].extend(process_doecode(doecode_json))
 
     str_org_projects = code_json.to_json()
     print(str_org_projects)
