@@ -12,6 +12,82 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
 
 
+def _license_obj(license):
+    """
+    A helper function to look up license object information
+
+    Use names from: https://api.github.com/licenses
+    """
+    obj = None
+
+    if license in ('MIT', 'MIT License'):
+        obj = {
+            'URL': 'https://api.github.com/licenses/mit',
+            'name': 'MIT'
+        }
+    elif license in ('BSD 2-clause "Simplified" License'):
+        obj = {
+            'URL': 'https://api.github.com/licenses/bsd-2-clause',
+            'name': 'BSD-2-Clause'
+        }
+    elif license in ('BSD 3-clause "New" or "Revised" License'):
+        obj = {
+            'URL': 'https://api.github.com/licenses/bsd-3-clause',
+            'name': 'BSD-3-Clause'
+        }
+    elif license in ('Apache License 2.0'):
+        obj = {
+            'URL': 'https://api.github.com/licenses/apache-2.0',
+            'name': 'Apache-2.0'
+        }
+    elif license in ('GNU General Public License v2.1'):
+        obj = {
+            'URL': 'https://api.github.com/licenses/gpl-2.1',
+            'name': 'GPL-2.1'
+        }
+    elif license in ('GNU General Public License v2.0'):
+        obj = {
+            'URL': 'https://api.github.com/licenses/gpl-2.0',
+            'name': 'GPL-2.0'
+        }
+    elif license in ('GNU Lesser General Public License v2.1'):
+        obj = {
+            'URL': 'https://api.github.com/licenses/lgpl-2.1',
+            'name': 'LGPL-2.1'
+        }
+    elif license in ('GNU General Public License v3.0'):
+        obj = {
+            'URL': 'https://api.github.com/licenses/gpl-3.0',
+            'name': 'GPL-3.0'
+        }
+    elif license in ('GNU Lesser General Public License v3.0'):
+        obj = {
+            'URL': 'https://api.github.com/licenses/lgpl-3.0',
+            'name': 'LGPL-3.0'
+        }
+    elif license in ('Eclipse Public License 1.0'):
+        obj = {
+            'URL': 'https://api.github.com/licenses/epl-1.0',
+            'name': 'EPL-1.0',
+        }
+    elif license in ('Mozilla Public License 2.0'):
+        obj = {
+            'URL': 'https://api.github.com/licenses/mpl-2.0',
+            'name': 'MPL-2.0',
+        }
+    elif license in ('Other'):
+        obj = {
+            'URL': 'https://doecode.osti.gov',
+            'name': 'Other',
+        }
+
+    if obj is None:
+        logger.warn('I dont understand the license: %s', license)
+        raise ValueError('Aborting!')
+
+    return obj
+
+
 class CodeGovMetadata(dict):
     """
     Defines the entire contents of a Code.gov 's code.json file
@@ -35,7 +111,7 @@ class CodeGovMetadata(dict):
         #       other: Another measurement method not referenced above.
         #   ifOther: [string] A one- or two- sentence description of the measurement type used, if 'other' is selected as the value of 'method' field.
         self['measurementType'] = {
-            'method' = method
+            'method': method
         }
         if method == 'other':
             self['measurementType']['ifOther'] = other_method
@@ -81,9 +157,9 @@ class CodeGovProject(dict):
         #       exemptByPolicyDate: The release was created prior to the M-16-21 policy (August 8, 2016).
         #   exemptionText: [null or string]
         self['permissions'] = {
-            licenses = None,
-            usageType = '',
-            exemptionText = None
+            'licenses': None,
+            'usageType': '',
+            'exemptionText': None
         }
 
         # *laborHours: [number]: An estimate of total labor hours spent by your organization/component across all versions of this release. This includes labor performed by federal employees and contractors.
@@ -208,7 +284,7 @@ class CodeGovProject(dict):
         project['contact'] = {
             'email': '',
             'name': '',
-            'twitter': '',
+            'URL': '',
             'phone': '',
         }
 
@@ -273,7 +349,7 @@ class CodeGovProject(dict):
         project['contact'] = {
             'email': '',
             'name': '',
-            'twitter': '',
+            'URL': '',
             'phone': '',
         }
         project['status'] = ''
@@ -334,7 +410,7 @@ class CodeGovProject(dict):
         project['contact'] = {
             'email': '',
             'name': '',
-            'twitter': '',
+            'URL': '',
             'phone': '',
         }
 
@@ -381,94 +457,103 @@ class CodeGovProject(dict):
 
         return project
 
+
     @classmethod
-    def from_doecode(klass, repository):
+    def from_doecode(klass, record):
         """
-        Create CodeGovProject object from DOECode formatted json file
+        Create CodeGovProject object from DOECode record
 
         Handles crafting Code.gov Project
         """
-        if not isinstance(repository, dict):
-            raise TypeError('Repository must be a dict')
+        if not isinstance(record, dict):
+            raise TypeError('`record` must be a dict')
 
         project = klass()
 
-        # *name: [string] The project name
-        project['name'] = repository['software_title']
+        # -- REQUIRED FIELDS --
+
+        project['name'] = record['software_title']
         logger.debug('Software Title: %s', project['name'])
 
-        # *description: [string] A description of the project
-        project['description'] = repository['description']
+        project['repositoryURL'] = record.get('repository_link', '')
 
-        # *license: [null or string] The URL of the project license, if available. null should be used if not.
-        licenses = set(repository['licenses'])
+        project['description'] = record['description']
+
+        licenses = set(record['licenses'])
         licenses.discard(None)
-        project['license'] = ', '.join(licenses)
+        logger.debug('DOECode: licenses=%s', licenses)
+        if licenses:
+            license_objects = [_license_obj(license) for license in licenses]
+            project['permissions']['licenses'] = license_objects
 
-        # *openSourceProject: [integer] A value indicating whether or not the project is open source.
-        #   0: The project is not open source.
-        #   1: The project is open source.
-        project['openSourceProject'] = bool(repository['open_source'])
+        # TODO: Need to
+        if record['open_source']:
+            usage_type = 'openSource'
+        elif record['accessibility'] in ('OS',):
+            usage_type = 'openSource'
+        else:
+            logger.warn('DOECode: Unable to determine usage_type')
+            logger.warn('DOECode: open_source=%s', record['open_source'])
+            logger.warn('DOECode: accessibility=%s', record['accessibility'])
+            logger.warn('DOECode: access_limitations=%s', record['access_limitations'])
+            usage_type = ''
+        project['permissions']['usageType'] = usage_type
 
-        # *governmentWideReuseProject: [integer] A value indicating whether or not the project is built for government-wide reuse.
-        #   0: The project is not built for government-wide reuse.
-        #   1: The project is built for government-wide reuse.
-        project['governmentWideReuseProject'] = 0
+        # TODO: Compute from git repo
+        project['laborHours'] = 0
 
-        # *tags: [array] A list of string alphanumeric keywords that identify the project.
-        project['tags'] = []
+        project['tags'] = ['doecode']
 
-        # *contact: [object] Information about contacting the project.
-        #   *email: [string] An email address to contact the project.
-        #   name: [string] The name of a contact or department for the project
-        #   twitter: [string] The username of the project's Twitter account
-        #   phone: [string] The phone number to contact a project.
         project['contact'] = {
-            'email': repository['owner'],
+            'email': record['owner'],
             'name': '',
-            'twitter': '',
+            'URL': '',
             'phone': '',
         }
 
-        # status: [string] The development status of the project
-        #   "Ideation" - brainstorming phase.
-        #   "Alpha" - initial prototyping phase and internal testing.
-        #   "Beta" - a project is being tested in public.
-        #   "Production" - finished project, with development and maintenance ongoing.
-        #   "Archival" - finished project, but no longer actively maintained.
-        project['status'] = ''
+        # -- OPTIONAL FIELDS --
 
-        # vcs: [string] A lowercase string with the name of the Version Control System in use on the project.
-        project['vcs'] = 'git'
+        # record['version'] = ''
 
-        # repository: [string] The URL of the public project repository
-        project['repository'] = repository.get('repository_link', '')
+        project['organization'] = record['site_ownership_code']
 
-        # homepage: [string] The URL of the public project homepage
-        project['homepage'] = ''
+        # TODO: Currently, can't be an empty string, see: https://github.com/GSA/code-gov-web/issues/370
+        project['status'] = 'Development'
 
-        # downloadURL: [string] The URL where a distribution of the project can be found.
-        project['downloadURL'] = ''
+        vcs = None
+        link = project['repositoryURL']
+        if 'github.com' in link:
+            vcs = 'git'
+        if vcs is None:
+            logger.debug('Unable to determine vcs for: %s', link)
+            vcs = ''
+        project['vcs'] = vcs
 
-        # languages: [array] A list of strings with the names of the programming languages in use on the project.
-        project['languages'] = []
+        project['homepageURL'] = record.get('landing_page', '')
 
-        # partners: [array] A list of strings containing the acronyms of agencies partnering on the project.
-        project['partners'] = []
+        # record['downloadURL'] = ''
 
-        # exemption: [integer] The exemption that excuses the project from government-wide reuse.
-        #   1: The sharing of the source code is restricted by law or regulation, including—but not limited to—patent or intellectual property law, the Export Asset Regulations, the International Traffic in Arms Regulation, and the Federal laws and regulations governing classified information.
-        #   2: The sharing of the source code would create an identifiable risk to the detriment of national security, confidentiality of Government information, or individual privacy.
-        #   3: The sharing of the source code would create an identifiable risk to the stability, security, or integrity of the agency's systems or personnel.
-        #   4: The sharing of the source code would create an identifiable risk to agency mission, programs, or operations.
-        #   5: The CIO believes it is in the national interest to exempt sharing the source code.
-        project['exemption'] = None
+        # self['disclaimerText'] = ''
 
-        # updated: [object] Dates that the project and metadata have been updated.
-        #   metadataLastUpdated: [string] A date in YYYY-MM-DD or ISO 8601 format indicating when the metadata in this file was last updated.
-        #   lastCommit: [string] A date in ISO 8601 format indicating when the last commit to the project repository was.
-        #   sourceCodeLastModified: [string] A field intended for closed-source software and software outside of a VCS. The date in YYYY-MM-DD or ISO 8601 format that the source code or package was last updated.
-        # project['updated']['metadataLastUpdated'] = None
-        # project['updated']['lastCommit'] = None
+        # self['disclaimerURL'] = ''
+
+        # self['languages'] = []
+
+        # self['partners'] = []
+        logger.debug('DOECode: contributing_organizations=%s', record['contributing_organizations'])
+
+        # self['relatedCode'] = []
+
+        # self['reusedCode'] = []
+
+        # date: [object] A date object describing the release.
+        #   created: [string] The date the release was originally created, in YYYY-MM-DD or ISO 8601 format.
+        #   lastModified: [string] The date the release was modified, in YYYY-MM-DD or ISO 8601 format.
+        #   metadataLastUpdated: [string] The date the metadata of the release was last updated, in YYYY-MM-DD or ISO 8601 format.
+        project['date'] = {
+            'created': record['date_record_added'],
+            'lastModified': '',
+            'metadataLastUpdated': record['date_record_updated']
+        }
 
         return project
