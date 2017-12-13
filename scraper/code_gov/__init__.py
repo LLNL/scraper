@@ -13,10 +13,35 @@ logging.basicConfig(level=logging.DEBUG)
 
 
 class CodeGovMetadata(dict):
-    def __init__(self, agency, organization):
-        self['agency'] = agency
-        self['organization'] = organization
-        self['projects'] = []
+    """
+    Defines the entire contents of a Code.gov 's code.json file
+
+    For details: https://code.gov/#/policy-guide/docs/compliance/inventory-code
+    """
+    def __init__(self, agency, method, other_method=''):
+        # *version: [string] The Code.gov metadata schema version
+        self['version'] = '2.0.0'
+
+        # *agency: [string] The agency acronym for Clinger Cohen Act agency, e.g. "GSA" or "DOD"
+        self['agency'] = agency.upper()
+
+        # *measurementType: [object] The description of the open source measurement method
+        #   *method [enum]: An enumerated list of methods for measuring the open source requirement
+        #       cost: Cost of software development.
+        #       systems: System certification and accreditation boundaries.
+        #       projects: A complete software solution / project.
+        #       modules: A self-contained module from a software solution.
+        #       linesOfCode: Source lines of code.
+        #       other: Another measurement method not referenced above.
+        #   ifOther: [string] A one- or two- sentence description of the measurement type used, if 'other' is selected as the value of 'method' field.
+        self['measurementType'] = {
+            'method' = method
+        }
+        if method == 'other':
+            self['measurementType']['ifOther'] = other_method
+
+        # The list of source code releases
+        self['releases'] = []
 
     def to_json(self):
         return json.dumps(self, indent=4, sort_keys=True)
@@ -26,32 +51,45 @@ class CodeGovProject(dict):
     """
     Python representation of Code.gov Metadata Schema
 
-    See:
-
-    https://github.com/presidential-innovation-fellows/code-gov-web/blob/master/_draft_content/02_compliance/05-metadata-schema-definition.md
+    For details: https://code.gov/#/policy-guide/docs/compliance/inventory-code
     """
 
     def __init__(self):
-        # *name: [string] The project name
+        # -- REQUIRED FIELDS --
+
+        # *name: [string] The name of the release
         self['name'] = ''
+
+        # repository: [string] The URL of the public project repository
+        self['repositoryURL'] = ''
 
         # *description: [string] A description of the project
         self['description'] = ''
 
-        # *license: [null or string] The URL of the project license, if available. null should be used if not.
-        self['license'] = None
+        # *permissions: [object] A description of the usage/restrictions regarding the release
+        #   * licenses: [null or array of objects] An object containing license details, if available. If not, null should be used.
+        #       URL: [string] The URL of the release license, if available
+        #       name: [string] An abbreviation for the name of the license
+        #   * usageType: [enum]
+        #       openSource: Open source
+        #       governmentWideReuse: Government-wide reuse.
+        #       exemptByLaw: The sharing of the source code is restricted by law or regulation, including—but not limited to—patent or intellectual property law, the Export Asset Regulations, the International Traffic in Arms Regulation, and the Federal laws and regulations governing classified information.
+        #       exemptByNationalSecurity: The sharing of the source code would create an identifiable risk to the detriment of national security, confidentiality of Government information, or individual privacy.
+        #       exemptByAgencySystem: The sharing of the source code would create an identifiable risk to the stability, security, or integrity of the agency’s systems or personnel.
+        #       exemptByAgencyMission: The sharing of the source code would create an identifiable risk to agency mission, programs, or operations.
+        #       exemptByCIO: The CIO believes it is in the national interest to exempt sharing the source code.
+        #       exemptByPolicyDate: The release was created prior to the M-16-21 policy (August 8, 2016).
+        #   exemptionText: [null or string]
+        self['permissions'] = {
+            licenses = None,
+            usageType = '',
+            exemptionText = None
+        }
 
-        # *openSourceProject: [integer] A value indicating whether or not the project is open source.
-        #   0: The project is not open source.
-        #   1: The project is open source.
-        self['openSourceProject'] = 0
+        # *laborHours: [number]: An estimate of total labor hours spent by your organization/component across all versions of this release. This includes labor performed by federal employees and contractors.
+        self['laborHours'] = 0
 
-        # *governmentWideReuseProject: [integer] A value indicating whether or not the project is built for government-wide reuse.
-        #   0: The project is not built for government-wide reuse.
-        #   1: The project is built for government-wide reuse.
-        self['governmentWideReuseProject'] = 0
-
-        # *tags: [array] A list of string alphanumeric keywords that identify the project.
+        # *tags: [array] An array of keywords that will be helpful in discovering and searching for the release.
         self['tags'] = []
 
         # *contact: [object] Information about contacting the project.
@@ -62,14 +100,24 @@ class CodeGovProject(dict):
         self['contact'] = {
             'email': '',
             'name': '',
-            'twitter': '',
+            'URL': '',
             'phone': '',
         }
 
+        # -- OPTIONAL FIELDS --
+
+        # version: [string] The version for this release. For example, "1.0.0."
+        self['version'] = ''
+
+        # organization: [string] The organization or component within the agency that the releases listed belong to. For example, "18F" or "Navy."
+        self['organization'] = ''
+
         # status: [string] The development status of the project
         #   "Ideation" - brainstorming phase.
+        #   "Development" - a release is still in development.
         #   "Alpha" - initial prototyping phase and internal testing.
         #   "Beta" - a project is being tested in public.
+        #   "Release Candidate" - a release is nearly ready for production.
         #   "Production" - finished project, with development and maintenance ongoing.
         #   "Archival" - finished project, but no longer actively maintained.
         self['status'] = ''
@@ -77,37 +125,45 @@ class CodeGovProject(dict):
         # vcs: [string] A lowercase string with the name of the Version Control System in use on the project.
         self['vcs'] = ''
 
-        # repository: [string] The URL of the public project repository
-        self['repository'] = ''
+        # homepageURL: [string] The URL of the public release homepage.
+        self['homepageURL'] = ''
 
-        # homepage: [string] The URL of the public project homepage
-        self['homepage'] = ''
-
-        # downloadURL: [string] The URL where a distribution of the project can be found.
+        # downloadURL: [string] The URL where a distribution of the release can be found.
         self['downloadURL'] = ''
 
-        # languages: [array] A list of strings with the names of the programming languages in use on the project.
+        # disclaimerText: [string] Short paragraph that includes disclaimer language to accompany the release.
+        self['disclaimerText'] = ''
+
+        # disclaimerURL: [string] The URL where disclaimer language regarding the release can be found.
+        self['disclaimerURL'] = ''
+
+        # languages: [array] A list of strings with the names of the programming languages in use on the release.
         self['languages'] = []
 
-        # partners: [array] A list of strings containing the acronyms of agencies partnering on the project.
+        # partners: [array] An array of objects including an acronym for each agency partnering on the release and the contact email at such agency.
+        #   name: [string] The acronym describing the partner agency.
+        #   email: [string] The email address for the point of contact at the partner agency.
         self['partners'] = []
 
-        # exemption: [integer] The exemption that excuses the project from government-wide reuse.
-        #   1: The sharing of the source code is restricted by law or regulation, including—but not limited to—patent or intellectual property law, the Export Asset Regulations, the International Traffic in Arms Regulation, and the Federal laws and regulations governing classified information.
-        #   2: The sharing of the source code would create an identifiable risk to the detriment of national security, confidentiality of Government information, or individual privacy.
-        #   3: The sharing of the source code would create an identifiable risk to the stability, security, or integrity of the agency's systems or personnel.
-        #   4: The sharing of the source code would create an identifiable risk to agency mission, programs, or operations.
-        #   5: The CIO believes it is in the national interest to exempt sharing the source code.
-        self['exemption'] = None
+        # relatedCode: [array] An array of affiliated government repositories that may be a part of the same project. For example, relatedCode for 'code-gov-web' would include 'code-gov-api' and 'code-gov-tools'.
+        #   name: [string] The name of the code repository, project, library or release.
+        #   URL: [string] The URL where the code repository, project, library or release can be found.
+        #   isGovernmentRepo: [boolean] True or False. Is the code repository owned or managed by a federal agency?
+        self['relatedCode'] = []
 
-        # updated: [object] Dates that the project and metadata have been updated.
-        #   metadataLastUpdated: [string] A date in YYYY-MM-DD or ISO 8601 format indicating when the metadata in this file was last updated.
-        #   lastCommit: [string] A date in ISO 8601 format indicating when the last commit to the project repository was.
-        #   sourceCodeLastModified: [string] A field intended for closed-source software and software outside of a VCS. The date in YYYY-MM-DD or ISO 8601 format that the source code or package was last updated.
-        self['updated'] = {
-            'metadataLastUpdated': '',
-            'lastCommit': '',
-            'sourceCodeLastModified': '',
+        # reusedCode: [array] An array of government source code, libraries, frameworks, APIs, platforms or other software used in this release. For example: US Web Design Standards, cloud.gov, Federalist, Digital Services Playbook, Analytics Reporter.
+        #   name: [string] The name of the software used in this release.
+        #   URL: [string] The URL where the software can be found.
+        self['reusedCode'] = []
+
+        # date: [object] A date object describing the release.
+        #   created: [string] The date the release was originally created, in YYYY-MM-DD or ISO 8601 format.
+        #   lastModified: [string] The date the release was modified, in YYYY-MM-DD or ISO 8601 format.
+        #   metadataLastUpdated: [string] The date the metadata of the release was last updated, in YYYY-MM-DD or ISO 8601 format.
+        self['date'] = {
+            'created': '',
+            'lastModified': '',
+            'metadataLastUpdated': ''
         }
 
     @classmethod
