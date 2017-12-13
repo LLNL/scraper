@@ -339,6 +339,7 @@ class CodeGovProject(dict):
 
         # *name: [string] The project name
         project['name'] = repository['software_title']
+        logger.debug('Software Title: %s', project['name'])
 
         # *description: [string] A description of the project
         project['description'] = repository['description']
