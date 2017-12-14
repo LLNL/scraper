@@ -11,6 +11,23 @@ import stashy
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
 
+DOE_LAB_MAPPING = {
+    'AMES': 'Ames Laboratory (AMES)',
+    'ANL': 'Argonne National Laboratory (ANL)',
+    'BNL': 'Brookhaven National Laboratory (BNL)',
+    'INL': 'Idaho National Laboratory (INL)',
+    'LANL': 'Los Alamos National Laboratory (LANL)',
+    'LBNL': 'Lawrence Berkeley National Laboratory (LBNL)',
+    'LLNL': 'Lawrence Livermore National Laboratory (LLNL)',
+    'NETL': 'National Energy Technology Laboratory (NETL)',
+    'NREL': 'National Renewable Energy Laboratory (NREL)',
+    'ORNL': 'Oak Ridge National Laboratory (ORNL)',
+    'OSTI': 'Office of Scientific and Technical Information (OSTI)',
+    'PNNL': 'Pacific Northwest National Laboratory (PNNL)',
+    'SNL': 'Sandia National Laboratories (SNL)',
+    'TJNAF': 'Thomas Jefferson National Accelerator Facility (TJNAF)',
+}
+
 
 def _license_obj(license):
     """
@@ -253,6 +270,98 @@ class CodeGovProject(dict):
         logger.info('Processing: %s', repository.full_name)
 
         project = klass()
+
+        # -- REQUIRED FIELDS --
+
+        project['name'] = repository.name
+
+        project['repositoryURL'] = record.get('repository_link', '')
+
+        project['description'] = record['description']
+
+        licenses = set(record['licenses'])
+        licenses.discard(None)
+        logger.debug('DOECode: licenses=%s', licenses)
+        if licenses:
+            license_objects = [_license_obj(license) for license in licenses]
+            project['permissions']['licenses'] = license_objects
+
+        # TODO: Need to
+        if record['open_source']:
+            usage_type = 'openSource'
+        elif record['accessibility'] in ('OS',):
+            usage_type = 'openSource'
+        else:
+            logger.warn('DOECode: Unable to determine usage_type')
+            logger.warn('DOECode: open_source=%s', record['open_source'])
+            logger.warn('DOECode: accessibility=%s', record['accessibility'])
+            logger.warn('DOECode: access_limitations=%s', record['access_limitations'])
+            usage_type = ''
+        project['permissions']['usageType'] = usage_type
+
+        # TODO: Compute from git repo
+        project['laborHours'] = 0
+
+        project['tags'] = ['doecode']
+
+        project['contact'] = {
+            'email': record['owner'],
+            'name': '',
+            'URL': '',
+            'phone': '',
+        }
+
+        # -- OPTIONAL FIELDS --
+
+        # record['version'] = ''
+
+        project['organization'] = record['site_ownership_code']
+
+        # TODO: Currently, can't be an empty string, see: https://github.com/GSA/code-gov-web/issues/370
+        project['status'] = 'Development'
+
+        vcs = None
+        link = project['repositoryURL']
+        if 'github.com' in link:
+            vcs = 'git'
+        if vcs is None:
+            logger.debug('Unable to determine vcs for: %s', link)
+            vcs = ''
+        project['vcs'] = vcs
+
+        project['homepageURL'] = record.get('landing_page', '')
+
+        # record['downloadURL'] = ''
+
+        # self['disclaimerText'] = ''
+
+        # self['disclaimerURL'] = ''
+
+        # self['languages'] = []
+
+        # self['partners'] = []
+        logger.debug('DOECode: contributing_organizations=%s', record['contributing_organizations'])
+
+        # self['relatedCode'] = []
+
+        # self['reusedCode'] = []
+
+        # date: [object] A date object describing the release.
+        #   created: [string] The date the release was originally created, in YYYY-MM-DD or ISO 8601 format.
+        #   lastModified: [string] The date the release was modified, in YYYY-MM-DD or ISO 8601 format.
+        #   metadataLastUpdated: [string] The date the metadata of the release was last updated, in YYYY-MM-DD or ISO 8601 format.
+        project['date'] = {
+            'created': record['date_record_added'],
+            'lastModified': '',
+            'metadataLastUpdated': record['date_record_updated']
+        }
+
+
+
+
+
+
+
 
         # *name: [string] The project name
         project['name'] = repository.name
@@ -503,6 +612,9 @@ class CodeGovProject(dict):
         project['laborHours'] = 0
 
         project['tags'] = ['doecode']
+        site_code = record['site_ownership_code']
+        if site_code in DOE_LAB_MAPPING:
+            project['tags'].append(DOE_LAB_MAPPING[site_code])
 
         project['contact'] = {
             'email': record['owner'],
@@ -518,7 +630,7 @@ class CodeGovProject(dict):
         project['organization'] = record['site_ownership_code']
 
         # TODO: Currently, can't be an empty string, see: https://github.com/GSA/code-gov-web/issues/370
-        project['status'] = 'Development'
+        project['status'] = 'Production'
 
         vcs = None
         link = project['repositoryURL']
