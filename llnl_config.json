@@ -10,6 +10,7 @@
         "mfem",
         "pruners",
         "rose-compiler",
+        "spack",
         "zfsonlinux"
     ],
     "github_repos": [

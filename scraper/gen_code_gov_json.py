@@ -31,7 +31,7 @@ def process_organization(org_name):
     org = gh.organization(org_name)
 
     repos = org.repositories(type='public')
-    projects = [CodeGovProject.from_github3(r) for r in repos]
+    projects = [CodeGovProject.from_github3(r, org) for r in repos]
     logger.debug('Number of projects: %d', len(projects))
 
     logger.info('Setting Contact Email...')
@@ -138,7 +138,9 @@ if __name__ == '__main__':
     for bitbucket in bitbucket_servers:
         code_json['releases'].extend(process_bitbucket(bitbucket))
 
-    code_json['releases'].extend(process_doecode(doecode_json))
+    if os.path.isfile(doecode_json):
+        code_json['releases'].extend(process_doecode(doecode_json))
+
 
     str_org_projects = code_json.to_json()
 
