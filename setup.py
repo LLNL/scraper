@@ -17,9 +17,11 @@ setup(
         'python-gitlab>=0.17',
         'stashy>=0.3',
     ],
-    scripts=[
-        'scraper/gen_code_gov_json.py',
-    ],
+    entry_points={
+        'console_scripts': [
+            'scraper = scraper.gen_code_gov_json:main',
+        ]
+    },
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',

@@ -79,8 +79,7 @@ def process_doecode(doecode_json_filename):
     return projects
 
 
-if __name__ == '__main__':
-
+def main():
     parser = argparse.ArgumentParser(description='Process some integers.')
 
     parser.add_argument('--agency', type=str, nargs='?', default='', help='Agency Label, e.g. "DOE"')
@@ -159,3 +158,6 @@ if __name__ == '__main__':
 
     logger.info('Agency: %s', agency)
     logger.info('Number of Projects: %s', len(code_json['releases']))
+
+if __name__ == '__main__':
+    main()
