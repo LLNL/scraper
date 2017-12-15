@@ -20,7 +20,7 @@ the name ``GITHUB_API_TOKEN``:
 
 To generate a ``code.json`` file for your GitHub organization:
 
-    $ pip install .
+    $ pip install -e .
 
     $ scraper --agency <agency_name> --github-orgs <list of github org usernames ...>
 
