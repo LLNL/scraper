@@ -282,7 +282,7 @@ class CodeGovProject(dict):
         project['description'] = repository.description
 
         # TODO: Update licenses from GitHub API
-        project['permissions']['licenses'] = [None]
+        project['permissions']['licenses'] = None
         project['permissions']['usageType'] = 'openSource'
 
         # TODO: Compute from git repo
