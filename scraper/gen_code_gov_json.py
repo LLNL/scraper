@@ -140,6 +140,8 @@ if __name__ == '__main__':
 
     if os.path.isfile(doecode_json):
         code_json['releases'].extend(process_doecode(doecode_json))
+    elif doecode_json:
+        logger.warning('Unbale to find DOECode json file: %s', doecode_json)
 
 
     str_org_projects = code_json.to_json()
