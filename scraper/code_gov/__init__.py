@@ -92,11 +92,6 @@ def _license_obj(license):
             'URL': 'https://api.github.com/licenses/mpl-2.0',
             'name': 'MPL-2.0',
         }
-    elif license in ('Other'):
-        obj = {
-            'URL': 'https://doecode.osti.gov',
-            'name': 'Other',
-        }
 
     if obj is None:
         logger.warn('I dont understand the license: %s', license)
@@ -484,9 +479,19 @@ class CodeGovProject(dict):
         licenses = set(record['licenses'])
         licenses.discard(None)
         logger.debug('DOECode: licenses=%s', licenses)
+
+        license_objects = []
+        if 'Other' in licenses:
+            licenses.remove('Other')
+            license_objects = [{
+                'name': 'Other',
+                'URL': record['proprietary_url']
+            }]
+
         if licenses:
-            license_objects = [_license_obj(license) for license in licenses]
-            project['permissions']['licenses'] = license_objects
+            license_objects.extend([_license_obj(license) for license in licenses])
+
+        project['permissions']['licenses'] = license_objects
 
         # TODO: Need to
         if record['open_source']:
@@ -495,6 +500,8 @@ class CodeGovProject(dict):
             usage_type = 'openSource'
         else:
             logger.warn('DOECode: Unable to determine usage_type')
+            logger.warn('DOECode: code_id=%s', record['code_id'])
+            logger.warn('DOECode: software_title=%s', record['software_title'])
             logger.warn('DOECode: open_source=%s', record['open_source'])
             logger.warn('DOECode: accessibility=%s', record['accessibility'])
             logger.warn('DOECode: access_limitations=%s', record['access_limitations'])
