@@ -11,14 +11,17 @@
         "pruners",
         "rose-compiler",
         "spack",
+        "uv-cdat",
         "zfsonlinux"
     ],
     "github_repos": [
+        "ceed/laghos",
         "dun/conman",
         "dun/munge",
+        "frankieli/icenine",
         "hpc/dcp",
         "hpc/mpifileutils",
         "hpc/openlorenz",
-        "hpc/Spindle"
+        "hpc/spindle"
     ]
 }
