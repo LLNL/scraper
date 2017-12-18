@@ -498,6 +498,9 @@ class CodeGovProject(dict):
             usage_type = 'openSource'
         elif record['accessibility'] in ('OS',):
             usage_type = 'openSource'
+        elif record['accessibility'] in ('CS',):
+            usage_type = 'exemptByLaw'
+            project['permissions']['exemptionText'] = 'This source code is restricted by patent and / or intellectual property law.'
         else:
             logger.warn('DOECode: Unable to determine usage_type')
             logger.warn('DOECode: code_id=%s', record['code_id'])
