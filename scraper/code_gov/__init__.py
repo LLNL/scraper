@@ -285,6 +285,11 @@ class CodeGovProject(dict):
 
         # TODO: Compute from GitHub
         project['tags'] = ['github']
+        old_accept = repository.session.headers['Accept']
+        repository.session.headers['Accept'] = 'application/vnd.github.mercy-preview+json'
+        topics = repository._get(repository.url + '/topics').json()
+        project['tags'].extend(topics['names'])
+        repository.session.headers['Accept'] = old_accept
 
         project['contact'] = {
             'email': organization.email,
