@@ -255,7 +255,7 @@ class CodeGovProject(dict):
         }
 
     @classmethod
-    def from_github3(klass, repository, organization):
+    def from_github3(klass, repository, organization=None):
         """
         Create CodeGovProject object from github3 Repository object
         """
@@ -263,6 +263,8 @@ class CodeGovProject(dict):
             raise TypeError('Repository must be a github3 Repository object')
 
         logger.info('Processing: %s', repository.full_name)
+
+        organization = repository.owner
 
         project = klass()
 

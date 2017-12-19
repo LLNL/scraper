@@ -31,7 +31,7 @@ def process_organization(org_name):
     org = gh.organization(org_name)
 
     repos = org.repositories(type='public')
-    projects = [CodeGovProject.from_github3(r, org) for r in repos]
+    projects = [CodeGovProject.from_github3(r) for r in repos]
     logger.debug('Number of projects: %d', len(projects))
 
     logger.info('Setting Contact Email...')
