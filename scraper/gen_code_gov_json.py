@@ -14,7 +14,7 @@ from scraper.code_gov import CodeGovMetadata, CodeGovProject
 from scraper.code_gov.doe import to_doe_csv
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.WARNING)
 
 # TODO: Might not really want this at global scope
 token = os.environ['GITHUB_API_TOKEN']
@@ -84,6 +84,8 @@ def main():
 
     parser.add_argument('--agency', type=str, nargs='?', default='', help='Agency Label, e.g. "DOE"')
     parser.add_argument('--method', type=str, nargs='?', default='', help='Method of measuring open source')
+    parser.add_argument('--organization', type=str, nargs='?', default='', help='Force all repos to report a particular organzation')
+    parser.add_argument('--contact-email', type=str, nargs='?', default='', help='Force all repos to report a particular contact email')
 
     parser.add_argument('--config', type=str, nargs='?', default='', help='Configuration File (*.json)')
 
@@ -97,6 +99,9 @@ def main():
     parser.add_argument('--verbose', action='store_true', help='Enable verbose output')
 
     args = parser.parse_args()
+
+    if args.verbose:
+        logging.basicConfig(level=logging.DEBUG)
 
     try:
         config_json = json.load(open(args.config))
@@ -142,6 +147,14 @@ def main():
     elif doecode_json:
         logger.warning('Unbale to find DOECode json file: %s', doecode_json)
 
+    # Force certain fields
+    if args.organization:
+        for release in code_json['releases']:
+            release['organization'] = args.organization
+
+    if args.contact_email:
+        for release in code_json['releases']:
+            release['contact']['email'] = args.contact_email
 
     str_org_projects = code_json.to_json()
 
