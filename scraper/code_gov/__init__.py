@@ -187,18 +187,20 @@ class CodeGovProject(dict):
         #   phone: [string] The phone number to contact a project.
         self['contact'] = {
             'email': '',
-            'name': '',
-            'URL': '',
-            'phone': '',
         }
+        # TODO: Currently, the GSA Harvester requires these fields to not be present if they are empty
+        #     'name': '',
+        #     'URL': '',
+        #     'phone': '',
+        # }
 
         # -- OPTIONAL FIELDS --
 
         # version: [string] The version for this release. For example, "1.0.0."
-        self['version'] = ''
+        # self['version'] = ''
 
         # organization: [string] The organization or component within the agency that the releases listed belong to. For example, "18F" or "Navy."
-        self['organization'] = ''
+        # self['organization'] = ''
 
         # status: [string] The development status of the project
         #   "Ideation" - brainstorming phase.
@@ -208,51 +210,51 @@ class CodeGovProject(dict):
         #   "Release Candidate" - a release is nearly ready for production.
         #   "Production" - finished project, with development and maintenance ongoing.
         #   "Archival" - finished project, but no longer actively maintained.
-        self['status'] = ''
+        # self['status'] = ''
 
         # vcs: [string] A lowercase string with the name of the Version Control System in use on the project.
-        self['vcs'] = ''
+        # self['vcs'] = ''
 
         # homepageURL: [string] The URL of the public release homepage.
-        self['homepageURL'] = ''
+        # self['homepageURL'] = ''
 
         # downloadURL: [string] The URL where a distribution of the release can be found.
-        self['downloadURL'] = ''
+        # self['downloadURL'] = ''
 
         # disclaimerText: [string] Short paragraph that includes disclaimer language to accompany the release.
-        self['disclaimerText'] = ''
+        # self['disclaimerText'] = ''
 
         # disclaimerURL: [string] The URL where disclaimer language regarding the release can be found.
-        self['disclaimerURL'] = ''
+        # self['disclaimerURL'] = ''
 
         # languages: [array] A list of strings with the names of the programming languages in use on the release.
-        self['languages'] = []
+        # self['languages'] = []
 
         # partners: [array] An array of objects including an acronym for each agency partnering on the release and the contact email at such agency.
         #   name: [string] The acronym describing the partner agency.
         #   email: [string] The email address for the point of contact at the partner agency.
-        self['partners'] = []
+        # self['partners'] = []
 
         # relatedCode: [array] An array of affiliated government repositories that may be a part of the same project. For example, relatedCode for 'code-gov-web' would include 'code-gov-api' and 'code-gov-tools'.
         #   name: [string] The name of the code repository, project, library or release.
         #   URL: [string] The URL where the code repository, project, library or release can be found.
         #   isGovernmentRepo: [boolean] True or False. Is the code repository owned or managed by a federal agency?
-        self['relatedCode'] = []
+        # self['relatedCode'] = []
 
         # reusedCode: [array] An array of government source code, libraries, frameworks, APIs, platforms or other software used in this release. For example: US Web Design Standards, cloud.gov, Federalist, Digital Services Playbook, Analytics Reporter.
         #   name: [string] The name of the software used in this release.
         #   URL: [string] The URL where the software can be found.
-        self['reusedCode'] = []
+        # self['reusedCode'] = []
 
         # date: [object] A date object describing the release.
         #   created: [string] The date the release was originally created, in YYYY-MM-DD or ISO 8601 format.
         #   lastModified: [string] The date the release was modified, in YYYY-MM-DD or ISO 8601 format.
         #   metadataLastUpdated: [string] The date the metadata of the release was last updated, in YYYY-MM-DD or ISO 8601 format.
-        self['date'] = {
-            'created': '',
-            'lastModified': '',
-            'metadataLastUpdated': ''
-        }
+        # self['date'] = {
+        #     'created': '',
+        #     'lastModified': '',
+        #     'metadataLastUpdated': ''
+        # }
 
     @classmethod
     def from_github3(klass, repository, organization=None):
@@ -293,12 +295,9 @@ class CodeGovProject(dict):
         project['tags'].extend(topics['names'])
         repository.session.headers['Accept'] = old_accept
 
-        project['contact'] = {
-            'email': organization.email,
-            'name': '',
-            'URL': organization.html_url,
-            'phone': '',
-        }
+
+        project['contact']['email'] = organization.email
+        project['contact']['URL'] = organization.html_url
 
         # -- OPTIONAL FIELDS --
 
@@ -479,7 +478,13 @@ class CodeGovProject(dict):
         project['name'] = record['software_title']
         logger.debug('DOECode: software_title="%s"', record['software_title'])
 
-        project['repositoryURL'] = record.get('repository_link', '')
+        link = record.get('repository_link', '')
+        if link:
+            project['repositoryURL'] = link
+        else:
+            url = record.get('landing_page')
+            logger.warning('DOECODE: No repositoryURL, using landing_page: %s', url)
+            project['repositoryURL'] = url
 
         project['description'] = record['description']
 
@@ -526,12 +531,10 @@ class CodeGovProject(dict):
         if site_code in DOE_LAB_MAPPING:
             project['tags'].append(DOE_LAB_MAPPING[site_code])
 
-        project['contact'] = {
-            'email': record['owner'],
-            'name': '',
-            'URL': '',
-            'phone': '',
-        }
+        project['contact']['email'] = record['owner']
+        # project['contact']['URL'] = ''
+        # project['contact']['name'] = ''
+        # project['contact']['phone'] = ''
 
         # -- OPTIONAL FIELDS --
 
@@ -549,9 +552,12 @@ class CodeGovProject(dict):
         if vcs is None:
             logger.debug('DOECode: Unable to determine vcs for: name="%s", repositoryURL=%s', project['name'], link)
             vcs = ''
-        project['vcs'] = vcs
+        if vcs:
+            project['vcs'] = vcs
 
-        project['homepageURL'] = record.get('landing_page', '')
+        url = record.get('landing_page', '')
+        if url:
+            project['homepageURL'] = url
 
         # record['downloadURL'] = ''
 
@@ -574,7 +580,7 @@ class CodeGovProject(dict):
         #   metadataLastUpdated: [string] The date the metadata of the release was last updated, in YYYY-MM-DD or ISO 8601 format.
         project['date'] = {
             'created': record['date_record_added'],
-            'lastModified': '',
+            # 'lastModified': '',
             'metadataLastUpdated': record['date_record_updated']
         }
 
