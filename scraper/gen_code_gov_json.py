@@ -45,7 +45,6 @@ def process_organization(org_name):
     Returns a Code.gov standard JSON of GitHub organization projects
     """
     org = gh.organization(org_name)
-
     repos = org.repositories(type='public')
     projects = [CodeGovProject.from_github3(r) for r in repos]
     logger.debug('Number of projects: %d', len(projects))
@@ -186,6 +185,7 @@ def main():
 
     logger.info('Agency: %s', agency)
     logger.info('Number of Projects: %s', len(code_json['releases']))
+
 
 if __name__ == '__main__':
     main()

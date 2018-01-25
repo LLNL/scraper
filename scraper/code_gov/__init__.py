@@ -6,7 +6,7 @@ import logging
 
 import github3
 import gitlab
-import stashy
+# import stashy
 
 logger = logging.getLogger(__name__)
 
@@ -294,7 +294,6 @@ class CodeGovProject(dict):
         project['tags'].extend(topics['names'])
         repository.session.headers['Accept'] = old_accept
 
-
         project['contact']['email'] = organization.email
         project['contact']['URL'] = organization.html_url
 
@@ -458,7 +457,6 @@ class CodeGovProject(dict):
         # project['updated']['lastCommit'] = None
 
         return project
-
 
     @classmethod
     def from_doecode(klass, record):

@@ -3,6 +3,7 @@
 
 SEPARATOR = ';'
 
+
 def to_cell(string):
     string = str(string)
     string = string.replace('\n', ' ')  # Newlines will break CSV cells
