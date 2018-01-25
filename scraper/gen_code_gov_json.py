@@ -100,7 +100,7 @@ def process_doecode(doecode_json_filename):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser = argparse.ArgumentParser(description='Scrape code repositories for Code.gov / DOECode')
 
     parser.add_argument('--agency', type=str, nargs='?', default='', help='Agency Label, e.g. "DOE"')
     parser.add_argument('--method', type=str, nargs='?', default='', help='Method of measuring open source')
