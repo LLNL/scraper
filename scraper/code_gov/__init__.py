@@ -9,7 +9,6 @@ import gitlab
 import stashy
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG)
 
 DOE_LAB_MAPPING = {
     'AMES': 'Ames Laboratory (AMES)',

@@ -14,7 +14,6 @@ from scraper.code_gov import CodeGovMetadata, CodeGovProject
 from scraper.code_gov.doe import to_doe_csv
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.WARNING)
 
 # TODO: Might not really want this at global scope
 token = os.environ['GITHUB_API_TOKEN']
@@ -22,6 +21,23 @@ gh = github3.login(token=token)
 
 if gh is None:
     raise RuntimeError('Invalid GITHUB_API_TOKEN in environment')
+
+
+def _configure_logging(verbose=False):
+    # logging.basicConfig(level=logging.INFO)
+
+    # logging.getLogger('github3').propogate = False
+
+    handler = logging.StreamHandler()
+    if verbose:
+        logger.setLevel(logging.DEBUG)
+        handler.setLevel(logging.DEBUG)
+    else:
+        logger.setLevel(logging.INFO)
+        handler.setLevel(logging.INFO)
+
+    handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
+    logger.addHandler(handler)
 
 
 def process_organization(org_name):
@@ -100,8 +116,7 @@ def main():
 
     args = parser.parse_args()
 
-    if args.verbose:
-        logging.basicConfig(level=logging.DEBUG)
+    _configure_logging(args.verbose)
 
     try:
         config_json = json.load(open(args.config))
