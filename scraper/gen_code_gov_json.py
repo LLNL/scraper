@@ -46,10 +46,13 @@ def process_organization(org_name):
     """
     org = gh.organization(org_name)
     repos = org.repositories(type='public')
-    projects = [CodeGovProject.from_github3(r) for r in repos]
-    logger.debug('Number of projects: %d', len(projects))
+    num_repos = org.public_repos_count
 
-    logger.info('Setting Contact Email...')
+    logger.info('Processing GitHub Org: %s (%d public repos)', org_name, num_repos)
+
+    projects = [CodeGovProject.from_github3(r) for r in repos]
+
+    logger.debug('Setting Contact Email to: %s', org.email)
     for project in projects:
         project['contact']['email'] = org.email
 
@@ -60,6 +63,8 @@ def process_repository(repository_name):
     """
     Returns a Code.gov standard JSON of GitHub organization projects
     """
+    logger.info('Processing GitHub Repo: %s', repository_name)
+
     org, name = repository_name.split('/')
     repo = gh.repository(org, name)
 
@@ -126,24 +131,26 @@ def main():
 
     agency = config_json.get('agency', 'UNKNOWN')
     agency = args.agency or agency
+    logger.debug('Agency: %s', agency)
 
     method = config_json.get('method', 'other')
     method = args.method or method
+    logger.debug('Inventory Method: %s', method)
 
     github_orgs = config_json.get('github_orgs', [])
     github_orgs.extend(args.github_orgs)
+    logger.debug('GitHub.com Organizations: %s', github_orgs)
 
     github_repos = config_json.get('github_repos', [])
     github_repos.extend(args.github_repos)
+    logger.debug('GitHub.com Repositories: %s', github_repos)
 
     bitbucket_servers = config_json.get('bitbucket_servers', [])
     bitbucket_servers = [connect_to_bitbucket(s) for s in bitbucket_servers]
+    logger.debug('Bitbucket Servers: %s', bitbucket_servers)
 
     doecode_json = args.doecode_json
-
-    logger.debug('Agency: %s', agency)
-    logger.debug('GitHub.com Organizations: %s', github_orgs)
-    logger.debug('GitHub.com Repositories: %s', github_repos)
+    logger.debug('Queuing DOE Code JSON: %s', doecode_json)
 
     code_json = CodeGovMetadata(agency, method)
 
@@ -163,17 +170,21 @@ def main():
 
     # Force certain fields
     if args.organization:
+        logger.debug('Forcing Organiation to: %s', args.organzation)
         for release in code_json['releases']:
             release['organization'] = args.organization
 
     if args.contact_email:
+        logger.debug('Forcing Contact Email to: %s', args.contact_email)
         for release in code_json['releases']:
             release['contact']['email'] = args.contact_email
 
     str_org_projects = code_json.to_json()
 
-    if args.verbose:
-        print(str_org_projects)
+    # -- I don't believe we need to be outputing to JSON to the console
+    #   -- Maybe if "very verbose" ?
+    # if args.verbose:
+    #     print(str_org_projects)
 
     with open('code.json', 'w') as fp:
         fp.write(str_org_projects)
@@ -183,7 +194,6 @@ def main():
             for project in code_json['releases']:
                 fp.write(to_doe_csv(project) + '\n')
 
-    logger.info('Agency: %s', agency)
     logger.info('Number of Projects: %s', len(code_json['releases']))
 
 
