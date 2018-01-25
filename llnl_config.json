@@ -1,6 +1,7 @@
 {
     "agency": "DOE",
     "organization": "Lawrence Livermore National Laboratory",
+    "contact_email": "open-source@llnl.gov",
     "github_orgs": [
         "chaos",
         "esgf",

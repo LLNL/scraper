@@ -137,6 +137,14 @@ def main():
     method = args.method or method
     logger.debug('Inventory Method: %s', method)
 
+    organization = config_json.get('organization', '')
+    organization = args.organization or organization
+    logger.debug('Organization: %s', organization)
+
+    contact_email = config_json.get('contact_email', '')
+    contact_email = args.contact_email or contact_email
+    logger.debug('Contact Email: %s', contact_email)
+
     github_orgs = config_json.get('github_orgs', [])
     github_orgs.extend(args.github_orgs)
     logger.debug('GitHub.com Organizations: %s', github_orgs)
@@ -169,15 +177,15 @@ def main():
         logger.warning('Unbale to find DOECode json file: %s', doecode_json)
 
     # Force certain fields
-    if args.organization:
-        logger.debug('Forcing Organiation to: %s', args.organzation)
+    if organization:
+        logger.debug('Forcing Organiation to: %s', organization)
         for release in code_json['releases']:
-            release['organization'] = args.organization
+            release['organization'] = organization
 
-    if args.contact_email:
-        logger.debug('Forcing Contact Email to: %s', args.contact_email)
+    if contact_email:
+        logger.debug('Forcing Contact Email to: %s', contact_email)
         for release in code_json['releases']:
-            release['contact']['email'] = args.contact_email
+            release['contact']['email'] = contact_email
 
     str_org_projects = code_json.to_json()
 
