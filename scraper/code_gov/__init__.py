@@ -104,7 +104,7 @@ def _prune_dict_null_str(dictionary):
     Prune the "None" or emptry string values from dictionary items
     """
     for key, value in list(dictionary.items()):
-        if value == None or str(value) == '':
+        if value is None or str(value) == '':
             del dictionary[key]
 
         if isinstance(value, dict):
