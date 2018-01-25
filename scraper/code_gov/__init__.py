@@ -99,6 +99,20 @@ def _license_obj(license):
     return obj
 
 
+def _prune_dict_null_str(dictionary):
+    """
+    Prune the "None" or emptry string values from dictionary items
+    """
+    for key, value in list(dictionary.items()):
+        if value == None or str(value) == '':
+            del dictionary[key]
+
+        if isinstance(value, dict):
+            dictionary[key] = _prune_dict_null_str(dictionary[key])
+
+    return dictionary
+
+
 class CodeGovMetadata(dict):
     """
     Defines the entire contents of a Code.gov 's code.json file
@@ -329,6 +343,8 @@ class CodeGovProject(dict):
             'lastModified': repository.updated_at.isoformat(),
             'metadataLastUpdated': '',
         }
+
+        _prune_dict_null_str(project)
 
         return project
 
