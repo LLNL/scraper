@@ -186,15 +186,21 @@ def main():
     # if args.verbose:
     #     print(str_org_projects)
 
-    with open('code.json', 'w') as fp:
+    logger.info('Number of Projects: %s', len(code_json['releases']))
+
+    json_filename = 'code.json'
+    logger.info('Writing output to: %s', json_filename)
+
+    with open(json_filename, 'w') as fp:
+        logger.info
         fp.write(str_org_projects)
 
     if args.to_csv:
-        with open('code.csv', 'w') as fp:
+        csv_filename = 'code.csv'
+        with open(csv_filename, 'w') as fp:
             for project in code_json['releases']:
                 fp.write(to_doe_csv(project) + '\n')
 
-    logger.info('Number of Projects: %s', len(code_json['releases']))
 
 
 if __name__ == '__main__':
