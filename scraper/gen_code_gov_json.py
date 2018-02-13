@@ -9,6 +9,8 @@ import os
 
 import github3
 import stashy
+import requests
+import yaml
 
 from scraper.code_gov import CodeGovMetadata, CodeGovProject
 from scraper.code_gov.doe import to_doe_csv
@@ -99,6 +101,26 @@ def process_doecode(doecode_json_filename):
     return projects
 
 
+def government_at_github():
+    """
+    Returns a list of US Government GitHub orgs
+
+    Based on: https://government.github.com/community/
+    """
+    us_gov_github_orgs = set()
+
+    gov_yml = requests.get('https://raw.githubusercontent.com/github/government.github.com/gh-pages/_data/governments.yml')
+    gov_yml_json = yaml.load(gov_yml.text)
+    us_gov_github_orgs.update(gov_yml_json['U.S. Federal'])
+    us_gov_github_orgs.update(gov_yml_json['U.S. Military and Intelligence'])
+
+    gov_labs_yml = requests.get('https://raw.githubusercontent.com/github/government.github.com/gh-pages/_data/research.yml')
+    gov_labs_yml_json = yaml.load(gov_labs_yml.text)
+    us_gov_github_orgs.update(gov_labs_yml_json['U.S. Research Labs'])
+
+    return list(us_gov_github_orgs)
+
+
 def main():
     parser = argparse.ArgumentParser(description='Scrape code repositories for Code.gov / DOECode')
 
@@ -111,6 +133,7 @@ def main():
 
     parser.add_argument('--github-orgs', type=str, nargs='+', default=[], help='GitHub Organizations')
     parser.add_argument('--github-repos', type=str, nargs='+', default=[], help='GitHub Repositories')
+    parser.add_argument('--github-gov-orgs', action='store_true', help='Use orgs from government.github.com/community')
 
     parser.add_argument('--to-csv', action='store_true', help='Toggle output to CSV')
 
@@ -148,6 +171,9 @@ def main():
     github_orgs = config_json.get('github_orgs', [])
     github_orgs.extend(args.github_orgs)
     logger.debug('GitHub.com Organizations: %s', github_orgs)
+
+    if args.github_gov_orgs:
+        github_orgs.extend(government_at_github())
 
     github_repos = config_json.get('github_repos', [])
     github_repos.extend(args.github_repos)
