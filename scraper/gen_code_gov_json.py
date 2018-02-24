@@ -222,13 +222,13 @@ def main():
 
     code_json = CodeGovMetadata(agency, method)
 
-    for org_name in github_orgs:
+    for org_name in sorted(github_orgs, key=str.lower):
         code_json['releases'].extend(process_organization(org_name))
 
-    for repo_name in github_repos:
+    for repo_name in sorted(github_repos, key=str.lower):
         code_json['releases'].append(process_repository(repo_name))
 
-    for bitbucket in bitbucket_servers:
+    for bitbucket in sorted(bitbucket_servers, key=str.lower):
         code_json['releases'].extend(process_bitbucket(bitbucket))
 
     if os.path.isfile(doecode_json):
