@@ -6,9 +6,12 @@ import getpass
 import json
 import logging
 import os
+import time
 
 import github3
 import stashy
+import requests
+import yaml
 
 from scraper.code_gov import CodeGovMetadata, CodeGovProject
 from scraper.code_gov.doe import to_doe_csv
@@ -40,6 +43,36 @@ def _configure_logging(verbose=False):
     logger.addHandler(handler)
 
 
+def _check_api_limits(min_requests_remaining=250, sleep_time=15):
+    """
+    Simplified check for API limits
+
+    If necessary, spin in place waiting for API to reset before returning.
+
+    Returns two-tuple of: ``(# API requests remaining, unix time of reset)``
+
+    See: https://developer.github.com/v3/#rate-limiting
+    """
+    api_rates = gh.rate_limit()
+
+    api_remaining = api_rates['rate']['remaining']
+    api_reset = api_rates['rate']['reset']
+    logger.info('Rate Limit - %d requests remaining', api_remaining)
+
+    if api_remaining > min_requests_remaining:
+        return
+
+    now_time = time.time()
+    time_to_reset = int(api_reset - now_time)
+    logger.info('Rate Limit - Need to sleep for %d seconds', time_to_reset)
+
+    while now_time < api_reset:
+        time.sleep(10)
+        now_time = time.time()
+
+    return
+
+
 def process_organization(org_name):
     """
     Returns a Code.gov standard JSON of GitHub organization projects
@@ -47,6 +80,11 @@ def process_organization(org_name):
     org = gh.organization(org_name)
     repos = org.repositories(type='public')
     num_repos = org.public_repos_count
+
+    WIGGLE_ROOM = 100
+    num_requests_needed = 2 * num_repos + WIGGLE_ROOM
+
+    _check_api_limits(min_requests_remaining=num_requests_needed)
 
     logger.info('Processing GitHub Org: %s (%d public repos)', org_name, num_repos)
 
@@ -99,6 +137,26 @@ def process_doecode(doecode_json_filename):
     return projects
 
 
+def government_at_github():
+    """
+    Returns a list of US Government GitHub orgs
+
+    Based on: https://government.github.com/community/
+    """
+    us_gov_github_orgs = set()
+
+    gov_yml = requests.get('https://raw.githubusercontent.com/github/government.github.com/gh-pages/_data/governments.yml')
+    gov_yml_json = yaml.safe_load(gov_yml.text)
+    us_gov_github_orgs.update(gov_yml_json['U.S. Federal'])
+    us_gov_github_orgs.update(gov_yml_json['U.S. Military and Intelligence'])
+
+    gov_labs_yml = requests.get('https://raw.githubusercontent.com/github/government.github.com/gh-pages/_data/research.yml')
+    gov_labs_yml_json = yaml.safe_load(gov_labs_yml.text)
+    us_gov_github_orgs.update(gov_labs_yml_json['U.S. Research Labs'])
+
+    return list(us_gov_github_orgs)
+
+
 def main():
     parser = argparse.ArgumentParser(description='Scrape code repositories for Code.gov / DOECode')
 
@@ -111,6 +169,7 @@ def main():
 
     parser.add_argument('--github-orgs', type=str, nargs='+', default=[], help='GitHub Organizations')
     parser.add_argument('--github-repos', type=str, nargs='+', default=[], help='GitHub Repositories')
+    parser.add_argument('--github-gov-orgs', action='store_true', help='Use orgs from government.github.com/community')
 
     parser.add_argument('--to-csv', action='store_true', help='Toggle output to CSV')
 
@@ -149,6 +208,9 @@ def main():
     github_orgs.extend(args.github_orgs)
     logger.debug('GitHub.com Organizations: %s', github_orgs)
 
+    if args.github_gov_orgs:
+        github_orgs.extend(government_at_github())
+
     github_repos = config_json.get('github_repos', [])
     github_repos.extend(args.github_repos)
     logger.debug('GitHub.com Repositories: %s', github_repos)
@@ -162,13 +224,13 @@ def main():
 
     code_json = CodeGovMetadata(agency, method)
 
-    for org_name in github_orgs:
+    for org_name in sorted(github_orgs, key=str.lower):
         code_json['releases'].extend(process_organization(org_name))
 
-    for repo_name in github_repos:
+    for repo_name in sorted(github_repos, key=str.lower):
         code_json['releases'].append(process_repository(repo_name))
 
-    for bitbucket in bitbucket_servers:
+    for bitbucket in sorted(bitbucket_servers, key=str.lower):
         code_json['releases'].extend(process_bitbucket(bitbucket))
 
     if os.path.isfile(doecode_json):
