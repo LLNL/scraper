@@ -75,12 +75,14 @@ def process_organization(org_name):
     """
     Returns a Code.gov standard JSON of GitHub organization projects
     """
-
-    _check_api_limits()
-
     org = gh.organization(org_name)
     repos = org.repositories(type='public')
     num_repos = org.public_repos_count
+
+    WIGGLE_ROOM = 100
+    num_requests_needed = 2 * num_repos + WIGGLE_ROOM
+
+    _check_api_limits(min_requests_remaining=num_requests_needed)
 
     logger.info('Processing GitHub Org: %s (%d public repos)', org_name, num_repos)
 
