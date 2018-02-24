@@ -42,10 +42,42 @@ def _configure_logging(verbose=False):
     logger.addHandler(handler)
 
 
+def _check_api_limits(min_requests_remaining=250, sleep_time=15):
+    """
+    Simplified check for API limits
+
+    If necessary, spin in place waiting for API to reset before returning.
+
+    Returns two-tuple of: ``(# API requests remaining, unix time of reset)``
+
+    See: https://developer.github.com/v3/#rate-limiting
+    """
+    api_rates = gh.rate_limit()
+
+    api_remaining = api_rates['rate']['remaining']
+    api_reset = api_rates['rate']['reset']
+    logger.info('Rate Limit - %d requests remaining', api_remaining)
+
+    if api_remaining > min_requests_remaining:
+        return
+
+    now_time = time.time()
+    time_to_reset = int(api_reset - now_time)
+    logger.info('Rate Limit - Need to sleep for %d seconds', time_to_reset)
+
+    while now_time < api_reset:
+        time.sleep(10)
+        now_time = time.time()
+
+    return
+
 def process_organization(org_name):
     """
     Returns a Code.gov standard JSON of GitHub organization projects
     """
+
+    _check_api_limits()
+
     org = gh.organization(org_name)
     repos = org.repositories(type='public')
     num_repos = org.public_repos_count
