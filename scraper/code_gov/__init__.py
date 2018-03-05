@@ -3,9 +3,11 @@
 
 import json
 import logging
+import re
 
 import github3
 import gitlab
+import requests
 # import stashy
 
 logger = logging.getLogger(__name__)
@@ -111,6 +113,28 @@ def _prune_dict_null_str(dictionary):
             dictionary[key] = _prune_dict_null_str(dictionary[key])
 
     return dictionary
+
+
+def compute_labor_hours(sloc):
+    """
+    Compute the labor hours, given a count of source lines of code
+
+    The intention is to use the COCOMO II model to compute this value.
+
+    References:
+    - http://csse.usc.edu/tools/cocomoii.php
+    - http://docs.python-guide.org/en/latest/scenarios/scrape/
+    """
+    # (40 Hours / week) * (52 weeks / year) / (12 months / year) ~= 173.33
+    HOURS_PER_PERSON_MONTH = 40.0 * 52 / 12
+
+    cocomo_url = 'http://csse.usc.edu/tools/cocomoii.php'
+    page = requests.post(cocomo_url, data={'new_size': sloc})
+
+    EFFORT_REGEX = re.compile(r'Effort = ([\d\.]+) Person-months')
+    person_months = float(EFFORT_REGEX.search(page.text).group(1))
+
+    return person_months * HOURS_PER_PERSON_MONTH
 
 
 class CodeGovMetadata(dict):
