@@ -11,7 +11,6 @@ import time
 import github3
 import stashy
 import requests
-import yaml
 
 from scraper.code_gov import CodeGovMetadata, CodeGovProject
 from scraper.code_gov.doe import to_doe_csv
@@ -145,14 +144,11 @@ def government_at_github():
     """
     us_gov_github_orgs = set()
 
-    gov_yml = requests.get('https://raw.githubusercontent.com/github/government.github.com/gh-pages/_data/governments.yml')
-    gov_yml_json = yaml.safe_load(gov_yml.text)
-    us_gov_github_orgs.update(gov_yml_json['U.S. Federal'])
-    us_gov_github_orgs.update(gov_yml_json['U.S. Military and Intelligence'])
+    gov_orgs = requests.get('https://government.github.com/organizations.json').json()
 
-    gov_labs_yml = requests.get('https://raw.githubusercontent.com/github/government.github.com/gh-pages/_data/research.yml')
-    gov_labs_yml_json = yaml.safe_load(gov_labs_yml.text)
-    us_gov_github_orgs.update(gov_labs_yml_json['U.S. Research Labs'])
+    us_gov_github_orgs.update(gov_orgs['governments']['U.S. Federal'])
+    us_gov_github_orgs.update(gov_orgs['governments']['U.S. Military and Intelligence'])
+    us_gov_github_orgs.update(gov_orgs['research']['U.S. Research Labs'])
 
     return list(us_gov_github_orgs)
 
