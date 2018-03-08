@@ -8,7 +8,8 @@ import re
 import github3
 import gitlab
 import requests
-# import stashy
+
+from scraper.util import execute
 
 logger = logging.getLogger(__name__)
 
@@ -113,6 +114,80 @@ def _prune_dict_null_str(dictionary):
             dictionary[key] = _prune_dict_null_str(dictionary[key])
 
     return dictionary
+
+
+def git_repo_to_sloc(url):
+    """
+    Given a Git repository URL, returns number of lines of code based on cloc
+
+    Reference:
+        - cloc: https://github.com/AlDanial/cloc
+
+    Sample cloc output:
+        {
+            "header": {
+                "cloc_url": "github.com/AlDanial/cloc",
+                "cloc_version": "1.74",
+                "elapsed_seconds": 0.195950984954834,
+                "n_files": 27,
+                "n_lines": 2435,
+                "files_per_second": 137.78956000769,
+                "lines_per_second": 12426.5769858787
+            },
+            "C++": {
+                "nFiles": 7,
+                "blank": 121,
+                "comment": 314,
+                "code": 371
+            },
+            "C/C++ Header": {
+                "nFiles": 8,
+                "blank": 107,
+                "comment": 604,
+                "code": 191
+            },
+            "CMake": {
+                "nFiles": 11,
+                "blank": 49,
+                "comment": 465,
+                "code": 165
+            },
+            "Markdown": {
+                "nFiles": 1,
+                "blank": 18,
+                "comment": 0,
+                "code": 30
+            },
+            "SUM": {
+                "blank": 295,
+                "comment": 1383,
+                "code": 757,
+                "nFiles": 27
+            }
+        }
+    """
+    tmp_dir = 'tmp-clone'
+
+    cmd = ['rm', '-rf', tmp_dir]
+    out, err = execute(cmd)
+    # print(out,err)
+
+    cmd = ['git', 'clone', '--depth=1', url, tmp_dir]
+    out, err = execute(cmd)
+    # print(out,err)
+
+    cmd = ['cloc', '--json', tmp_dir]
+    out, err = execute(cmd)
+    # print(out,err)
+
+    cloc_json = json.loads(out[1:].replace('\\n', '').replace('\'', ''))
+    sloc = cloc_json['SUM']['code']
+
+    cmd = ['rm', '-rf', tmp_dir]
+    out, err = execute(cmd)
+    # print(out,err)
+
+    return sloc
 
 
 def compute_labor_hours(sloc):
