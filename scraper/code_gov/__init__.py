@@ -3,7 +3,9 @@
 
 import json
 import logging
+import os
 import re
+import tempfile
 
 import github3
 import gitlab
@@ -166,26 +168,21 @@ def git_repo_to_sloc(url):
             }
         }
     """
-    tmp_dir = 'tmp-clone'
 
-    cmd = ['rm', '-rf', tmp_dir]
-    out, err = execute(cmd)
-    # print(out,err)
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        logger.debug('Cloning: url=%s tmp_dir=%s', url, tmp_dir)
 
-    cmd = ['git', 'clone', '--depth=1', url, tmp_dir]
-    out, err = execute(cmd)
-    # print(out,err)
+        tmp_clone = os.path.join(tmp_dir, 'clone-dir')
 
-    cmd = ['cloc', '--json', tmp_dir]
-    out, err = execute(cmd)
-    # print(out,err)
+        cmd = ['git', 'clone', '--depth=1', url, tmp_clone]
+        execute(cmd)
 
-    cloc_json = json.loads(out[1:].replace('\\n', '').replace('\'', ''))
-    sloc = cloc_json['SUM']['code']
+        cmd = ['cloc', '--json', tmp_clone]
+        out, _ = execute(cmd)
 
-    cmd = ['rm', '-rf', tmp_dir]
-    out, err = execute(cmd)
-    # print(out,err)
+        cloc_json = json.loads(out[1:].replace('\\n', '').replace('\'', ''))
+        sloc = cloc_json['SUM']['code']
+        logger.debug('SLOC: url=%s, sloc=%d', sloc)
 
     return sloc
 
@@ -207,7 +204,11 @@ def compute_labor_hours(sloc):
     page = requests.post(cocomo_url, data={'new_size': sloc})
 
     EFFORT_REGEX = re.compile(r'Effort = ([\d\.]+) Person-months')
-    person_months = float(EFFORT_REGEX.search(page.text).group(1))
+    try:
+        person_months = float(EFFORT_REGEX.search(page.text).group(1))
+    except AttributeError:
+        # If there is no match, and .search(..) returns None
+        person_months = 0
 
     return person_months * HOURS_PER_PERSON_MONTH
 
@@ -444,6 +445,13 @@ class CodeGovProject(dict):
         }
 
         _prune_dict_null_str(project)
+
+        sum_sloc = git_repo_to_sloc(project['repositoryURL'])
+        laborHours = compute_labor_hours(sum_sloc)
+        print('GitHub3: sum_sloc=%d' % sum_sloc)
+        print('GitHub3: laborHours=%d' % laborHours)
+        logger.info('GitHub3: sum_sloc=%d', sum_sloc)
+        logger.info('GitHub3: laborHours=%d', laborHours)
 
         return project
 
