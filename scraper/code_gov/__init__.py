@@ -180,9 +180,13 @@ def git_repo_to_sloc(url):
         cmd = ['cloc', '--json', tmp_clone]
         out, _ = execute(cmd)
 
-        cloc_json = json.loads(out[1:].replace('\\n', '').replace('\'', ''))
-        sloc = cloc_json['SUM']['code']
-        logger.debug('SLOC: url=%s, sloc=%d', sloc)
+        try:
+            cloc_json = json.loads(out[1:].replace('\\n', '').replace('\'', ''))
+            sloc = cloc_json['SUM']['code']
+            logger.debug('SLOC: url=%s, sloc=%d', sloc)
+        except json.decoder.JSONDecodeError:
+            logger.debug('Error Decoding: url=%s, out=%s', url, out)
+            sloc = 0
 
     return sloc
 
