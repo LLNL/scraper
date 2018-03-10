@@ -22,6 +22,7 @@ setup(
             'scraper = scraper.gen_code_gov_json:main',
         ]
     },
+    scripts=['scripts/codegov_computer_hours.py'],
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
