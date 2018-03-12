@@ -1,7 +1,7 @@
 import logging
 import os
 
-from subprocess import Popen, PIPE, STDOUT
+from subprocess import Popen, PIPE, STDOUT  # nosec
 
 logger = logging.getLogger(__name__)
 
@@ -14,6 +14,6 @@ def execute(command, cwd=None):
     elif not os.path.isdir(cwd):
         raise ValueError('path does not exist: %s', cwd)
 
-    process = Popen(command, cwd=cwd, stdout=PIPE, stderr=STDOUT)
+    process = Popen(command, cwd=cwd, stdout=PIPE, stderr=STDOUT)  # nosec
     out, err = process.communicate()
     return str(out), str(err)
