@@ -14,6 +14,11 @@ def execute(command, cwd=None):
     elif not os.path.isdir(cwd):
         raise ValueError('path does not exist: %s', cwd)
 
-    process = Popen(command, cwd=cwd, stdout=PIPE, stderr=STDOUT)  # nosec
+    process = Popen(
+        command,
+        cwd=cwd,
+        stdout=PIPE,
+        stderr=STDOUT,
+        shell=False)  # nosec
     out, err = process.communicate()
     return str(out), str(err)
