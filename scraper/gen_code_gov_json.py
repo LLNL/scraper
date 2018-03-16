@@ -56,14 +56,14 @@ def _check_api_limits(min_requests_remaining=250, sleep_time=15):
 
     api_remaining = api_rates['rate']['remaining']
     api_reset = api_rates['rate']['reset']
-    logger.info('Rate Limit - %d requests remaining', api_remaining)
+    logger.debug('Rate Limit - %d requests remaining', api_remaining)
 
     if api_remaining > min_requests_remaining:
         return
 
     now_time = time.time()
     time_to_reset = int(api_reset - now_time)
-    logger.info('Rate Limit - Need to sleep for %d seconds', time_to_reset)
+    logger.warn('Rate Limit Depleted - Sleeping for %d seconds', time_to_reset)
 
     while now_time < api_reset:
         time.sleep(10)
