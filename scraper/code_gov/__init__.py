@@ -401,8 +401,13 @@ class CodeGovProject(dict):
         project['permissions']['licenses'] = None
         project['permissions']['usageType'] = 'openSource'
 
-        # TODO: Compute from git repo
-        project['laborHours'] = 0
+        sum_sloc = git_repo_to_sloc(project['repositoryURL'])
+        logger.debug('GitHub3: sum_sloc=%d', sum_sloc)
+
+        laborHours = compute_labor_hours(sum_sloc)
+        logger.debug('GitHub3: laborHours=%d', laborHours)
+
+        project['laborHours'] = laborHours
 
         # TODO: Compute from GitHub
         project['tags'] = ['github']
@@ -449,13 +454,6 @@ class CodeGovProject(dict):
         }
 
         _prune_dict_null_str(project)
-
-        sum_sloc = git_repo_to_sloc(project['repositoryURL'])
-        laborHours = compute_labor_hours(sum_sloc)
-        print('GitHub3: sum_sloc=%d' % sum_sloc)
-        print('GitHub3: laborHours=%d' % laborHours)
-        logger.info('GitHub3: sum_sloc=%d', sum_sloc)
-        logger.info('GitHub3: laborHours=%d', laborHours)
 
         return project
 
