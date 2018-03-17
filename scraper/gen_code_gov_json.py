@@ -42,7 +42,7 @@ def _configure_logging(verbose=False):
     logger.addHandler(handler)
 
 
-def _check_api_limits(min_requests_remaining=250, sleep_time=15):
+def _check_api_limits(gh_session, min_requests_remaining=250, sleep_time=15):
     """
     Simplified check for API limits
 
@@ -52,7 +52,7 @@ def _check_api_limits(min_requests_remaining=250, sleep_time=15):
 
     See: https://developer.github.com/v3/#rate-limiting
     """
-    api_rates = gh.rate_limit()
+    api_rates = gh_session.rate_limit()
 
     api_remaining = api_rates['rate']['remaining']
     api_reset = api_rates['rate']['reset']
@@ -83,7 +83,7 @@ def process_organization(org_name):
     WIGGLE_ROOM = 100
     num_requests_needed = 2 * num_repos + WIGGLE_ROOM
 
-    _check_api_limits(min_requests_remaining=num_requests_needed)
+    _check_api_limits(gh, min_requests_remaining=num_requests_needed)
 
     logger.info('Processing GitHub Org: %s (%d public repos)', org_name, num_repos)
 
