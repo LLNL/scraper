@@ -15,6 +15,8 @@ from scraper.util import execute
 
 logger = logging.getLogger(__name__)
 
+EFFORT_REGEX = re.compile(r'Effort = ([\d\.]+) Person-months')
+
 DOE_LAB_MAPPING = {
     'AMES': 'Ames Laboratory (AMES)',
     'ANL': 'Argonne National Laboratory (ANL)',
@@ -208,7 +210,6 @@ def compute_labor_hours(sloc):
     cocomo_url = 'http://csse.usc.edu/tools/cocomoii.php'
     page = requests.post(cocomo_url, data={'new_size': sloc})
 
-    EFFORT_REGEX = re.compile(r'Effort = ([\d\.]+) Person-months')
     try:
         person_months = float(EFFORT_REGEX.search(page.text).group(1))
     except AttributeError:
