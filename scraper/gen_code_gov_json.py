@@ -10,10 +10,10 @@ import time
 
 import github3
 import stashy
-import requests
 
 from scraper.code_gov import CodeGovMetadata, CodeGovProject
 from scraper.code_gov.doe import to_doe_csv
+from scraper.github import gov_orgs
 
 logger = logging.getLogger(__name__)
 
@@ -136,23 +136,6 @@ def process_doecode(doecode_json_filename):
     return projects
 
 
-def government_at_github():
-    """
-    Returns a list of US Government GitHub orgs
-
-    Based on: https://government.github.com/community/
-    """
-    us_gov_github_orgs = set()
-
-    gov_orgs = requests.get('https://government.github.com/organizations.json').json()
-
-    us_gov_github_orgs.update(gov_orgs['governments']['U.S. Federal'])
-    us_gov_github_orgs.update(gov_orgs['governments']['U.S. Military and Intelligence'])
-    us_gov_github_orgs.update(gov_orgs['research']['U.S. Research Labs'])
-
-    return list(us_gov_github_orgs)
-
-
 def main():
     parser = argparse.ArgumentParser(description='Scrape code repositories for Code.gov / DOECode')
 
@@ -205,7 +188,7 @@ def main():
     logger.debug('GitHub.com Organizations: %s', github_orgs)
 
     if args.github_gov_orgs:
-        github_orgs.extend(government_at_github())
+        github_orgs.extend(gov_orgs())
 
     github_repos = config_json.get('github_repos', [])
     github_repos.extend(args.github_repos)
