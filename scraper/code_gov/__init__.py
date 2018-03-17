@@ -183,10 +183,11 @@ def git_repo_to_sloc(url):
         try:
             cloc_json = json.loads(out[1:].replace('\\n', '').replace('\'', ''))
             sloc = cloc_json['SUM']['code']
-            logger.debug('SLOC: url=%s, sloc=%d', sloc)
         except json.decoder.JSONDecodeError:
             logger.debug('Error Decoding: url=%s, out=%s', url, out)
             sloc = 0
+
+    logger.debug('SLOC: url=%s, sloc=%d', sloc)
 
     return sloc
 
@@ -214,7 +215,10 @@ def compute_labor_hours(sloc):
         # If there is no match, and .search(..) returns None
         person_months = 0
 
-    return person_months * HOURS_PER_PERSON_MONTH
+    labor_hours = person_months * HOURS_PER_PERSON_MONTH
+    logger.debug('sloc=%d labor_hours=%d', sloc, labor_hours)
+
+    return labor_hours
 
 
 class CodeGovMetadata(dict):
@@ -402,11 +406,7 @@ class CodeGovProject(dict):
         project['permissions']['usageType'] = 'openSource'
 
         sum_sloc = git_repo_to_sloc(project['repositoryURL'])
-        logger.debug('GitHub3: sum_sloc=%d', sum_sloc)
-
         laborHours = compute_labor_hours(sum_sloc)
-        logger.debug('GitHub3: laborHours=%d', laborHours)
-
         project['laborHours'] = laborHours
 
         # TODO: Compute from GitHub
