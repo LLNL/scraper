@@ -117,6 +117,13 @@ def process_repository(repository_name):
 
     return project
 
+def process_gitlab_organization(org_name):
+    """
+    Returns a Code.gov standard JSON of GitLab organization projects
+    """
+    # TODO: Need to finish
+    return
+
 
 def connect_to_bitbucket(server_url):
     username = getpass.getuser()
@@ -157,6 +164,8 @@ def main():
     parser.add_argument('--github-orgs', type=str, nargs='+', default=[], help='GitHub Organizations')
     parser.add_argument('--github-repos', type=str, nargs='+', default=[], help='GitHub Repositories')
     parser.add_argument('--github-gov-orgs', action='store_true', help='Use orgs from government.github.com/community')
+
+    parser.add_argument('--gitlab-orgs', type=str, nargs='+', default=[], help='GitLab Organizations')
 
     parser.add_argument('--to-csv', action='store_true', help='Toggle output to CSV')
 
@@ -219,6 +228,10 @@ def main():
     github_repos.extend(args.github_repos)
     logger.debug('GitHub.com Repositories: %s', github_repos)
 
+    gitlab_orgs = config_json.get('gitlab_orgs', [])
+    gitlab_orgs.extend(args.gitlab_orgs)
+    logger.debug('GitLab.com Organizations: %s', gitlab_orgs)
+
     bitbucket_servers = config_json.get('bitbucket_servers', [])
     bitbucket_servers = [connect_to_bitbucket(s) for s in bitbucket_servers]
     logger.debug('Bitbucket Servers: %s', bitbucket_servers)
@@ -232,6 +245,9 @@ def main():
 
     for repo_name in sorted(github_repos, key=str.lower):
         code_json['releases'].append(process_repository(repo_name))
+
+    for org_name in sorted(gitlab_orgs, key=str.lower):
+        code_json['releases'].extend(process_gitlab_organization(org_name))
 
     for bitbucket in sorted(bitbucket_servers, key=str.lower):
         code_json['releases'].extend(process_bitbucket(bitbucket))
