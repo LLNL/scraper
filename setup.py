@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='llnl-scraper',
-    version='0.1.0',
+    version='0.2.1',
     description='Package for extracting ',
     author='Ian Lee',
     author_email='lee1001@llnl.gov',
