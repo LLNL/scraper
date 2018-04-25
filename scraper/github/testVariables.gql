@@ -1,0 +1,34 @@
+query ($orgName: String!, $numRepos: Int!, $pgCursor: String) {
+  organization(login: $orgName) {
+    repositories(first: $numRepos, after: $pgCursor) {
+      nodes {
+        nameWithOwner
+        name
+        owner {
+          login
+        }
+        url
+        stargazers {
+          totalCount
+        }
+        forks {
+          totalCount
+        }
+        homepageUrl
+        description
+        primaryLanguage {
+          name
+        }
+      }
+      pageInfo {
+        endCursor
+        hasNextPage
+      }
+    }
+  }
+}
+variables {
+  "orgName": "LLNL",
+  "numRepos": 5,
+  "pgCursor": null
+}
