@@ -4,7 +4,8 @@ import subprocess
 
 """Module for GitHub query and data management.
 
-With this module, you will be able to send GraphQL queries to GitHub, as well as read and write JSON files to store data.
+With this module, you will be able to send GraphQL queries to GitHub,
+as well as read and write JSON files to store data.
 
 """
 
@@ -12,22 +13,24 @@ With this module, you will be able to send GraphQL queries to GitHub, as well as
 class GitHubGraphQL:
     """GitHub GraphQL API manager."""
 
-
     def __init__(self, apiToken=None):
         """Initialize the GitHubGraphQL object.
 
         Note:
-            If no apiToken argument is provided, the environment variable 'GITHUB_API_TOKEN' must be set.
+            If no apiToken argument is provided,
+            the environment variable 'GITHUB_API_TOKEN' must be set.
 
         Args:
-            apiToken (Optional[str]): A string representing a GitHub API token. Defaults to None.
+            apiToken (Optional[str]): A string representing a GitHub API
+                token. Defaults to None.
 
         Raises:
-            TypeError: If no GitHub API token is provided either via argument or environment variable 'GITHUB_API_TOKEN'.
-        
+            TypeError: If no GitHub API token is provided either via
+            argument or environment variable 'GITHUB_API_TOKEN'.
+
         """
 
-        if apiToken :
+        if apiToken:
             self.__githubApiToken = apiToken
         else:
             try:
@@ -38,15 +41,14 @@ class GitHubGraphQL:
         self.data = {}
         self.__maxRequests = 10  # Limit auto re-sending a request
 
-
     @property
     def dataFilePath(self):
         """str: Absolute path to a JSON format data file.
 
-        Can accept relative paths, but will always convert them to the absolute path.
+        Can accept relative paths, but will always convert them to
+        the absolute path.
         """
         return self.__dataFilePath
-
 
     @dataFilePath.setter
     def dataFilePath(self, dataFilePath):
@@ -56,22 +58,22 @@ class GitHubGraphQL:
         self.__dataFilePath = os.path.abspath(dataFilePath)
         print("Stored new data file path '%s'" % (self.dataFilePath))
 
-
     def resetData(self):
         """Reset the internal JSON data object."""
         self.data = {}
         print("Stored data has been reset.")
 
-
     def loadDataFile(self, filePath=None, updatePath=True):
         """Load a JSON data file into the internal JSON data object.
-        
+
         If no file path is provided, the stored data file path will be used.
-        
+
         Args:
-            filePath (Optional[str]): A relative or absolute path to a '.json' file. Defaults to None.
-            updatePath (Optional[bool]): Specifies whether or not to update the stored data file path. Defaults to True.
-        
+            filePath (Optional[str]): A relative or absolute path to a
+                '.json' file. Defaults to None.
+            updatePath (Optional[bool]): Specifies whether or not to update
+                the stored data file path. Defaults to True.
+
         """
         if not filePath:
             filePath = self.dataFilePath
@@ -85,16 +87,17 @@ class GitHubGraphQL:
             if updatePath:
                 self.dataFilePath(filePath)
 
-
     def saveDataFile(self, filePath=None, updatePath=False):
         """Write the internal JSON data object to a JSON data file.
-        
+
         If no file path is provided, the stored data file path will be used.
-        
+
         Args:
-            filePath (Optional[str]): A relative or absolute path to a '.json' file. Defaults to None.
-            updatePath (Optional[bool]): Specifies whether or not to update the stored data file path. Defaults to False.
-        
+            filePath (Optional[str]): A relative or absolute path to a
+                '.json' file. Defaults to None.
+            updatePath (Optional[bool]): Specifies whether or not to update
+                the stored data file path. Defaults to False.
+
         """
         if not filePath:
             filePath = self.dataFilePath
@@ -108,16 +111,15 @@ class GitHubGraphQL:
         if updatePath:
             self.dataFilePath(filePath)
 
-
     def queryGitHub(self, gitquery, requestCount=0):
         """Submit a GitHub query.
 
         Args:
             gitquery (str): The query itself.
-            requestCount (Optional[int]): Used as counter for repeated requests.
+            requestCount (Optional[int]): Counter for repeated requests.
 
         """
-        apiError = False
+        # apiError = False
         requestCount += 1
 
         print("\n\tSending GraphQL query...")
@@ -125,7 +127,6 @@ class GitHubGraphQL:
         print("\tChecking response...")
         print("\t" + response["heads"][0])
         print("\n" + response["result"])
-
 
     def _submitQuery(self, gitquery):
         """Send the curl request to GitHub
@@ -156,4 +157,4 @@ class GitHubGraphQL:
         http = heads[0].split()
         statusNum = int(http[1])
 
-        return {'result':result, 'heads':heads, 'statusNum':statusNum}
+        return {'result': result, 'heads': heads, 'statusNum': statusNum}
