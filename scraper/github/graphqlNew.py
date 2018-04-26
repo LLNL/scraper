@@ -143,7 +143,7 @@ class GitHubGraphQL:
 
         if verbosity >= 0:
             print("Sending GraphQL query...")
-        response = self._submitQuery(gitquery, (verbosity > 0))
+        response = self._submitQuery(gitquery, verbose=(verbosity > 0))
         if verbosity >= 0:
             print("Checking response...")
             print(response["heads"][0])
@@ -151,12 +151,18 @@ class GitHubGraphQL:
         outObj = json.loads(response["result"])
         return outObj
 
-    def _submitQuery(self, gitquery, verbose=False):
-        """Send the curl request to GitHub
+    def _submitQuery(self, gitquery, verbose=False, rest=False):
+        """Send a curl request to GitHub.
 
         Args:
-            gitquery (str): The query itself.
-            verbose (Optional[bool]): If False, stderr prints will be suppressed. Defaults to False.
+            gitquery (str): The query or endpoint itself.
+                Examples:
+                       query: 'query { viewer { login } }'
+                    endpoint: '/users/defunkt'
+            verbose (Optional[bool]): If False, stderr prints will be
+                suppressed. Defaults to False.
+            rest (Optional[bool]): If True, uses the REST API instead
+                of GraphQL. Defaults to False.
 
         Returns:
             {
@@ -167,13 +173,15 @@ class GitHubGraphQL:
 
         """
         errOut = subprocess.DEVNULL if not verbose else None
-        gitqueryJSON = json.dumps({'query': gitquery})
         authhead = 'Authorization: bearer ' + self.__githubApiToken
 
-        bashcurl = 'curl -iH TMPauthhead -X POST -d TMPgitquery https://api.github.com/graphql'
+        bashcurl = 'curl -iH TMPauthhead -X POST -d TMPgitquery https://api.github.com/graphql' if not rest \
+            else 'curl -iH TMPauthhead https://api.github.com' + gitquery
         bashcurl_list = bashcurl.split()
         bashcurl_list[2] = authhead
-        bashcurl_list[6] = gitqueryJSON
+        if not rest:
+            gitqueryJSON = json.dumps({'query': gitquery})
+            bashcurl_list[6] = gitqueryJSON
 
         fullResponse = subprocess.check_output(bashcurl_list, stderr=errOut).decode().split('\r\n\r\n')
         heads = fullResponse[0].split('\r\n')
