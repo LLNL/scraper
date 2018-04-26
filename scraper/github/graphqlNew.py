@@ -1,4 +1,4 @@
-import os.path
+import os
 import json
 import subprocess
 
@@ -30,6 +30,7 @@ class GitHubGraphQL:
 
         """
 
+        # Get GitHub API token
         if apiToken:
             self.__githubApiToken = apiToken
         else:
@@ -38,6 +39,16 @@ class GitHubGraphQL:
             except KeyError as error:
                 raise TypeError("Requires either a string argument or environment variable 'GITHUB_API_TOKEN'.") from error
 
+        # Check token validity
+        print("Checking GitHub API token... ", end="", flush=True)
+        basicCheck = self._submitQuery('query { viewer { login } }')
+        if basicCheck["statusNum"] == 401:
+            print("FAILED.")
+            raise ValueError("GitHub API token is not valid.\n" + basicCheck["heads"][0] + " " + basicCheck["result"])
+        else:
+            print("Token validated.")
+
+        # Initialize other variables
         self.data = {}
         self.__maxRequests = 10  # Limit auto re-sending a request
 
@@ -111,28 +122,41 @@ class GitHubGraphQL:
         if updatePath:
             self.dataFilePath(filePath)
 
-    def queryGitHub(self, gitquery, requestCount=0):
+    def queryGitHub(self, gitquery, verbosity=0, requestCount=0):
         """Submit a GitHub query.
 
         Args:
             gitquery (str): The query itself.
+            verbosity (Optional[int]): Changes output verbosity levels.
+                If < 0, all extra printouts are suppressed.
+                If == 0, normal print statements are displayed.
+                If > 0, additional status print statements are displayed.
+                Defaults to 0.
             requestCount (Optional[int]): Counter for repeated requests.
+
+        Returns:
+            Dict: A JSON style data object.
 
         """
         # apiError = False
         requestCount += 1
 
-        print("\n\tSending GraphQL query...")
-        response = self._submitQuery(gitquery)
-        print("\tChecking response...")
-        print("\t" + response["heads"][0])
-        print("\n" + response["result"])
+        if verbosity >= 0:
+            print("Sending GraphQL query...")
+        response = self._submitQuery(gitquery, (verbosity > 0))
+        if verbosity >= 0:
+            print("Checking response...")
+            print(response["heads"][0])
 
-    def _submitQuery(self, gitquery):
+        outObj = json.loads(response["result"])
+        return outObj
+
+    def _submitQuery(self, gitquery, verbose=False):
         """Send the curl request to GitHub
 
         Args:
             gitquery (str): The query itself.
+            verbose (Optional[bool]): If False, stderr prints will be suppressed. Defaults to False.
 
         Returns:
             {
@@ -142,13 +166,16 @@ class GitHubGraphQL:
             }
 
         """
+        errOut = subprocess.DEVNULL if not verbose else None
+        gitqueryJSON = json.dumps({'query': gitquery})
         authhead = 'Authorization: bearer ' + self.__githubApiToken
+
         bashcurl = 'curl -iH TMPauthhead -X POST -d TMPgitquery https://api.github.com/graphql'
         bashcurl_list = bashcurl.split()
         bashcurl_list[2] = authhead
-        bashcurl_list[6] = gitquery
+        bashcurl_list[6] = gitqueryJSON
 
-        fullResponse = subprocess.check_output(bashcurl_list).decode().split('\r\n\r\n')
+        fullResponse = subprocess.check_output(bashcurl_list, stderr=errOut).decode().split('\r\n\r\n')
         heads = fullResponse[0].split('\r\n')
         if len(fullResponse) > 1:
             result = fullResponse[1]
