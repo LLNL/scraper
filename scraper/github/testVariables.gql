@@ -27,8 +27,4 @@ query ($orgName: String!, $numRepos: Int!, $pgCursor: String) {
     }
   }
 }
-variables {
-  "orgName": "LLNL",
-  "numRepos": 5,
-  "pgCursor": null
-}
+# { "orgName": "LLNL", "numRepos": 5, "pgCursor": null }

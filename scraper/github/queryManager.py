@@ -1,20 +1,21 @@
 import os
-import json
 import subprocess
+import json
+import re
 
 """Module for GitHub query and data management.
 
-With this module, you will be able to send GraphQL queries to GitHub,
-as well as read and write JSON files to store data.
+With this module, you will be able to send GraphQL and REST queries
+to GitHub, as well as read and write JSON files to store data.
 
 """
 
 
-class GitHubGraphQL:
-    """GitHub GraphQL API manager."""
+class GitHubQueryManager:
+    """GitHub query API manager."""
 
-    def __init__(self, apiToken=None):
-        """Initialize the GitHubGraphQL object.
+    def __init__(self, apiToken=None, maxRetry=10):
+        """Initialize the GitHubQueryManager object.
 
         Note:
             If no apiToken argument is provided,
@@ -23,6 +24,8 @@ class GitHubGraphQL:
         Args:
             apiToken (Optional[str]): A string representing a GitHub API
                 token. Defaults to None.
+            maxRetry (Optional[int]): A limit on how many times to
+                automatically retry requests. Defaults to 10.
 
         Raises:
             TypeError: If no GitHub API token is provided either via
@@ -49,8 +52,25 @@ class GitHubGraphQL:
             print("Token validated.")
 
         # Initialize other variables
+        self.maxRetry = maxRetry
         self.data = {}
-        self.__maxRequests = 10  # Limit auto re-sending a request
+        """Dict: Working data."""
+
+    @property
+    def maxRetry(self):
+        """int: A limit on how many times to automatically retry requests.
+
+        Must be a whole integer greater than 0.
+        """
+        return self.__maxRetry
+
+    @maxRetry.setter
+    def maxRetry(self, maxRetry):
+        numIn = int(maxRetry)
+        if not numIn > 0:
+            numIn = 1
+        self.__maxRetry = numIn
+        print("Auto-retry limit for requests set to %i." % (self.maxRetry))
 
     @property
     def dataFilePath(self):
@@ -70,12 +90,12 @@ class GitHubGraphQL:
         print("Stored new data file path '%s'" % (self.dataFilePath))
 
     def resetData(self):
-        """Reset the internal JSON data object."""
+        """Reset the internal JSON data dictionary."""
         self.data = {}
         print("Stored data has been reset.")
 
     def loadDataFile(self, filePath=None, updatePath=True):
-        """Load a JSON data file into the internal JSON data object.
+        """Load a JSON data file into the internal JSON data dictionary.
 
         If no file path is provided, the stored data file path will be used.
 
@@ -99,7 +119,7 @@ class GitHubGraphQL:
                 self.dataFilePath(filePath)
 
     def saveDataFile(self, filePath=None, updatePath=False):
-        """Write the internal JSON data object to a JSON data file.
+        """Write the internal JSON data dictionary to a JSON data file.
 
         If no file path is provided, the stored data file path will be used.
 
@@ -122,28 +142,88 @@ class GitHubGraphQL:
         if updatePath:
             self.dataFilePath(filePath)
 
-    def queryGitHub(self, gitquery, verbosity=0, requestCount=0):
-        """Submit a GitHub query.
+    def _readGQL(self, filePath, verbose=False):
+        """Read a 'pretty' formatted GraphQL query file into a one-line string.
 
         Args:
-            gitquery (str): The query itself.
+            filePath (str): A relative or absolute path to a file containing
+                a GraphQL query.
+                File may use comments and multi-line formatting.
+                .. _GitHub GraphQL Explorer:
+                   https://developer.github.com/v4/explorer/
+            verbose (Optional[bool]): If False, prints will be suppressed.
+                Defaults to False.
+
+        Returns:
+            str: A single line GraphQL query.
+
+        """
+        if not os.path.isfile(filePath):
+            raise RuntimeError("Query file '%s' does not exist." % (filePath))
+        if verbose:
+            print("Reading '%s' ... " % (filePath), end="", flush=True)
+        with open(filePath, "r") as q:
+            # Strip all comments, newlines, and extra whitespace.
+            query_in = ' '.join(re.sub(r'#.*(\n|\Z)', '\n', q.read()).replace('\n', ' ').split())
+        if verbose:
+            print("File read!")
+        return query_in
+
+    def queryGitHubFromFile(self, filePath, gitvars={}, verbosity=0):
+        """Submit a GitHub GraphQL query from a file.
+
+        Can only be used with GraphQL queries.
+        For REST queries, see the 'queryGitHub' method.
+
+        Args:
+            filePath (str): A relative or absolute path to a file containing
+                a GraphQL query.
+                File may use comments and multi-line formatting.
+                .. _GitHub GraphQL Explorer:
+                   https://developer.github.com/v4/explorer/
+            gitvars (Optional[Dict]): All query variables.
+                Only for GraphQL queries. Defaults to empty.
             verbosity (Optional[int]): Changes output verbosity levels.
                 If < 0, all extra printouts are suppressed.
                 If == 0, normal print statements are displayed.
                 If > 0, additional status print statements are displayed.
                 Defaults to 0.
+
+        Returns:
+            Dict: A JSON style dictionary.
+
+        """
+        gitquery = self._readGQL(filePath, verbose=(verbosity >= 0))
+        return self.queryGitHub(gitquery, gitvars=gitvars, verbosity=verbosity)
+
+    def queryGitHub(self, gitquery, gitvars={}, verbosity=0, rest=False, requestCount=0):
+        """Submit a GitHub query.
+
+        Args:
+            gitquery (str): The query or endpoint itself.
+                Examples:
+                       query: 'query { viewer { login } }'
+                    endpoint: '/user'
+            gitvars (Optional[Dict]): All query variables.
+                Only for GraphQL queries. Defaults to empty.
+            verbosity (Optional[int]): Changes output verbosity levels.
+                If < 0, all extra printouts are suppressed.
+                If == 0, normal print statements are displayed.
+                If > 0, additional status print statements are displayed.
+                Defaults to 0.
+            rest (Optional[bool]): If True, uses the REST API instead
+                of GraphQL. Defaults to False.
             requestCount (Optional[int]): Counter for repeated requests.
 
         Returns:
-            Dict: A JSON style data object.
+            Dict: A JSON style dictionary.
 
         """
-        # apiError = False
         requestCount += 1
 
         if verbosity >= 0:
             print("Sending GraphQL query...")
-        response = self._submitQuery(gitquery, verbose=(verbosity > 0))
+        response = self._submitQuery(gitquery, gitvars=gitvars, verbose=(verbosity > 0), rest=rest)
         if verbosity >= 0:
             print("Checking response...")
             print(response["heads"][0])
@@ -151,14 +231,16 @@ class GitHubGraphQL:
         outObj = json.loads(response["result"])
         return outObj
 
-    def _submitQuery(self, gitquery, verbose=False, rest=False):
+    def _submitQuery(self, gitquery, gitvars={}, verbose=False, rest=False):
         """Send a curl request to GitHub.
 
         Args:
             gitquery (str): The query or endpoint itself.
                 Examples:
                        query: 'query { viewer { login } }'
-                    endpoint: '/users/defunkt'
+                    endpoint: '/user'
+            gitvars (Optional[Dict]): All query variables.
+                Only for GraphQL queries. Defaults to empty.
             verbose (Optional[bool]): If False, stderr prints will be
                 suppressed. Defaults to False.
             rest (Optional[bool]): If True, uses the REST API instead
@@ -180,7 +262,7 @@ class GitHubGraphQL:
         bashcurl_list = bashcurl.split()
         bashcurl_list[2] = authhead
         if not rest:
-            gitqueryJSON = json.dumps({'query': gitquery})
+            gitqueryJSON = json.dumps({'query': gitquery, 'variables': json.dumps(gitvars)})
             bashcurl_list[6] = gitqueryJSON
 
         fullResponse = subprocess.check_output(bashcurl_list, stderr=errOut).decode().split('\r\n\r\n')
