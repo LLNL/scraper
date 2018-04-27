@@ -89,12 +89,12 @@ class GitHubQueryManager:
         self.__dataFilePath = os.path.abspath(dataFilePath)
         print("Stored new data file path '%s'" % (self.dataFilePath))
 
-    def resetData(self):
+    def data_Reset(self):
         """Reset the internal JSON data dictionary."""
         self.data = {}
         print("Stored data has been reset.")
 
-    def loadDataFile(self, filePath=None, updatePath=True):
+    def dataFile_Load(self, filePath=None, updatePath=True):
         """Load a JSON data file into the internal JSON data dictionary.
 
         If no file path is provided, the stored data file path will be used.
@@ -118,7 +118,7 @@ class GitHubQueryManager:
             if updatePath:
                 self.dataFilePath(filePath)
 
-    def saveDataFile(self, filePath=None, updatePath=False):
+    def dataFile_Save(self, filePath=None, updatePath=False):
         """Write the internal JSON data dictionary to a JSON data file.
 
         If no file path is provided, the stored data file path will be used.
@@ -145,6 +145,8 @@ class GitHubQueryManager:
     def _readGQL(self, filePath, verbose=False):
         """Read a 'pretty' formatted GraphQL query file into a one-line string.
 
+        Removes line breaks and comments. Condenses white space.
+
         Args:
             filePath (str): A relative or absolute path to a file containing
                 a GraphQL query.
@@ -163,8 +165,12 @@ class GitHubQueryManager:
         if verbose:
             print("Reading '%s' ... " % (filePath), end="", flush=True)
         with open(filePath, "r") as q:
-            # Strip all comments, newlines, and extra whitespace.
-            query_in = ' '.join(re.sub(r'#.*(\n|\Z)', '\n', q.read()).replace('\n', ' ').split())
+            # Strip all comments and newlines.
+            query_in = re.sub(r'#.*(\n|\Z)', '\n', q.read())
+            # Condense etra whitespace.
+            query_in = re.sub(r'\s+', ' ', query_in)
+            # Remove any leading or trailing whitespace.
+            query_in = re.sub(r'(\A\s+)|(\s+\Z)', '', query_in)
         if verbose:
             print("File read!")
         return query_in
