@@ -2,6 +2,7 @@ import os
 import subprocess
 import json
 import re
+import time
 
 """Module for GitHub query and data management.
 
@@ -47,11 +48,14 @@ class GitHubQueryManager:
         basicCheck = self._submitQuery('query { viewer { login } }')
         if basicCheck["statusNum"] == 401:
             print("FAILED.")
-            raise ValueError("GitHub API token is not valid.\n" + basicCheck["heads"][0] + " " + basicCheck["result"])
+            raise ValueError("GitHub API token is not valid.\n" + basicCheck["headDict"]["http"] + " " + basicCheck["result"])
         else:
             print("Token validated.")
 
-        # Initialize other variables
+        # Initialize private variables
+        self.__retryDelay = 3  #: Number of seconds to wait between retries.
+
+        # Initialize public variables
         self.maxRetry = maxRetry
         self.data = {}
         """Dict: Working data."""
@@ -70,7 +74,7 @@ class GitHubQueryManager:
         if not numIn > 0:
             numIn = 1
         self.__maxRetry = numIn
-        print("Auto-retry limit for requests set to %i." % (self.maxRetry))
+        print("Auto-retry limit for requests set to %d." % (self.maxRetry))
 
     @property
     def dataFilePath(self):
@@ -232,9 +236,35 @@ class GitHubQueryManager:
         response = self._submitQuery(gitquery, gitvars=gitvars, verbose=(verbosity > 0), rest=rest)
         if verbosity >= 0:
             print("Checking response...")
-            print(response["heads"][0])
+            print(response["headDict"]["http"])
+        statusNum = response["statusNum"]
 
+        # Check for accepted but not yet processed, usually due to un-cached data
+        if statusNum == 202:
+            if requestCount >= self.maxRetry:
+                raise RuntimeError("Query attempted but failed %d times.\n%s\n%s" % (self.maxRetry, response["headDict"]["http"], response["result"]))
+            else:
+                self._countdown(self.__retryDelay, printString="Query accepted but not yet processed. Trying again in %*dsec...", verbose=(verbosity >= 0))
+                return self.queryGitHub(gitquery, gitvars=gitvars, verbosity=verbosity, rest=rest, requestCount=requestCount)
+        # Check for server error responses
+        if statusNum == 502 or statusNum == 503:
+            if requestCount >= self.maxRetry:
+                raise RuntimeError("Query attempted but failed %d times.\n%s\n%s" % (self.maxRetry, response["headDict"]["http"], response["result"]))
+            else:
+                self._countdown(self.__retryDelay, printString="Server error. Trying again in %*dsec...", verbose=(verbosity >= 0))
+                return self.queryGitHub(gitquery, gitvars=gitvars, verbosity=verbosity, rest=rest, requestCount=requestCount)
+        # Check for other error responses
+        if statusNum >= 400 or statusNum == 204:
+            raise RuntimeError("Request got an Error response.\n%s\n%s" % (response["headDict"]["http"], response["result"]))
+
+        if verbosity >= 0:
+            print("Data recieved!")
         outObj = json.loads(response["result"])
+
+        # Check for GraphQL API errors (e.g. repo not found)
+        if not rest and "errors" in outObj:
+            raise RuntimeError("GraphQL API error.\n%s" % (json.dumps(outObj["errors"])))
+
         return outObj
 
     def _submitQuery(self, gitquery, gitvars={}, verbose=False, rest=False):
@@ -254,9 +284,10 @@ class GitHubQueryManager:
 
         Returns:
             {
-                'result' (str): The body of the response.
-                'heads' (List[str]): The response headers.
                 'statusNum' (int): The HTTP status code.
+                'headDict' (Dict[str]): The response headers.
+                'linkDict' (Dict[int]): Link based pagination data.
+                'result' (str): The body of the response.
             }
 
         """
@@ -271,7 +302,10 @@ class GitHubQueryManager:
             gitqueryJSON = json.dumps({'query': gitquery, 'variables': json.dumps(gitvars)})
             bashcurl_list[6] = gitqueryJSON
 
-        fullResponse = subprocess.check_output(bashcurl_list, stderr=errOut).decode().split('\r\n\r\n')
+        fullResponse = subprocess.check_output(bashcurl_list, stderr=errOut).decode()
+        if verbose:
+            print("\n" + fullResponse)
+        fullResponse = fullResponse.split('\r\n\r\n')
         heads = fullResponse[0].split('\r\n')
         if len(fullResponse) > 1:
             result = fullResponse[1]
@@ -280,4 +314,42 @@ class GitHubQueryManager:
         http = heads[0].split()
         statusNum = int(http[1])
 
-        return {'result': result, 'heads': heads, 'statusNum': statusNum}
+        # Parse headers into a useful dictionary
+        headDict = {}
+        headDict["http"] = heads[0]
+        for header in heads[1:]:
+            h = header.split(': ')
+            headDict[h[0]] = h[1]
+
+        # Parse any Link headers even further
+        linkDict = None
+        if "Link" in headDict:
+            linkProperties = headDict["Link"].split(', ')
+            propDict = {}
+            for item in linkProperties:
+                divided = re.split(r'&page=|>; rel="|"', item)
+                propDict[divided[2]] = int(divided[1])
+            linkDict = propDict
+
+        return {'statusNum': statusNum, 'headDict': headDict, 'linkDict': linkDict, 'result': result}
+
+    def _countdown(self, waitTime=0, printString="Waiting %*d seconds...", verbose=True):
+        """Makes a pretty countdown.
+
+        Args:
+            gitquery (str): The query or endpoint itself.
+                Examples:
+                       query: 'query { viewer { login } }'
+                    endpoint: '/user'
+            printString (Optional[str]): A counter message to display.
+                Defaults to 'Waiting %*d seconds...'
+            verbose (Optional[bool]): If False, all extra printouts will be
+                suppressed. Defaults to True."""
+        if waitTime <= 0:
+            waitTime = self.__retryDelay
+        for remaining in range(waitTime, 0, -1):
+            if verbose:
+                print("\r" + printString % (len(str(waitTime)), remaining), end="", flush=True)
+            time.sleep(1)
+        if verbose:
+            print("\r" + printString % (len(str(waitTime)), 0))
