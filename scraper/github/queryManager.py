@@ -1,15 +1,27 @@
+"""A module for GitHub query and data management.
+
+With this module, you will be able to send GraphQL and REST queries
+to GitHub, as well as read and write JSON files to store data.
+
+"""
 import os
 import subprocess
 import json
 import re
 import time
 
-"""Module for GitHub query and data management.
 
-With this module, you will be able to send GraphQL and REST queries
-to GitHub, as well as read and write JSON files to store data.
+def _vPrint(verbose, *args, **kwargs):
+    """Easy verbosity-control print method.
 
-"""
+    Args:
+        verbose (bool): Normal print if True, do nothing otherwise.
+
+    """
+    if verbose:
+        return print(*args, **kwargs)
+    else:
+        pass
 
 
 class GitHubQueryManager:
@@ -76,76 +88,6 @@ class GitHubQueryManager:
         self.__maxRetry = numIn
         print("Auto-retry limit for requests set to %d." % (self.maxRetry))
 
-    @property
-    def dataFilePath(self):
-        """str: Absolute path to a JSON format data file.
-
-        Can accept relative paths, but will always convert them to
-        the absolute path.
-        """
-        return self.__dataFilePath
-
-    @dataFilePath.setter
-    def dataFilePath(self, dataFilePath):
-        if dataFilePath:
-            if not os.path.isfile(dataFilePath):
-                print("Data file '%s' does not currently exist. Saving data will create a new file." % (dataFilePath))
-        self.__dataFilePath = os.path.abspath(dataFilePath)
-        print("Stored new data file path '%s'" % (self.dataFilePath))
-
-    def data_Reset(self):
-        """Reset the internal JSON data dictionary."""
-        self.data = {}
-        print("Stored data has been reset.")
-
-    def dataFile_Load(self, filePath=None, updatePath=True):
-        """Load a JSON data file into the internal JSON data dictionary.
-
-        If no file path is provided, the stored data file path will be used.
-
-        Args:
-            filePath (Optional[str]): A relative or absolute path to a
-                '.json' file. Defaults to None.
-            updatePath (Optional[bool]): Specifies whether or not to update
-                the stored data file path. Defaults to True.
-
-        """
-        if not filePath:
-            filePath = self.dataFilePath
-        if not os.path.isfile(filePath):
-            raise FileNotFoundError("Data file '%s' does not exist." % (filePath))
-        else:
-            print("Importing existing data file '%s' ..." % (filePath))
-            with open(filePath, "r") as q:
-                data_raw = q.read()
-            self.data = json.loads(data_raw)
-            if updatePath:
-                self.dataFilePath(filePath)
-
-    def dataFile_Save(self, filePath=None, updatePath=False):
-        """Write the internal JSON data dictionary to a JSON data file.
-
-        If no file path is provided, the stored data file path will be used.
-
-        Args:
-            filePath (Optional[str]): A relative or absolute path to a
-                '.json' file. Defaults to None.
-            updatePath (Optional[bool]): Specifies whether or not to update
-                the stored data file path. Defaults to False.
-
-        """
-        if not filePath:
-            filePath = self.dataFilePath
-        if not os.path.isfile(filePath):
-            print("Data file '%s' does not exist, will create new file." % (filePath))
-        dataJsonString = json.dumps(self.data, indent=4, sort_keys=True)
-        print("Writing to file '%s' ..." % (filePath))
-        with open(filePath, "w") as fileout:
-            fileout.write(dataJsonString)
-        print("Wrote file!")
-        if updatePath:
-            self.dataFilePath(filePath)
-
     def _readGQL(self, filePath, verbose=False):
         """Read a 'pretty' formatted GraphQL query file into a one-line string.
 
@@ -166,8 +108,7 @@ class GitHubQueryManager:
         """
         if not os.path.isfile(filePath):
             raise RuntimeError("Query file '%s' does not exist." % (filePath))
-        if verbose:
-            print("Reading '%s' ... " % (filePath), end="", flush=True)
+        _vPrint(verbose, "Reading '%s' ... " % (filePath), end="", flush=True)
         with open(filePath, "r") as q:
             # Strip all comments and newlines.
             query_in = re.sub(r'#.*(\n|\Z)', '\n', q.read())
@@ -175,8 +116,7 @@ class GitHubQueryManager:
             query_in = re.sub(r'\s+', ' ', query_in)
             # Remove any leading or trailing whitespace.
             query_in = re.sub(r'(\A\s+)|(\s+\Z)', '', query_in)
-        if verbose:
-            print("File read!")
+        _vPrint(verbose, "File read!")
         return query_in
 
     def queryGitHubFromFile(self, filePath, gitvars={}, verbosity=0):
@@ -231,12 +171,10 @@ class GitHubQueryManager:
         """
         requestCount += 1
 
-        if verbosity >= 0:
-            print("Sending GraphQL query...")
+        _vPrint((verbosity >= 0), "Sending GraphQL query...")
         response = self._submitQuery(gitquery, gitvars=gitvars, verbose=(verbosity > 0), rest=rest)
-        if verbosity >= 0:
-            print("Checking response...")
-            print(response["headDict"]["http"])
+        _vPrint((verbosity >= 0), "Checking response...")
+        _vPrint((verbosity >= 0), response["headDict"]["http"])
         statusNum = response["statusNum"]
 
         # Check for accepted but not yet processed, usually due to un-cached data
@@ -257,8 +195,7 @@ class GitHubQueryManager:
         if statusNum >= 400 or statusNum == 204:
             raise RuntimeError("Request got an Error response.\n%s\n%s" % (response["headDict"]["http"], response["result"]))
 
-        if verbosity >= 0:
-            print("Data recieved!")
+        _vPrint((verbosity >= 0), "Data recieved!")
         outObj = json.loads(response["result"])
 
         # Check for GraphQL API errors (e.g. repo not found)
@@ -303,8 +240,7 @@ class GitHubQueryManager:
             bashcurl_list[6] = gitqueryJSON
 
         fullResponse = subprocess.check_output(bashcurl_list, stderr=errOut).decode()
-        if verbose:
-            print("\n" + fullResponse)
+        _vPrint(verbose, "\n" + fullResponse)
         fullResponse = fullResponse.split('\r\n\r\n')
         heads = fullResponse[0].split('\r\n')
         if len(fullResponse) > 1:
@@ -344,12 +280,103 @@ class GitHubQueryManager:
             printString (Optional[str]): A counter message to display.
                 Defaults to 'Waiting %*d seconds...'
             verbose (Optional[bool]): If False, all extra printouts will be
-                suppressed. Defaults to True."""
+                suppressed. Defaults to True.
+
+        """
         if waitTime <= 0:
             waitTime = self.__retryDelay
         for remaining in range(waitTime, 0, -1):
-            if verbose:
-                print("\r" + printString % (len(str(waitTime)), remaining), end="", flush=True)
+            _vPrint(verbose, "\r" + printString % (len(str(waitTime)), remaining), end="", flush=True)
             time.sleep(1)
         if verbose:
-            print("\r" + printString % (len(str(waitTime)), 0))
+            _vPrint(verbose, "\r" + printString % (len(str(waitTime)), 0))
+
+
+class DataManager:
+    """JSON data manager."""
+
+    def __init__(self, filePath=None):
+        """Initialize the DataManager object.
+        Args:
+            apiToken (Optional[str]): A string representing a GitHub API
+                token. Defaults to None.
+
+        """
+        self.data = {}
+        """Dict: Working data."""
+        self.filePath = filePath
+
+    @property
+    def filePath(self):
+        """str: Absolute path to a JSON format data file.
+
+        Can accept relative paths, but will always convert them to
+        the absolute path.
+        """
+        if not self.__filePath:
+            raise ValueError("Internal variable filePath has not been set.")
+        return self.__filePath
+
+    @filePath.setter
+    def filePath(self, filePath):
+        if filePath:
+            if not os.path.isfile(filePath):
+                print("Data file '%s' does not currently exist. Saving data will create a new file." % (filePath))
+            self.__filePath = os.path.abspath(filePath)
+            print("Stored new data file path '%s'" % (self.filePath))
+        else:
+            self.__filePath = None
+
+    def dataReset(self):
+        """Reset the internal JSON data dictionary."""
+        self.data = {}
+        print("Stored data has been reset.")
+
+    def fileLoad(self, filePath=None, updatePath=True):
+        """Load a JSON data file into the internal JSON data dictionary.
+
+        Current internal data will be overwritten.
+        If no file path is provided, the stored data file path will be used.
+
+        Args:
+            filePath (Optional[str]): A relative or absolute path to a
+                '.json' file. Defaults to None.
+            updatePath (Optional[bool]): Specifies whether or not to update
+                the stored data file path. Defaults to True.
+
+        """
+        if not filePath:
+            filePath = self.filePath
+        if not os.path.isfile(filePath):
+            raise FileNotFoundError("Data file '%s' does not exist." % (filePath))
+        else:
+            print("Importing existing data file '%s' ..." % (filePath))
+            with open(filePath, "r") as q:
+                data_raw = q.read()
+            self.data = json.loads(data_raw)
+            if updatePath:
+                self.filePath(filePath)
+
+    def fileSave(self, filePath=None, updatePath=False):
+        """Write the internal JSON data dictionary to a JSON data file.
+
+        If no file path is provided, the stored data file path will be used.
+
+        Args:
+            filePath (Optional[str]): A relative or absolute path to a
+                '.json' file. Defaults to None.
+            updatePath (Optional[bool]): Specifies whether or not to update
+                the stored data file path. Defaults to False.
+
+        """
+        if not filePath:
+            filePath = self.filePath
+        if not os.path.isfile(filePath):
+            print("Data file '%s' does not exist, will create new file." % (filePath))
+        dataJsonString = json.dumps(self.data, indent=4, sort_keys=True)
+        print("Writing to file '%s' ..." % (filePath))
+        with open(filePath, "w") as fileout:
+            fileout.write(dataJsonString)
+        print("Wrote file!")
+        if updatePath:
+            self.filePath(filePath)
