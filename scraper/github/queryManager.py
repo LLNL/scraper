@@ -16,6 +16,8 @@ def _vPrint(verbose, *args, **kwargs):
 
     Args:
         verbose (bool): Normal print if True, do nothing otherwise.
+        *args: Argument list for the 'print' method.
+        **kwargs: Keyword arguments for the 'print' method.
 
     """
     if verbose:
@@ -119,7 +121,55 @@ class GitHubQueryManager:
         _vPrint(verbose, "File read!")
         return query_in
 
-    def queryGitHubFromFile(self, filePath, gitvars={}, verbosity=0):
+    def getPage(self, data):
+        """Get the 'page' for pagination from a data object.
+
+        Note:
+            Must be defined by the user!
+
+        Args:
+            data (Dict): A data dictionary as read from a query response.
+
+        Returns:
+            {
+                'obj' (Dict): Portion of the data that is paginated.
+                'pageInfo' (str): Key in 'obj' to the 'pageInfo' data.
+                'list' (str): Key in 'obj' to the list to be extended by
+                    each page.
+            }
+
+        Example:
+
+            Query::
+
+                query ($numRepos: Int!, $pgCursor: String) {
+                  viewer {
+                    repositories(first: $numRepos, after: $pgCursor) {
+                      nodes {
+                        nameWithOwner
+                      }
+                      pageInfo {
+                        endCursor
+                        hasNextPage
+                      }
+                    }
+                  }
+                }
+
+            Corresponding getPage definition::
+
+                $ def myPage(data):
+                    return {
+                        "obj":data["data"]["viewer"]["repositories"],
+                        "pageInfo":"pageInfo",
+                        "list":"nodes"
+                    }
+                $ myGitHubQueryManagerObject.getPage = myPage
+
+        """
+        raise NotImplementedError("Method getPageInfo must be defined by the user.")
+
+    def queryGitHubFromFile(self, filePath, gitvars={}, verbosity=0, **kwargs):
         """Submit a GitHub GraphQL query from a file.
 
         Can only be used with GraphQL queries.
@@ -138,15 +188,16 @@ class GitHubQueryManager:
                 If == 0, normal print statements are displayed.
                 If > 0, additional status print statements are displayed.
                 Defaults to 0.
+            **kwargs: Keyword arguments for the 'queryGitHub' method.
 
         Returns:
             Dict: A JSON style dictionary.
 
         """
         gitquery = self._readGQL(filePath, verbose=(verbosity >= 0))
-        return self.queryGitHub(gitquery, gitvars=gitvars, verbosity=verbosity)
+        return self.queryGitHub(gitquery, gitvars=gitvars, verbosity=verbosity, **kwargs)
 
-    def queryGitHub(self, gitquery, gitvars={}, verbosity=0, rest=False, requestCount=0):
+    def queryGitHub(self, gitquery, gitvars={}, verbosity=0, paginate=False, cursorVar=None, rest=False, requestCount=0, pageNum=0):
         """Submit a GitHub query.
 
         Args:
@@ -155,22 +206,30 @@ class GitHubQueryManager:
                        query: 'query { viewer { login } }'
                     endpoint: '/user'
             gitvars (Optional[Dict]): All query variables.
-                Only for GraphQL queries. Defaults to empty.
+                Defaults to empty.
             verbosity (Optional[int]): Changes output verbosity levels.
                 If < 0, all extra printouts are suppressed.
                 If == 0, normal print statements are displayed.
                 If > 0, additional status print statements are displayed.
                 Defaults to 0.
+            paginate (Optional[bool]): Pagination will be completed
+                automatically if True. Defaults to False.
+            cursorVar (Optional[str]): Key in 'gitvars' that represents the
+                pagination cursor. Defaults to None.
             rest (Optional[bool]): If True, uses the REST API instead
                 of GraphQL. Defaults to False.
             requestCount (Optional[int]): Counter for repeated requests.
+            pageNum (Optional[int]): Counter for pagination.
 
         Returns:
             Dict: A JSON style dictionary.
 
         """
         requestCount += 1
+        pageNum += 1
 
+        if paginate:
+            _vPrint((verbosity >= 0), "Page %d" % (pageNum))
         _vPrint((verbosity >= 0), "Sending GraphQL query...")
         response = self._submitQuery(gitquery, gitvars=gitvars, verbose=(verbosity > 0), rest=rest)
         _vPrint((verbosity >= 0), "Checking response...")
@@ -183,14 +242,14 @@ class GitHubQueryManager:
                 raise RuntimeError("Query attempted but failed %d times.\n%s\n%s" % (self.maxRetry, response["headDict"]["http"], response["result"]))
             else:
                 self._countdown(self.__retryDelay, printString="Query accepted but not yet processed. Trying again in %*dsec...", verbose=(verbosity >= 0))
-                return self.queryGitHub(gitquery, gitvars=gitvars, verbosity=verbosity, rest=rest, requestCount=requestCount)
+                return self.queryGitHub(gitquery, gitvars=gitvars, verbosity=verbosity, paginate=paginate, cursorVar=cursorVar, rest=rest, requestCount=requestCount, pageNum=pageNum)
         # Check for server error responses
         if statusNum == 502 or statusNum == 503:
             if requestCount >= self.maxRetry:
                 raise RuntimeError("Query attempted but failed %d times.\n%s\n%s" % (self.maxRetry, response["headDict"]["http"], response["result"]))
             else:
                 self._countdown(self.__retryDelay, printString="Server error. Trying again in %*dsec...", verbose=(verbosity >= 0))
-                return self.queryGitHub(gitquery, gitvars=gitvars, verbosity=verbosity, rest=rest, requestCount=requestCount)
+                return self.queryGitHub(gitquery, gitvars=gitvars, verbosity=verbosity, paginate=paginate, cursorVar=cursorVar, rest=rest, requestCount=requestCount, pageNum=pageNum)
         # Check for other error responses
         if statusNum >= 400 or statusNum == 204:
             raise RuntimeError("Request got an Error response.\n%s\n%s" % (response["headDict"]["http"], response["result"]))
@@ -201,6 +260,22 @@ class GitHubQueryManager:
         # Check for GraphQL API errors (e.g. repo not found)
         if not rest and "errors" in outObj:
             raise RuntimeError("GraphQL API error.\n%s" % (json.dumps(outObj["errors"])))
+
+        # Pagination
+        if paginate:
+            if rest:
+                # TODO
+                pass
+            else:
+                if not cursorVar:
+                    raise ValueError("Must specify argument 'cursorVar' to use auto-pagination.")
+                aPage = self.getPage(outObj)
+                gitvars[cursorVar] = aPage["obj"][aPage["pageInfo"]]["endCursor"]
+                if aPage["obj"][aPage["pageInfo"]]["hasNextPage"]:
+                    nextObj = self.queryGitHub(gitquery, gitvars=gitvars, verbosity=verbosity, paginate=paginate, cursorVar=cursorVar, rest=rest, requestCount=0, pageNum=pageNum)
+                    newPage = self.getPage(nextObj)
+                    aPage["obj"][aPage["list"]].extend(newPage["obj"][newPage["list"]])
+                aPage["obj"].pop(aPage["pageInfo"], None)
 
         return outObj
 
@@ -213,7 +288,7 @@ class GitHubQueryManager:
                        query: 'query { viewer { login } }'
                     endpoint: '/user'
             gitvars (Optional[Dict]): All query variables.
-                Only for GraphQL queries. Defaults to empty.
+                Defaults to empty.
             verbose (Optional[bool]): If False, stderr prints will be
                 suppressed. Defaults to False.
             rest (Optional[bool]): If True, uses the REST API instead

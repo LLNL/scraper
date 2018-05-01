@@ -1,0 +1,14 @@
+query ($numRepos: Int!, $pgCursor: String) {
+  viewer {
+    starredRepositories(first: $numRepos, after: $pgCursor) {
+      nodes {
+        nameWithOwner
+      }
+      pageInfo {
+        endCursor
+        hasNextPage
+      }
+    }
+  }
+}
+# {"numRepos": 3, "pgCursor": null }
