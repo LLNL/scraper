@@ -121,54 +121,6 @@ class GitHubQueryManager:
         _vPrint(verbose, "File read!")
         return query_in
 
-    def getPage(self, data):
-        """Get the 'page' for pagination from a data object.
-
-        Note:
-            Must be defined by the user!
-
-        Args:
-            data (Dict): A data dictionary as read from a query response.
-
-        Returns:
-            {
-                'obj' (Dict): Portion of the data that is paginated.
-                'pageInfo' (str): Key in 'obj' to the 'pageInfo' data.
-                'list' (str): Key in 'obj' to the list to be extended by
-                    each page.
-            }
-
-        Example:
-
-            Query::
-
-                query ($numRepos: Int!, $pgCursor: String) {
-                  viewer {
-                    repositories(first: $numRepos, after: $pgCursor) {
-                      nodes {
-                        nameWithOwner
-                      }
-                      pageInfo {
-                        endCursor
-                        hasNextPage
-                      }
-                    }
-                  }
-                }
-
-            Corresponding getPage definition::
-
-                $ def myPage(data):
-                    return {
-                        "obj":data["data"]["viewer"]["repositories"],
-                        "pageInfo":"pageInfo",
-                        "list":"nodes"
-                    }
-                $ myGitHubQueryManagerObject.getPage = myPage
-
-        """
-        raise NotImplementedError("Method getPageInfo must be defined by the user.")
-
     def queryGitHubFromFile(self, filePath, gitvars={}, verbosity=0, **kwargs):
         """Submit a GitHub GraphQL query from a file.
 
@@ -197,7 +149,7 @@ class GitHubQueryManager:
         gitquery = self._readGQL(filePath, verbose=(verbosity >= 0))
         return self.queryGitHub(gitquery, gitvars=gitvars, verbosity=verbosity, **kwargs)
 
-    def queryGitHub(self, gitquery, gitvars={}, verbosity=0, paginate=False, cursorVar=None, rest=False, requestCount=0, pageNum=0):
+    def queryGitHub(self, gitquery, gitvars={}, verbosity=0, paginate=False, cursorVar=None, keysToList=[], rest=False, requestCount=0, pageNum=0):
         """Submit a GitHub query.
 
         Args:
@@ -216,6 +168,11 @@ class GitHubQueryManager:
                 automatically if True. Defaults to False.
             cursorVar (Optional[str]): Key in 'gitvars' that represents the
                 pagination cursor. Defaults to None.
+            keysToList (Optional[List[str]]): Ordered list of keys needed to
+                retrieve the list in the query results to be extended by
+                pagination. Defaults to empty.
+                Example:
+                    ['data', 'viewer', 'repositories', 'nodes']
             rest (Optional[bool]): If True, uses the REST API instead
                 of GraphQL. Defaults to False.
             requestCount (Optional[int]): Counter for repeated requests.
@@ -242,14 +199,14 @@ class GitHubQueryManager:
                 raise RuntimeError("Query attempted but failed %d times.\n%s\n%s" % (self.maxRetry, response["headDict"]["http"], response["result"]))
             else:
                 self._countdown(self.__retryDelay, printString="Query accepted but not yet processed. Trying again in %*dsec...", verbose=(verbosity >= 0))
-                return self.queryGitHub(gitquery, gitvars=gitvars, verbosity=verbosity, paginate=paginate, cursorVar=cursorVar, rest=rest, requestCount=requestCount, pageNum=pageNum)
+                return self.queryGitHub(gitquery, gitvars=gitvars, verbosity=verbosity, paginate=paginate, cursorVar=cursorVar, keysToList=keysToList, rest=rest, requestCount=requestCount, pageNum=pageNum)
         # Check for server error responses
         if statusNum == 502 or statusNum == 503:
             if requestCount >= self.maxRetry:
                 raise RuntimeError("Query attempted but failed %d times.\n%s\n%s" % (self.maxRetry, response["headDict"]["http"], response["result"]))
             else:
                 self._countdown(self.__retryDelay, printString="Server error. Trying again in %*dsec...", verbose=(verbosity >= 0))
-                return self.queryGitHub(gitquery, gitvars=gitvars, verbosity=verbosity, paginate=paginate, cursorVar=cursorVar, rest=rest, requestCount=requestCount, pageNum=pageNum)
+                return self.queryGitHub(gitquery, gitvars=gitvars, verbosity=verbosity, paginate=paginate, cursorVar=cursorVar, keysToList=keysToList, rest=rest, requestCount=requestCount, pageNum=pageNum)
         # Check for other error responses
         if statusNum >= 400 or statusNum == 204:
             raise RuntimeError("Request got an Error response.\n%s\n%s" % (response["headDict"]["http"], response["result"]))
@@ -269,13 +226,19 @@ class GitHubQueryManager:
             else:
                 if not cursorVar:
                     raise ValueError("Must specify argument 'cursorVar' to use auto-pagination.")
-                aPage = self.getPage(outObj)
-                gitvars[cursorVar] = aPage["obj"][aPage["pageInfo"]]["endCursor"]
-                if aPage["obj"][aPage["pageInfo"]]["hasNextPage"]:
-                    nextObj = self.queryGitHub(gitquery, gitvars=gitvars, verbosity=verbosity, paginate=paginate, cursorVar=cursorVar, rest=rest, requestCount=0, pageNum=pageNum)
-                    newPage = self.getPage(nextObj)
-                    aPage["obj"][aPage["list"]].extend(newPage["obj"][newPage["list"]])
-                aPage["obj"].pop(aPage["pageInfo"], None)
+                if not len(keysToList) > 0:
+                    raise ValueError("Must specify argument 'keysToList' as a non-empty list to use auto-pagination.")
+                aPage = outObj
+                for key in keysToList[0:-1]:
+                    aPage = aPage[key]
+                gitvars[cursorVar] = aPage["pageInfo"]["endCursor"]
+                if aPage["pageInfo"]["hasNextPage"]:
+                    nextObj = self.queryGitHub(gitquery, gitvars=gitvars, verbosity=verbosity, paginate=paginate, cursorVar=cursorVar, keysToList=keysToList, rest=rest, requestCount=0, pageNum=pageNum)
+                    newPage = nextObj
+                    for key in keysToList[0:-1]:
+                        newPage = newPage[key]
+                    aPage[keysToList[-1]].extend(newPage[keysToList[-1]])
+                aPage.pop("pageInfo", None)
 
         return outObj
 
