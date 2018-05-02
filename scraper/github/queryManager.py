@@ -338,16 +338,20 @@ class GitHubQueryManager:
 class DataManager:
     """JSON data manager."""
 
-    def __init__(self, filePath=None):
+    def __init__(self, filePath=None, loadData=False):
         """Initialize the DataManager object.
         Args:
-            apiToken (Optional[str]): A string representing a GitHub API
-                token. Defaults to None.
+            filePath (Optional[str]): Relative or absolute path to a JSON
+                data file. Defaults to None.
+            loadData (Optional[bool]): Loads data from the given file path
+                if True. Defaults to False.
 
         """
         self.data = {}
         """Dict: Working data."""
         self.filePath = filePath
+        if loadData:
+            self.fileLoad(updatePath=False)
 
     @property
     def filePath(self):
