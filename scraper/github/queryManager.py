@@ -134,7 +134,8 @@ class GitHubQueryManager:
                 .. _GitHub GraphQL Explorer:
                    https://developer.github.com/v4/explorer/
             gitvars (Optional[Dict]): All query variables.
-                Only for GraphQL queries. Defaults to empty.
+                Defaults to empty.
+                GraphQL Only.
             verbosity (Optional[int]): Changes output verbosity levels.
                 If < 0, all extra printouts are suppressed.
                 If == 0, normal print statements are displayed.
