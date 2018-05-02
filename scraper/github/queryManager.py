@@ -159,6 +159,7 @@ class GitHubQueryManager:
                     endpoint: '/user'
             gitvars (Optional[Dict]): All query variables.
                 Defaults to empty.
+                GraphQL Only.
             verbosity (Optional[int]): Changes output verbosity levels.
                 If < 0, all extra printouts are suppressed.
                 If == 0, normal print statements are displayed.
@@ -168,11 +169,13 @@ class GitHubQueryManager:
                 automatically if True. Defaults to False.
             cursorVar (Optional[str]): Key in 'gitvars' that represents the
                 pagination cursor. Defaults to None.
+                GraphQL Only.
             keysToList (Optional[List[str]]): Ordered list of keys needed to
                 retrieve the list in the query results to be extended by
                 pagination. Defaults to empty.
                 Example:
                     ['data', 'viewer', 'repositories', 'nodes']
+                GraphQL Only.
             rest (Optional[bool]): If True, uses the REST API instead
                 of GraphQL. Defaults to False.
             requestCount (Optional[int]): Counter for repeated requests.
@@ -221,13 +224,14 @@ class GitHubQueryManager:
         # Pagination
         if paginate:
             if rest:
-                # TODO
-                pass
+                if "next" in response["linkDict"]:
+                    nextObj = self.queryGitHub(response["linkDict"]["next"], gitvars=gitvars, verbosity=verbosity, paginate=paginate, cursorVar=cursorVar, keysToList=keysToList, rest=rest, requestCount=0, pageNum=pageNum)
+                    outObj.extend(nextObj)
             else:
                 if not cursorVar:
-                    raise ValueError("Must specify argument 'cursorVar' to use auto-pagination.")
+                    raise ValueError("Must specify argument 'cursorVar' to use GraphQL auto-pagination.")
                 if not len(keysToList) > 0:
-                    raise ValueError("Must specify argument 'keysToList' as a non-empty list to use auto-pagination.")
+                    raise ValueError("Must specify argument 'keysToList' as a non-empty list to use GraphQL auto-pagination.")
                 aPage = outObj
                 for key in keysToList[0:-1]:
                     aPage = aPage[key]
@@ -301,8 +305,8 @@ class GitHubQueryManager:
             linkProperties = headDict["Link"].split(', ')
             propDict = {}
             for item in linkProperties:
-                divided = re.split(r'&page=|>; rel="|"', item)
-                propDict[divided[2]] = int(divided[1])
+                divided = re.split(r'<https://api.github.com|>; rel="|"', item)
+                propDict[divided[2]] = divided[1]
             linkDict = propDict
 
         return {'statusNum': statusNum, 'headDict': headDict, 'linkDict': linkDict, 'result': result}
@@ -393,7 +397,7 @@ class DataManager:
                 data_raw = q.read()
             self.data = json.loads(data_raw)
             if updatePath:
-                self.filePath(filePath)
+                self.filePath = filePath
 
     def fileSave(self, filePath=None, updatePath=False):
         """Write the internal JSON data dictionary to a JSON data file.
@@ -417,4 +421,4 @@ class DataManager:
             fileout.write(dataJsonString)
         print("Wrote file!")
         if updatePath:
-            self.filePath(filePath)
+            self.filePath = filePath
