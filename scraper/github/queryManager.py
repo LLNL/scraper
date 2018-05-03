@@ -68,6 +68,9 @@ class GitHubQueryManager:
 
         # Initialize private variables
         self.__retryDelay = 3  #: Number of seconds to wait between retries.
+        self.__query = None  #: Cached query string
+        self.__queryPath = None  #: Path to query file
+        self.__queryTimestamp = None  #: When query file was last modified
 
         # Initialize public variables
         self.maxRetry = maxRetry
@@ -110,15 +113,24 @@ class GitHubQueryManager:
         """
         if not os.path.isfile(filePath):
             raise RuntimeError("Query file '%s' does not exist." % (filePath))
-        _vPrint(verbose, "Reading '%s' ... " % (filePath), end="", flush=True)
-        with open(filePath, "r") as q:
-            # Strip all comments and newlines.
-            query_in = re.sub(r'#.*(\n|\Z)', '\n', q.read())
-            # Condense etra whitespace.
-            query_in = re.sub(r'\s+', ' ', query_in)
-            # Remove any leading or trailing whitespace.
-            query_in = re.sub(r'(\A\s+)|(\s+\Z)', '', query_in)
-        _vPrint(verbose, "File read!")
+        lastModified = os.path.getmtime(filePath)
+        absPath = os.path.abspath(filePath)
+        if absPath == self.__queryPath and lastModified == self.__queryTimestamp:
+            _vPrint(verbose, "Using cached query '%s'" % (os.path.basename(self.__queryPath)))
+            query_in = self.__query
+        else:
+            _vPrint(verbose, "Reading '%s' ... " % (filePath), end="", flush=True)
+            with open(filePath, "r") as q:
+                # Strip all comments and newlines.
+                query_in = re.sub(r'#.*(\n|\Z)', '\n', q.read())
+                # Condense etra whitespace.
+                query_in = re.sub(r'\s+', ' ', query_in)
+                # Remove any leading or trailing whitespace.
+                query_in = re.sub(r'(\A\s+)|(\s+\Z)', '', query_in)
+            _vPrint(verbose, "File read!")
+            self.__queryPath = absPath
+            self.__queryTimestamp = lastModified
+            self.__query = query_in
         return query_in
 
     def queryGitHubFromFile(self, filePath, gitvars={}, verbosity=0, **kwargs):
