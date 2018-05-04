@@ -217,7 +217,7 @@ class GitHubQueryManager:
             "remaining": int(response["headDict"]["X-RateLimit-Remaining"]),
             "reset": int(response["headDict"]["X-RateLimit-Reset"])
         }
-        _vPrint((verbosity >= 0), "API Status %s" % (apiStatus))
+        _vPrint((verbosity >= 0), "API Status %s" % (json.dumps(apiStatus)))
         if not apiStatus["remaining"] > 0:
             _vPrint((verbosity >= 0), "API usage limit reached during query.")
             self._awaitReset(apiStatus["reset"])
@@ -247,15 +247,23 @@ class GitHubQueryManager:
 
         # Check for GraphQL API errors (e.g. repo not found)
         if not rest and "errors" in outObj:
-            raise RuntimeError("GraphQL API error.\n%s" % (json.dumps(outObj["errors"])))
+            if requestCount >= self.maxRetry:
+                raise RuntimeError("Query attempted but failed %d times.\n%s\n%s" % (self.maxRetry, response["headDict"]["http"], response["result"]))
+            elif len(outObj["errors"]) == 1 and len(outObj["errors"][0]) == 1:
+                # Poorly defined error type, usually intermittent, try again.
+                _vPrint((verbosity >= 0), "GraphQL API error.\n%s" % (json.dumps(outObj["errors"])))
+                self._countdown(self.__retryDelay, printString="Unknown API error. Trying again in %*dsec...", verbose=(verbosity >= 0))
+                return self.queryGitHub(gitquery, gitvars=gitvars, verbosity=verbosity, paginate=paginate, cursorVar=cursorVar, keysToList=keysToList, rest=rest, requestCount=requestCount, pageNum=pageNum)
+            else:
+                raise RuntimeError("GraphQL API error.\n%s" % (json.dumps(outObj["errors"])))
 
         # Pagination
         if paginate:
-            if rest:
+            if rest and response["linkDict"]:
                 if "next" in response["linkDict"]:
                     nextObj = self.queryGitHub(response["linkDict"]["next"], gitvars=gitvars, verbosity=verbosity, paginate=paginate, cursorVar=cursorVar, keysToList=keysToList, rest=rest, requestCount=0, pageNum=pageNum)
                     outObj.extend(nextObj)
-            else:
+            elif not rest:
                 if not cursorVar:
                     raise ValueError("Must specify argument 'cursorVar' to use GraphQL auto-pagination.")
                 if not len(keysToList) > 0:
