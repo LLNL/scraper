@@ -9,6 +9,8 @@ import subprocess
 import json
 import re
 import time
+from datetime import datetime
+import pytz
 
 
 def _vPrint(verbose, *args, **kwargs):
@@ -209,6 +211,19 @@ class GitHubQueryManager:
         _vPrint((verbosity >= 0), response["headDict"]["http"])
         statusNum = response["statusNum"]
 
+        # Make sure the query limit didn't run out
+        apiStatus = {
+            "limit": int(response["headDict"]["X-RateLimit-Limit"]),
+            "remaining": int(response["headDict"]["X-RateLimit-Remaining"]),
+            "reset": int(response["headDict"]["X-RateLimit-Reset"])
+        }
+        _vPrint((verbosity >= 0), "API Status %s" % (apiStatus))
+        if not apiStatus["remaining"] > 0:
+            _vPrint((verbosity >= 0), "API usage limit reached during query.")
+            self._awaitReset(apiStatus["reset"])
+            _vPrint((verbosity >= 0), "Repeating query...")
+            return self.queryGitHub(gitquery, gitvars=gitvars, verbosity=verbosity, paginate=paginate, cursorVar=cursorVar, keysToList=keysToList, rest=rest, requestCount=(requestCount - 1), pageNum=pageNum)
+
         # Check for accepted but not yet processed, usually due to un-cached data
         if statusNum == 202:
             if requestCount >= self.maxRetry:
@@ -323,6 +338,27 @@ class GitHubQueryManager:
             linkDict = propDict
 
         return {'statusNum': statusNum, 'headDict': headDict, 'linkDict': linkDict, 'result': result}
+
+    def _awaitReset(self, utcTimeStamp, verbose=True):
+        """Wait until the given UTC timestamp.
+
+        Args:
+            utcTimeStamp (int): A UTC format timestamp.
+            verbose (Optional[bool]): If False, all extra printouts will be
+                suppressed. Defaults to True.
+
+        """
+        resetTime = pytz.utc.localize(datetime.utcfromtimestamp(utcTimeStamp))
+        _vPrint(verbose, "--- Current Timestamp")
+        _vPrint(verbose, "      %s" % (time.strftime('%c')))
+        now = pytz.utc.localize(datetime.utcnow())
+        waitTime = round((resetTime - now).total_seconds()) + 1
+        _vPrint(verbose, "--- Current UTC Timestamp")
+        _vPrint(verbose, "      %s" % (now.strftime('%c')))
+        _vPrint(verbose, "--- GITHUB NEEDS A BREAK Until UTC Timestamp")
+        _vPrint(verbose, "      %s" % (resetTime.strftime('%c')))
+        self._countdown(waitTime, printString="--- Waiting %*d seconds...", verbose=verbose)
+        _vPrint(verbose, "--- READY!")
 
     def _countdown(self, waitTime=0, printString="Waiting %*d seconds...", verbose=True):
         """Makes a pretty countdown.
