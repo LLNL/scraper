@@ -203,7 +203,7 @@ class GitHubQueryManager:
 
         if paginate:
             _vPrint((verbosity >= 0), "Page %d" % (pageNum))
-        _vPrint((verbosity >= 0), "Sending GraphQL query...")
+        _vPrint((verbosity >= 0), "Sending %s query..." % ("REST" if rest else "GraphQL"))
         response = self._submitQuery(gitquery, gitvars=gitvars, verbose=(verbosity > 0), rest=rest)
         _vPrint((verbosity >= 0), "Checking response...")
         _vPrint((verbosity >= 0), response["headDict"]["http"])
@@ -409,9 +409,10 @@ class DataManager:
         if not os.path.isfile(filePath):
             raise FileNotFoundError("Data file '%s' does not exist." % (filePath))
         else:
-            print("Importing existing data file '%s' ..." % (filePath))
+            print("Importing existing data file '%s' ... " % (filePath), end="", flush=True)
             with open(filePath, "r") as q:
                 data_raw = q.read()
+            print("Imported!")
             self.data = json.loads(data_raw)
             if updatePath:
                 self.filePath = filePath
@@ -433,7 +434,7 @@ class DataManager:
         if not os.path.isfile(filePath):
             print("Data file '%s' does not exist, will create new file." % (filePath))
         dataJsonString = json.dumps(self.data, indent=4, sort_keys=True)
-        print("Writing to file '%s' ..." % (filePath))
+        print("Writing to file '%s' ... " % (filePath), end="", flush=True)
         with open(filePath, "w") as fileout:
             fileout.write(dataJsonString)
         print("Wrote file!")
