@@ -1,15 +1,18 @@
-"""A module for GitHub query and data management.
+"""
+A module for GitHub query and data management.
 
 With this module, you will be able to send GraphQL and REST queries
 to GitHub, as well as read and write JSON files to store data.
-
 """
-import os
-from subprocess import check_output, DEVNULL  # nosec
+
 import json
+import os
 import re
 import time
+
 from datetime import datetime
+from subprocess import check_output, DEVNULL  # nosec
+
 import pytz
 
 
