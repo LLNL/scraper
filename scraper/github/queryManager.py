@@ -5,7 +5,7 @@ to GitHub, as well as read and write JSON files to store data.
 
 """
 import os
-import subprocess
+from subprocess import check_output, DEVNULL
 import json
 import re
 import time
@@ -306,7 +306,7 @@ class GitHubQueryManager:
             }
 
         """
-        errOut = subprocess.DEVNULL if not verbose else None
+        errOut = DEVNULL if not verbose else None
         authhead = 'Authorization: bearer ' + self.__githubApiToken
 
         bashcurl = 'curl -iH TMPauthhead -X POST -d TMPgitquery https://api.github.com/graphql' if not rest \
@@ -317,7 +317,7 @@ class GitHubQueryManager:
             gitqueryJSON = json.dumps({'query': gitquery, 'variables': json.dumps(gitvars)})
             bashcurl_list[6] = gitqueryJSON
 
-        fullResponse = subprocess.check_output(bashcurl_list, stderr=errOut).decode()
+        fullResponse = check_output(bashcurl_list, stderr=errOut).decode()
         _vPrint(verbose, "\n" + fullResponse)
         fullResponse = fullResponse.split('\r\n\r\n')
         heads = fullResponse[0].split('\r\n')
