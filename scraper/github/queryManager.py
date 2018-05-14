@@ -5,7 +5,7 @@ to GitHub, as well as read and write JSON files to store data.
 
 """
 import os
-from subprocess import check_output, DEVNULL
+from subprocess import check_output, DEVNULL  # nosec
 import json
 import re
 import time
