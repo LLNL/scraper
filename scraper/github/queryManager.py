@@ -128,7 +128,7 @@ class GitHubQueryManager:
             with open(filePath, "r") as q:
                 # Strip all comments and newlines.
                 query_in = re.sub(r'#.*(\n|\Z)', '\n', q.read())
-                # Condense etra whitespace.
+                # Condense extra whitespace.
                 query_in = re.sub(r'\s+', ' ', query_in)
                 # Remove any leading or trailing whitespace.
                 query_in = re.sub(r'(\A\s+)|(\s+\Z)', '', query_in)
@@ -198,12 +198,15 @@ class GitHubQueryManager:
                 of GraphQL. Defaults to False.
             requestCount (Optional[int]): Counter for repeated requests.
             pageNum (Optional[int]): Counter for pagination.
+                For user readable log messages only, does not affect data.
 
         Returns:
             Dict: A JSON style dictionary.
 
         """
         requestCount += 1
+        if pageNum < 0:  # no negative page numbers
+            pageNum = 0
         pageNum += 1
 
         if paginate:
@@ -213,6 +216,9 @@ class GitHubQueryManager:
         _vPrint((verbosity >= 0), "Checking response...")
         _vPrint((verbosity >= 0), response["headDict"]["http"])
         statusNum = response["statusNum"]
+
+        # Decrement page count before error checks to properly reflect any repeated queries
+        pageNum -= 1
 
         # Make sure the query limit didn't run out
         apiStatus = {
@@ -245,7 +251,7 @@ class GitHubQueryManager:
         if statusNum >= 400 or statusNum == 204:
             raise RuntimeError("Request got an Error response.\n%s\n%s" % (response["headDict"]["http"], response["result"]))
 
-        _vPrint((verbosity >= 0), "Data recieved!")
+        _vPrint((verbosity >= 0), "Data received!")
         outObj = json.loads(response["result"])
 
         # Check for GraphQL API errors (e.g. repo not found)
@@ -259,6 +265,9 @@ class GitHubQueryManager:
                 return self.queryGitHub(gitquery, gitvars=gitvars, verbosity=verbosity, paginate=paginate, cursorVar=cursorVar, keysToList=keysToList, rest=rest, requestCount=requestCount, pageNum=pageNum)
             else:
                 raise RuntimeError("GraphQL API error.\n%s" % (json.dumps(outObj["errors"])))
+
+        # Re-increment page count before the next page query
+        pageNum += 1
 
         # Pagination
         if paginate:
