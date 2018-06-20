@@ -217,6 +217,9 @@ class GitHubQueryManager:
         _vPrint((verbosity >= 0), response["headDict"]["http"])
         statusNum = response["statusNum"]
 
+        # Decrement page count before error checks to properly reflect any repeated queries
+        pageNum -= 1
+
         # Make sure the query limit didn't run out
         apiStatus = {
             "limit": int(response["headDict"]["X-RateLimit-Limit"]),
@@ -228,7 +231,7 @@ class GitHubQueryManager:
             _vPrint((verbosity >= 0), "API usage limit reached during query.")
             self._awaitReset(apiStatus["reset"])
             _vPrint((verbosity >= 0), "Repeating query...")
-            return self.queryGitHub(gitquery, gitvars=gitvars, verbosity=verbosity, paginate=paginate, cursorVar=cursorVar, keysToList=keysToList, rest=rest, requestCount=(requestCount - 1), pageNum=(pageNum - 1))
+            return self.queryGitHub(gitquery, gitvars=gitvars, verbosity=verbosity, paginate=paginate, cursorVar=cursorVar, keysToList=keysToList, rest=rest, requestCount=(requestCount - 1), pageNum=pageNum)
 
         # Check for accepted but not yet processed, usually due to un-cached data
         if statusNum == 202:
@@ -236,14 +239,14 @@ class GitHubQueryManager:
                 raise RuntimeError("Query attempted but failed %d times.\n%s\n%s" % (self.maxRetry, response["headDict"]["http"], response["result"]))
             else:
                 self._countdown(self.__retryDelay, printString="Query accepted but not yet processed. Trying again in %*dsec...", verbose=(verbosity >= 0))
-                return self.queryGitHub(gitquery, gitvars=gitvars, verbosity=verbosity, paginate=paginate, cursorVar=cursorVar, keysToList=keysToList, rest=rest, requestCount=requestCount, pageNum=(pageNum - 1))
+                return self.queryGitHub(gitquery, gitvars=gitvars, verbosity=verbosity, paginate=paginate, cursorVar=cursorVar, keysToList=keysToList, rest=rest, requestCount=requestCount, pageNum=pageNum)
         # Check for server error responses
         if statusNum == 502 or statusNum == 503:
             if requestCount >= self.maxRetry:
                 raise RuntimeError("Query attempted but failed %d times.\n%s\n%s" % (self.maxRetry, response["headDict"]["http"], response["result"]))
             else:
                 self._countdown(self.__retryDelay, printString="Server error. Trying again in %*dsec...", verbose=(verbosity >= 0))
-                return self.queryGitHub(gitquery, gitvars=gitvars, verbosity=verbosity, paginate=paginate, cursorVar=cursorVar, keysToList=keysToList, rest=rest, requestCount=requestCount, pageNum=(pageNum - 1))
+                return self.queryGitHub(gitquery, gitvars=gitvars, verbosity=verbosity, paginate=paginate, cursorVar=cursorVar, keysToList=keysToList, rest=rest, requestCount=requestCount, pageNum=pageNum)
         # Check for other error responses
         if statusNum >= 400 or statusNum == 204:
             raise RuntimeError("Request got an Error response.\n%s\n%s" % (response["headDict"]["http"], response["result"]))
@@ -259,9 +262,12 @@ class GitHubQueryManager:
                 # Poorly defined error type, usually intermittent, try again.
                 _vPrint((verbosity >= 0), "GraphQL API error.\n%s" % (json.dumps(outObj["errors"])))
                 self._countdown(self.__retryDelay, printString="Unknown API error. Trying again in %*dsec...", verbose=(verbosity >= 0))
-                return self.queryGitHub(gitquery, gitvars=gitvars, verbosity=verbosity, paginate=paginate, cursorVar=cursorVar, keysToList=keysToList, rest=rest, requestCount=requestCount, pageNum=(pageNum - 1))
+                return self.queryGitHub(gitquery, gitvars=gitvars, verbosity=verbosity, paginate=paginate, cursorVar=cursorVar, keysToList=keysToList, rest=rest, requestCount=requestCount, pageNum=pageNum)
             else:
                 raise RuntimeError("GraphQL API error.\n%s" % (json.dumps(outObj["errors"])))
+
+        # Re-increment page count before the next page query
+        pageNum += 1
 
         # Pagination
         if paginate:
