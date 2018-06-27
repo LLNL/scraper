@@ -17,6 +17,10 @@ from scraper.github import gov_orgs
 
 logger = logging.getLogger(__name__)
 
+# TODO: Might not really want this at global scope
+gh = None
+
+
 def _configure_logging(verbose=False):
     # logging.basicConfig(level=logging.INFO)
 
