@@ -228,7 +228,7 @@ def main():
     if os.path.isfile(doecode_json):
         code_json['releases'].extend(process_doecode(doecode_json))
     elif doecode_json:
-        raise RuntimeError('Unable to find DOE CODE json file: %s', doecode_json)
+        raise FileNotFoundError('Unable to find DOE CODE json file: %s' % doecode_json)
 
     # Force certain fields
     if organization:
