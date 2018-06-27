@@ -17,14 +17,6 @@ from scraper.github import gov_orgs
 
 logger = logging.getLogger(__name__)
 
-# TODO: Might not really want this at global scope
-token = os.environ['GITHUB_API_TOKEN']
-gh = github3.login(token=token)
-
-if gh is None:
-    raise RuntimeError('Invalid GITHUB_API_TOKEN in environment')
-
-
 def _configure_logging(verbose=False):
     # logging.basicConfig(level=logging.INFO)
 
@@ -40,6 +32,18 @@ def _configure_logging(verbose=False):
 
     handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
     logger.addHandler(handler)
+
+
+def _check_github_token():
+    token = os.environ.get('GITHUB_API_TOKEN')
+
+    if token is None:
+        raise RuntimeError('GITHUB_API_TOKEN not configured in environment')
+
+    gh = github3.login(token=token)
+
+    if gh is None:
+        raise RuntimeError('Invalid GITHUB_API_TOKEN in environment')
 
 
 def _check_api_limits(gh_session, min_requests_remaining=250, sleep_time=15):
@@ -160,6 +164,12 @@ def main():
 
     _configure_logging(args.verbose)
 
+    doecode_json = args.doecode_json
+
+    # DOE CODE JSON parsing does not currently require GitHub connectivity.
+    if doecode_json is None:
+        _check_github_token()
+
     try:
         config_json = json.load(open(args.config))
     except (FileNotFoundError, json.JSONDecodeError):
@@ -198,7 +208,6 @@ def main():
     bitbucket_servers = [connect_to_bitbucket(s) for s in bitbucket_servers]
     logger.debug('Bitbucket Servers: %s', bitbucket_servers)
 
-    doecode_json = args.doecode_json
     logger.debug('Queuing DOE Code JSON: %s', doecode_json)
 
     code_json = CodeGovMetadata(agency, method)
@@ -215,7 +224,7 @@ def main():
     if os.path.isfile(doecode_json):
         code_json['releases'].extend(process_doecode(doecode_json))
     elif doecode_json:
-        logger.warning('Unbale to find DOECode json file: %s', doecode_json)
+        raise RuntimeError('Unable to find DOE CODE json file: %s', doecode_json)
 
     # Force certain fields
     if organization:
