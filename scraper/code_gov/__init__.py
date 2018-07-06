@@ -587,7 +587,7 @@ class CodeGovProject(dict):
     @classmethod
     def from_doecode(klass, record):
         """
-        Create CodeGovProject object from DOECode record
+        Create CodeGovProject object from DOE CODE record
 
         Handles crafting Code.gov Project
         """
@@ -599,7 +599,7 @@ class CodeGovProject(dict):
         # -- REQUIRED FIELDS --
 
         project['name'] = record['software_title']
-        logger.debug('DOECode: software_title="%s"', record['software_title'])
+        logger.debug('DOE CODE: software_title="%s"', record['software_title'])
 
         link = record.get('repository_link', '')
         if link:
@@ -613,7 +613,7 @@ class CodeGovProject(dict):
 
         licenses = set(record['licenses'])
         licenses.discard(None)
-        logger.debug('DOECode: licenses=%s', licenses)
+        logger.debug('DOE CODE: licenses=%s', licenses)
 
         license_objects = []
         if 'Other' in licenses:
@@ -673,7 +673,7 @@ class CodeGovProject(dict):
         if 'github.com' in link:
             vcs = 'git'
         if vcs is None:
-            logger.debug('DOECode: Unable to determine vcs for: name="%s", repositoryURL=%s', project['name'], link)
+            logger.debug('DOE CODE: Unable to determine vcs for: name="%s", repositoryURL=%s', project['name'], link)
             vcs = ''
         if vcs:
             project['vcs'] = vcs
