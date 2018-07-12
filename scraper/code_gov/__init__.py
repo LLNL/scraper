@@ -98,6 +98,21 @@ def _license_obj(license):
             'URL': 'https://api.github.com/licenses/mpl-2.0',
             'name': 'MPL-2.0',
         }
+    elif license in ('The Unlicense'):
+        obj = {
+            'URL': 'https://api.github.com/licenses/unlicense',
+            'name': 'Unlicense',
+        }
+    elif license in ('GNU Affero General Public License v3.0'):
+        obj = {
+            'URL': 'https://api.github.com/licenses/agpl-3.0',
+            'name': 'AGPL-3.0',
+        }
+    elif license in ('Eclipse Public License 2.0'):
+        obj = {
+            'URL': 'https://api.github.com/licenses/epl-2.0',
+            'name': 'EPL-2.0',
+        }
 
     if obj is None:
         logger.warn('I dont understand the license: %s', license)
