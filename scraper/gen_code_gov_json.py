@@ -136,7 +136,7 @@ def process_bitbucket(bitbucket):
 
 def process_doecode(doecode_json_filename):
     """
-    Converts a DOECode .json file into DOECode projects
+    Converts a DOE CODE .json file into DOE CODE projects
     """
     doecode_json = json.load(open(doecode_json_filename))
     projects = [CodeGovProject.from_doecode(p) for p in doecode_json['records']]
@@ -145,7 +145,7 @@ def process_doecode(doecode_json_filename):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Scrape code repositories for Code.gov / DOECode')
+    parser = argparse.ArgumentParser(description='Scrape code repositories for Code.gov / DOE CODE')
 
     parser.add_argument('--agency', type=str, nargs='?', default='', help='Agency Label, e.g. "DOE"')
     parser.add_argument('--method', type=str, nargs='?', default='', help='Method of measuring open source')
@@ -160,7 +160,7 @@ def main():
 
     parser.add_argument('--to-csv', action='store_true', help='Toggle output to CSV')
 
-    parser.add_argument('--doecode-json', type=str, nargs='?', default='', help='Path to DOECode .json file')
+    parser.add_argument('--doecode-json', type=str, nargs='?', default='', help='Path to DOE CODE .json file')
 
     parser.add_argument('--output-path', type=str, nargs='?', default='', help='Output path for .json and .csv files')
 
@@ -221,7 +221,7 @@ def main():
     bitbucket_servers = [connect_to_bitbucket(s) for s in bitbucket_servers]
     logger.debug('Bitbucket Servers: %s', bitbucket_servers)
 
-    logger.debug('Queuing DOE Code JSON: %s', doecode_json)
+    logger.debug('Queuing DOE CODE JSON: %s', doecode_json)
 
     code_json = CodeGovMetadata(agency, method)
 
