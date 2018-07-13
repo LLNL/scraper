@@ -602,12 +602,11 @@ class CodeGovProject(dict):
         logger.debug('DOECode: software_title="%s"', record['software_title'])
 
         link = record.get('repository_link', '')
-        if link:
-            project['repositoryURL'] = link
-        else:
-            url = record.get('landing_page')
-            logger.warning('DOECODE: No repositoryURL, using landing_page: %s', url)
-            project['repositoryURL'] = url
+        if not link:
+            link = record.get('landing_page')
+            logger.warning('DOE CODE: No repositoryURL, using landing_page: %s', link)
+
+        project['repositoryURL'] = link
 
         project['description'] = record['description']
 
@@ -628,22 +627,12 @@ class CodeGovProject(dict):
 
         project['permissions']['licenses'] = license_objects
 
-        # TODO: Need to
         if record['open_source']:
             usage_type = 'openSource'
-        elif record['accessibility'] in ('OS',):
-            usage_type = 'openSource'
-        elif record['accessibility'] in ('CS',):
+        else:
             usage_type = 'exemptByLaw'
             project['permissions']['exemptionText'] = 'This source code is restricted by patent and / or intellectual property law.'
-        else:
-            logger.warn('DOECode: Unable to determine usage_type')
-            logger.warn('DOECode: code_id=%s', record['code_id'])
-            logger.warn('DOECode: software_title=%s', record['software_title'])
-            logger.warn('DOECode: open_source=%s', record['open_source'])
-            logger.warn('DOECode: accessibility=%s', record['accessibility'])
-            logger.warn('DOECode: access_limitations=%s', record['access_limitations'])
-            usage_type = ''
+
         project['permissions']['usageType'] = usage_type
 
         # TODO: Compute from git repo
@@ -661,12 +650,21 @@ class CodeGovProject(dict):
 
         # -- OPTIONAL FIELDS --
 
-        # record['version'] = ''
+        if 'version_number' in record and record['version_number']:
+            project['version'] = record['version_number']
 
         project['organization'] = record['site_ownership_code']
 
-        # TODO: Currently, can't be an empty string, see: https://github.com/GSA/code-gov-web/issues/370
-        project['status'] = 'Production'
+        # Currently, can't be an empty string, see: https://github.com/GSA/code-gov-web/issues/370
+        status = record.get('ever_announced')
+        if status is None:
+            raise ValueError('DOE CODE: Unable to determine "ever_announced" value!');
+        elif status:
+            status = 'Production'
+        else:
+            status = 'Development'
+
+        project['status'] = status
 
         vcs = None
         link = project['repositoryURL']
@@ -688,10 +686,11 @@ class CodeGovProject(dict):
 
         # self['disclaimerURL'] = ''
 
-        # self['languages'] = []
+        if 'programming_languages' in record:
+            project['languages'] = record['programming_languages']
 
         # self['partners'] = []
-        logger.debug('DOECode: contributing_organizations=%s', record['contributing_organizations'])
+        #TODO: Look into using record['contributing_organizations']
 
         # self['relatedCode'] = []
 
