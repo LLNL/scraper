@@ -149,7 +149,7 @@ def process_doecode_url(url, key):
     """
     Converts a DOE CODE API .json URL response into DOE CODE projects
     """
-    doecode_json = requests.get(url, headers={"Authorization":"Basic " + key}).json()
+    doecode_json = requests.get(url, headers={"Authorization": "Basic " + key}).json()
     projects = [CodeGovProject.from_doecode(p) for p in doecode_json['records']]
 
     return projects

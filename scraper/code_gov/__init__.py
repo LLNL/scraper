@@ -657,7 +657,7 @@ class CodeGovProject(dict):
         # Currently, can't be an empty string, see: https://github.com/GSA/code-gov-web/issues/370
         status = record.get('ever_announced')
         if status is None:
-            raise ValueError('DOE CODE: Unable to determine "ever_announced" value!');
+            raise ValueError('DOE CODE: Unable to determine "ever_announced" value!')
         elif status:
             status = 'Production'
         else:
@@ -689,7 +689,7 @@ class CodeGovProject(dict):
             project['languages'] = record['programming_languages']
 
         # self['partners'] = []
-        #TODO: Look into using record['contributing_organizations']
+        # TODO: Look into using record['contributing_organizations']
 
         # self['relatedCode'] = []
 
