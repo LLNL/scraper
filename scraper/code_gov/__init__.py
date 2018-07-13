@@ -17,23 +17,6 @@ logger = logging.getLogger(__name__)
 
 EFFORT_REGEX = re.compile(r'Effort = ([\d\.]+) Person-months')
 
-DOE_LAB_MAPPING = {
-    'AMES': 'Ames Laboratory (AMES)',
-    'ANL': 'Argonne National Laboratory (ANL)',
-    'BNL': 'Brookhaven National Laboratory (BNL)',
-    'INL': 'Idaho National Laboratory (INL)',
-    'LANL': 'Los Alamos National Laboratory (LANL)',
-    'LBNL': 'Lawrence Berkeley National Laboratory (LBNL)',
-    'LLNL': 'Lawrence Livermore National Laboratory (LLNL)',
-    'NETL': 'National Energy Technology Laboratory (NETL)',
-    'NREL': 'National Renewable Energy Laboratory (NREL)',
-    'ORNL': 'Oak Ridge National Laboratory (ORNL)',
-    'OSTI': 'Office of Scientific and Technical Information (OSTI)',
-    'PNNL': 'Pacific Northwest National Laboratory (PNNL)',
-    'SNL': 'Sandia National Laboratories (SNL)',
-    'TJNAF': 'Thomas Jefferson National Accelerator Facility (TJNAF)',
-}
-
 
 def _license_obj(license):
     """
@@ -654,9 +637,9 @@ class CodeGovProject(dict):
         project['laborHours'] = 0
 
         project['tags'] = ['doecode']
-        site_code = record['site_ownership_code']
-        if site_code in DOE_LAB_MAPPING:
-            project['tags'].append(DOE_LAB_MAPPING[site_code])
+        lab_name = record.get('lab_display_name')
+        if lab_name is not None:
+            project['tags'].append(lab_name)
 
         project['contact']['email'] = record['owner']
         # project['contact']['URL'] = ''
@@ -668,7 +651,8 @@ class CodeGovProject(dict):
         if 'version_number' in record and record['version_number']:
             project['version'] = record['version_number']
 
-        project['organization'] = record['site_ownership_code']
+        if lab_name is not None:
+            project['organization'] = lab_name
 
         # Currently, can't be an empty string, see: https://github.com/GSA/code-gov-web/issues/370
         status = record.get('ever_announced')
