@@ -162,6 +162,8 @@ def main():
 
     parser.add_argument('--doecode-json', type=str, nargs='?', default='', help='Path to DOECode .json file')
 
+    parser.add_argument('--output-path', type=str, nargs='?', default='', help='Output path for .json and .csv files')
+
     parser.add_argument('--verbose', action='store_true', help='Enable verbose output')
 
     args = parser.parse_args()
@@ -180,6 +182,13 @@ def main():
         if args.config:
             raise
         config_json = {}
+
+    output_path = config_json.get('output_path', None)
+    output_path = args.output_path or output_path
+    logger.debug('Output Path: %s', output_path)
+
+    if (output_path is not None and not os.path.exists(output_path)):
+        raise RuntimeError('Invalid output path argument provided!  Make sure the output path exists and try again.')
 
     agency = config_json.get('agency', 'UNKNOWN')
     agency = args.agency or agency
@@ -251,6 +260,10 @@ def main():
     logger.info('Number of Projects: %s', len(code_json['releases']))
 
     json_filename = 'code.json'
+
+    if output_path is not None:
+        json_filename = os.path.join(output_path, json_filename)
+
     logger.info('Writing output to: %s', json_filename)
 
     with open(json_filename, 'w') as fp:
@@ -259,6 +272,12 @@ def main():
 
     if args.to_csv:
         csv_filename = 'code.csv'
+
+        if output_path is not None:
+            csv_filename = os.path.join(output_path, csv_filename)
+
+        logger.info('Writing output to: %s', csv_filename)
+
         with open(csv_filename, 'w') as fp:
             for project in code_json['releases']:
                 fp.write(to_doe_csv(project) + '\n')
