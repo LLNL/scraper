@@ -18,11 +18,7 @@ from scraper.github import gov_orgs
 logger = logging.getLogger(__name__)
 
 # TODO: Might not really want this at global scope
-token = os.environ['GITHUB_API_TOKEN']
-gh = github3.login(token=token)
-
-if gh is None:
-    raise RuntimeError('Invalid GITHUB_API_TOKEN in environment')
+gh = None
 
 
 def _configure_logging(verbose=False):
@@ -40,6 +36,18 @@ def _configure_logging(verbose=False):
 
     handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
     logger.addHandler(handler)
+
+
+def _check_github_token():
+    token = os.environ.get('GITHUB_API_TOKEN')
+
+    if token is None:
+        raise RuntimeError('GITHUB_API_TOKEN not configured in environment')
+
+    gh = github3.login(token=token)
+
+    if gh is None:
+        raise RuntimeError('Invalid GITHUB_API_TOKEN in environment')
 
 
 def _check_api_limits(gh_session, min_requests_remaining=250, sleep_time=15):
@@ -128,7 +136,7 @@ def process_bitbucket(bitbucket):
 
 def process_doecode(doecode_json_filename):
     """
-    Converts a DOECode .json file into DOECode projects
+    Converts a DOE CODE .json file into DOE CODE projects
     """
     doecode_json = json.load(open(doecode_json_filename))
     projects = [CodeGovProject.from_doecode(p) for p in doecode_json['records']]
@@ -137,7 +145,7 @@ def process_doecode(doecode_json_filename):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Scrape code repositories for Code.gov / DOECode')
+    parser = argparse.ArgumentParser(description='Scrape code repositories for Code.gov / DOE CODE')
 
     parser.add_argument('--agency', type=str, nargs='?', default='', help='Agency Label, e.g. "DOE"')
     parser.add_argument('--method', type=str, nargs='?', default='', help='Method of measuring open source')
@@ -152,7 +160,9 @@ def main():
 
     parser.add_argument('--to-csv', action='store_true', help='Toggle output to CSV')
 
-    parser.add_argument('--doecode-json', type=str, nargs='?', default='', help='Path to DOECode .json file')
+    parser.add_argument('--doecode-json', type=str, nargs='?', default='', help='Path to DOE CODE .json file')
+
+    parser.add_argument('--output-path', type=str, nargs='?', default='', help='Output path for .json and .csv files')
 
     parser.add_argument('--output-path', type=str, nargs='?', default='', help='Output path for .json and .csv files')
 
@@ -161,6 +171,12 @@ def main():
     args = parser.parse_args()
 
     _configure_logging(args.verbose)
+
+    doecode_json = args.doecode_json
+
+    # DOE CODE JSON parsing does not currently require GitHub connectivity.
+    if doecode_json is None:
+        _check_github_token()
 
     try:
         config_json = json.load(open(args.config))
@@ -207,8 +223,7 @@ def main():
     bitbucket_servers = [connect_to_bitbucket(s) for s in bitbucket_servers]
     logger.debug('Bitbucket Servers: %s', bitbucket_servers)
 
-    doecode_json = args.doecode_json
-    logger.debug('Queuing DOE Code JSON: %s', doecode_json)
+    logger.debug('Queuing DOE CODE JSON: %s', doecode_json)
 
     code_json = CodeGovMetadata(agency, method)
 
@@ -224,7 +239,7 @@ def main():
     if os.path.isfile(doecode_json):
         code_json['releases'].extend(process_doecode(doecode_json))
     elif doecode_json:
-        logger.warning('Unbale to find DOECode json file: %s', doecode_json)
+        raise FileNotFoundError('Unable to find DOE CODE json file: %s' % doecode_json)
 
     # Force certain fields
     if organization:

@@ -17,23 +17,6 @@ logger = logging.getLogger(__name__)
 
 EFFORT_REGEX = re.compile(r'Effort = ([\d\.]+) Person-months')
 
-DOE_LAB_MAPPING = {
-    'AMES': 'Ames Laboratory (AMES)',
-    'ANL': 'Argonne National Laboratory (ANL)',
-    'BNL': 'Brookhaven National Laboratory (BNL)',
-    'INL': 'Idaho National Laboratory (INL)',
-    'LANL': 'Los Alamos National Laboratory (LANL)',
-    'LBNL': 'Lawrence Berkeley National Laboratory (LBNL)',
-    'LLNL': 'Lawrence Livermore National Laboratory (LLNL)',
-    'NETL': 'National Energy Technology Laboratory (NETL)',
-    'NREL': 'National Renewable Energy Laboratory (NREL)',
-    'ORNL': 'Oak Ridge National Laboratory (ORNL)',
-    'OSTI': 'Office of Scientific and Technical Information (OSTI)',
-    'PNNL': 'Pacific Northwest National Laboratory (PNNL)',
-    'SNL': 'Sandia National Laboratories (SNL)',
-    'TJNAF': 'Thomas Jefferson National Accelerator Facility (TJNAF)',
-}
-
 
 def _license_obj(license):
     """
@@ -602,7 +585,7 @@ class CodeGovProject(dict):
     @classmethod
     def from_doecode(klass, record):
         """
-        Create CodeGovProject object from DOECode record
+        Create CodeGovProject object from DOE CODE record
 
         Handles crafting Code.gov Project
         """
@@ -614,21 +597,20 @@ class CodeGovProject(dict):
         # -- REQUIRED FIELDS --
 
         project['name'] = record['software_title']
-        logger.debug('DOECode: software_title="%s"', record['software_title'])
+        logger.debug('DOE CODE: software_title="%s"', record['software_title'])
 
         link = record.get('repository_link', '')
-        if link:
-            project['repositoryURL'] = link
-        else:
-            url = record.get('landing_page')
-            logger.warning('DOECODE: No repositoryURL, using landing_page: %s', url)
-            project['repositoryURL'] = url
+        if not link:
+            link = record.get('landing_page')
+            logger.warning('DOE CODE: No repositoryURL, using landing_page: %s', link)
+
+        project['repositoryURL'] = link
 
         project['description'] = record['description']
 
         licenses = set(record['licenses'])
         licenses.discard(None)
-        logger.debug('DOECode: licenses=%s', licenses)
+        logger.debug('DOE CODE: licenses=%s', licenses)
 
         license_objects = []
         if 'Other' in licenses:
@@ -643,31 +625,21 @@ class CodeGovProject(dict):
 
         project['permissions']['licenses'] = license_objects
 
-        # TODO: Need to
         if record['open_source']:
             usage_type = 'openSource'
-        elif record['accessibility'] in ('OS',):
-            usage_type = 'openSource'
-        elif record['accessibility'] in ('CS',):
+        else:
             usage_type = 'exemptByLaw'
             project['permissions']['exemptionText'] = 'This source code is restricted by patent and / or intellectual property law.'
-        else:
-            logger.warn('DOECode: Unable to determine usage_type')
-            logger.warn('DOECode: code_id=%s', record['code_id'])
-            logger.warn('DOECode: software_title=%s', record['software_title'])
-            logger.warn('DOECode: open_source=%s', record['open_source'])
-            logger.warn('DOECode: accessibility=%s', record['accessibility'])
-            logger.warn('DOECode: access_limitations=%s', record['access_limitations'])
-            usage_type = ''
+
         project['permissions']['usageType'] = usage_type
 
         # TODO: Compute from git repo
         project['laborHours'] = 0
 
-        project['tags'] = ['doecode']
-        site_code = record['site_ownership_code']
-        if site_code in DOE_LAB_MAPPING:
-            project['tags'].append(DOE_LAB_MAPPING[site_code])
+        project['tags'] = ['DOE CODE']
+        lab_name = record.get('lab_display_name')
+        if lab_name is not None:
+            project['tags'].append(lab_name)
 
         project['contact']['email'] = record['owner']
         # project['contact']['URL'] = ''
@@ -676,19 +648,29 @@ class CodeGovProject(dict):
 
         # -- OPTIONAL FIELDS --
 
-        # record['version'] = ''
+        if 'version_number' in record and record['version_number']:
+            project['version'] = record['version_number']
 
-        project['organization'] = record['site_ownership_code']
+        if lab_name is not None:
+            project['organization'] = lab_name
 
-        # TODO: Currently, can't be an empty string, see: https://github.com/GSA/code-gov-web/issues/370
-        project['status'] = 'Production'
+        # Currently, can't be an empty string, see: https://github.com/GSA/code-gov-web/issues/370
+        status = record.get('ever_announced')
+        if status is None:
+            raise ValueError('DOE CODE: Unable to determine "ever_announced" value!')
+        elif status:
+            status = 'Production'
+        else:
+            status = 'Development'
+
+        project['status'] = status
 
         vcs = None
         link = project['repositoryURL']
         if 'github.com' in link:
             vcs = 'git'
         if vcs is None:
-            logger.debug('DOECode: Unable to determine vcs for: name="%s", repositoryURL=%s', project['name'], link)
+            logger.debug('DOE CODE: Unable to determine vcs for: name="%s", repositoryURL=%s', project['name'], link)
             vcs = ''
         if vcs:
             project['vcs'] = vcs
@@ -703,10 +685,11 @@ class CodeGovProject(dict):
 
         # self['disclaimerURL'] = ''
 
-        # self['languages'] = []
+        if 'programming_languages' in record:
+            project['languages'] = record['programming_languages']
 
         # self['partners'] = []
-        logger.debug('DOECode: contributing_organizations=%s', record['contributing_organizations'])
+        # TODO: Look into using record['contributing_organizations']
 
         # self['relatedCode'] = []
 
