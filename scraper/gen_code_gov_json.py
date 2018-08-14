@@ -18,7 +18,8 @@ from scraper.github import gov_orgs
 logger = logging.getLogger(__name__)
 
 # TODO: Might not really want this at global scope
-gh = None
+token = os.environ.get('GITHUB_API_TOKEN')
+gh = github3.login(token=token)
 
 
 def _configure_logging(verbose=False):
@@ -48,6 +49,8 @@ def _check_github_token():
 
     if gh is None:
         raise RuntimeError('Invalid GITHUB_API_TOKEN in environment')
+
+    return gh
 
 
 def _check_api_limits(gh_session, min_requests_remaining=250, sleep_time=15):
@@ -161,8 +164,6 @@ def main():
     parser.add_argument('--to-csv', action='store_true', help='Toggle output to CSV')
 
     parser.add_argument('--doecode-json', type=str, nargs='?', default='', help='Path to DOE CODE .json file')
-
-    parser.add_argument('--output-path', type=str, nargs='?', default='', help='Output path for .json and .csv files')
 
     parser.add_argument('--output-path', type=str, nargs='?', default='', help='Output path for .json and .csv files')
 
