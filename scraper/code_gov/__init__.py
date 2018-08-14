@@ -181,7 +181,9 @@ def git_repo_to_sloc(url):
         out, _ = execute(cmd)
 
         try:
-            cloc_json = json.loads(out[1:].replace('\\n', '').replace('\'', ''))
+            json_start = out.find('{"header"')
+            json_blob = out[json_start:].replace('\\n', '').replace('\'', '')
+            cloc_json = json.loads(json_blob)
             sloc = cloc_json['SUM']['code']
         except json.decoder.JSONDecodeError:
             logger.debug('Error Decoding: url=%s, out=%s', url, out)
@@ -405,7 +407,9 @@ class CodeGovProject(dict):
         project['permissions']['usageType'] = 'openSource'
 
         sum_sloc = git_repo_to_sloc(project['repositoryURL'])
+        logger.info('SLOC: %d', sum_sloc)
         laborHours = compute_labor_hours(sum_sloc)
+        logger.info('laborHours: %d', laborHours)
         project['laborHours'] = laborHours
 
         # TODO: Compute from GitHub
