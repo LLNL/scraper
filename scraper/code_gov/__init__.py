@@ -703,10 +703,11 @@ class CodeGovProject(dict):
         #   created: [string] The date the release was originally created, in YYYY-MM-DD or ISO 8601 format.
         #   lastModified: [string] The date the release was modified, in YYYY-MM-DD or ISO 8601 format.
         #   metadataLastUpdated: [string] The date the metadata of the release was last updated, in YYYY-MM-DD or ISO 8601 format.
-        project['date'] = {
-            'created': record['date_record_added'],
-            # 'lastModified': '',
-            'metadataLastUpdated': record['date_record_updated']
-        }
+        if 'date_record_added' in record and 'date_record_updated' in record:
+            project['date'] = {
+                'created': record['date_record_added'],
+                # 'lastModified': '',
+                'metadataLastUpdated': record['date_record_updated']
+            }
 
         return project
