@@ -9,7 +9,7 @@ Government to allow the People to access metadata from the governments custom
 developed software. This site requires metadata to function, and this Python
 library can help with that!
 
-To get started, you will need a GitHub Personal Auth Token to make requests to
+To get started, you will need a [GitHub Personal Auth Token](https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/) to make requests to
 the GitHub API. This should be set in your environment or shell ``rc`` file with
 the name ``GITHUB_API_TOKEN``:
 
@@ -21,6 +21,7 @@ the name ``GITHUB_API_TOKEN``:
 To generate a ``code.json`` file for your GitHub organization:
 
     $ pip install -e .
+    $ npm install -g cloc
 
     $ scraper --agency <agency_name> --github-orgs <list of github org usernames ...>
 
