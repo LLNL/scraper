@@ -1,40 +1,6 @@
-Copyright (c) 2016, Lawrence Livermore National Security, LLC.
-Produced at the Lawrence Livermore National Laboratory
-All rights reserved.
+MIT License
 
-Written by: Ian Lee <lee1001@llnl.gov>
-LLNL-CODE-705597
-
-This file is part of: Scraper
-For details, see: https://github.com/llnl/scraper
-
-
-                            LLNL Preamble
-
-A. This notice is required to be provided under our contract with the U.S.
-Department of Energy (DOE). This work was produced at the Lawrence Livermore
-National Laboratory under Contract No. DE-AC52-07NA27344 with the DOE.
-
-B. Neither the United States Government nor Lawrence Livermore National
-Security, LLC nor any of their employees, makes any warranty, express or
-implied, or assumes any liability or responsibility for the accuracy,
-completeness, or usefulness of any information, apparatus, product, or process
-disclosed, or represents that its use would not infringe privately-owned rights.
-
-C. Also, reference herein to any specific commercial products, process, or
-services by trade name, trademark, manufacturer or otherwise does not
-necessarily constitute or imply its endorsement, recommendation, or favoring by
-the United States Government or Lawrence Livermore National Security, LLC. The
-views and opinions of authors expressed herein do not necessarily state or
-reflect those of the United States Government or Lawrence Livermore National
-Security, LLC, and shall not be used for advertising or product endorsement
-purposes.
-
-The precise terms and conditions for copying, distribution and modification
-follows.
-
-
-                    The MIT License (MIT)
+Copyright (c) 2018, Lawrence Livermore National Security, LLC
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
