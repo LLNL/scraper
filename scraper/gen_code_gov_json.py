@@ -19,8 +19,7 @@ from scraper.github import gov_orgs
 logger = logging.getLogger(__name__)
 
 # TODO: Might not really want this at global scope
-token = os.environ.get('GITHUB_API_TOKEN')
-gh = github3.login(token=token)
+gh = None
 
 
 def _configure_logging(verbose=False):
@@ -194,7 +193,7 @@ def main():
 
     # DOE CODE JSON parsing does not currently require GitHub connectivity.
     if doecode_json is None and doecode_url is None:
-        _check_github_token()
+        gh = _check_github_token()
 
     try:
         config_json = json.load(open(args.config))
