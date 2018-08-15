@@ -13,74 +13,15 @@ import stashy
 
 from scraper.code_gov import CodeGovMetadata, CodeGovProject
 from scraper.code_gov.doe import to_doe_csv
-from scraper.github import gov_orgs
+from scraper.github import gov_orgs, create_session, _check_api_limits
+from scraper.util import configure_logging
 
+
+configure_logging()
 logger = logging.getLogger(__name__)
 
 # TODO: Might not really want this at global scope
-token = os.environ.get('GITHUB_API_TOKEN')
-gh = github3.login(token=token)
-
-
-def _configure_logging(verbose=False):
-    # logging.basicConfig(level=logging.INFO)
-
-    # logging.getLogger('github3').propogate = False
-
-    handler = logging.StreamHandler()
-    if verbose:
-        logger.setLevel(logging.DEBUG)
-        handler.setLevel(logging.DEBUG)
-    else:
-        logger.setLevel(logging.INFO)
-        handler.setLevel(logging.INFO)
-
-    handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
-    logger.addHandler(handler)
-
-
-def _check_github_token():
-    token = os.environ.get('GITHUB_API_TOKEN')
-
-    if token is None:
-        raise RuntimeError('GITHUB_API_TOKEN not configured in environment')
-
-    gh = github3.login(token=token)
-
-    if gh is None:
-        raise RuntimeError('Invalid GITHUB_API_TOKEN in environment')
-
-    return gh
-
-
-def _check_api_limits(gh_session, min_requests_remaining=250, sleep_time=15):
-    """
-    Simplified check for API limits
-
-    If necessary, spin in place waiting for API to reset before returning.
-
-    Returns two-tuple of: ``(# API requests remaining, unix time of reset)``
-
-    See: https://developer.github.com/v3/#rate-limiting
-    """
-    api_rates = gh_session.rate_limit()
-
-    api_remaining = api_rates['rate']['remaining']
-    api_reset = api_rates['rate']['reset']
-    logger.debug('Rate Limit - %d requests remaining', api_remaining)
-
-    if api_remaining > min_requests_remaining:
-        return
-
-    now_time = time.time()
-    time_to_reset = int(api_reset - now_time)
-    logger.warn('Rate Limit Depleted - Sleeping for %d seconds', time_to_reset)
-
-    while now_time < api_reset:
-        time.sleep(10)
-        now_time = time.time()
-
-    return
+gh = create_session()
 
 
 def process_organization(org_name):
@@ -171,7 +112,10 @@ def main():
 
     args = parser.parse_args()
 
-    _configure_logging(args.verbose)
+    configure_logging(args.verbose)
+    logger.debug('debug -- Testing logging')
+    logger.info('info -- Testing logging')
+    logger.warn('warning -- Testing logging')
 
     doecode_json = args.doecode_json
 

@@ -189,7 +189,7 @@ def git_repo_to_sloc(url):
             logger.debug('Error Decoding: url=%s, out=%s', url, out)
             sloc = 0
 
-    logger.debug('SLOC: url=%s, sloc=%d', sloc)
+    logger.debug('SLOC: url=%s, sloc=%d', url, sloc)
 
     return sloc
 
