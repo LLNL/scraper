@@ -9,14 +9,19 @@ Government to allow the People to access metadata from the governments custom
 developed software. This site requires metadata to function, and this Python
 library can help with that!
 
-To get started, you will need a [GitHub Personal Auth Token](https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/) to make requests to
-the GitHub API. This should be set in your environment or shell ``rc`` file with
-the name ``GITHUB_API_TOKEN``:
+To get started, you will need a [GitHub Personal Auth
+Token](https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/)
+to make requests to the GitHub API. This should be set in your environment or
+shell ``rc`` file with the name ``GITHUB_API_TOKEN``:
 
     $ export GITHUB_API_TOKEN=XYZ
 
     $ echo "export GITHUB_API_TOKEN=XYZ" >> ~/.bashrc
 
+You will also need to install ``cloc`` into your environment. This is typically
+done with a [Package
+Manager](https://github.com/AlDanial/cloc#install-via-package-manager) such as
+``npm`` or ``homebrew``.
 
 To generate a ``code.json`` file for your GitHub organization:
 
