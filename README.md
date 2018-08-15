@@ -26,7 +26,6 @@ Manager](https://github.com/AlDanial/cloc#install-via-package-manager) such as
 To generate a ``code.json`` file for your GitHub organization:
 
     $ pip install -e .
-    $ npm install -g cloc
 
     $ scraper --agency <agency_name> --github-orgs <list of github org usernames ...>
 
