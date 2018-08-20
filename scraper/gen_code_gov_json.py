@@ -7,6 +7,7 @@ import json
 import logging
 import os
 import time
+import requests
 
 import github3
 import stashy
@@ -88,6 +89,16 @@ def process_doecode(doecode_json_filename):
     return projects
 
 
+def process_doecode_url(url, key):
+    """
+    Converts a DOE CODE API .json URL response into DOE CODE projects
+    """
+    doecode_json = requests.get(url, headers={"Authorization": "Basic " + key}).json()
+    projects = [CodeGovProject.from_doecode(p) for p in doecode_json['records']]
+
+    return projects
+
+
 def main():
     parser = argparse.ArgumentParser(description='Scrape code repositories for Code.gov / DOE CODE')
 
@@ -106,6 +117,10 @@ def main():
 
     parser.add_argument('--doecode-json', type=str, nargs='?', default=None, help='Path to DOE CODE .json file')
 
+    parser.add_argument('--doecode-url', type=str, nargs='?', default=None, help='URL to DOE CODE .json data')
+
+    parser.add_argument('--doecode-url-key', type=str, nargs='?', default=None, help='DOE CODE API key for accessing --doecode-url')
+
     parser.add_argument('--output-path', type=str, nargs='?', default='', help='Output path for .json and .csv files')
 
     parser.add_argument('--verbose', action='store_true', help='Enable verbose output')
@@ -118,9 +133,11 @@ def main():
     logger.warn('warning -- Testing logging')
 
     doecode_json = args.doecode_json
+    doecode_url = args.doecode_url
+    doecode_url_key = args.doecode_url_key
 
     # DOE CODE JSON parsing does not currently require GitHub connectivity.
-    if doecode_json is None:
+    if doecode_json is None and doecode_url is None:
         _check_github_token()
 
     try:
@@ -168,8 +185,6 @@ def main():
     bitbucket_servers = [connect_to_bitbucket(s) for s in bitbucket_servers]
     logger.debug('Bitbucket Servers: %s', bitbucket_servers)
 
-    logger.debug('Queuing DOE CODE JSON: %s', doecode_json)
-
     code_json = CodeGovMetadata(agency, method)
 
     for org_name in sorted(github_orgs, key=str.lower):
@@ -181,10 +196,21 @@ def main():
     for bitbucket in sorted(bitbucket_servers, key=str.lower):
         code_json['releases'].extend(process_bitbucket(bitbucket))
 
-    if os.path.isfile(doecode_json):
-        code_json['releases'].extend(process_doecode(doecode_json))
-    elif doecode_json:
-        raise FileNotFoundError('Unable to find DOE CODE json file: %s' % doecode_json)
+    if doecode_json is not None:
+        logger.debug('Queuing DOE CODE JSON: %s', doecode_json)
+
+        if os.path.isfile(doecode_json):
+            code_json['releases'].extend(process_doecode(doecode_json))
+        elif doecode_json:
+            raise FileNotFoundError('Unable to find DOE CODE json file: %s' % doecode_json)
+
+    elif doecode_url is not None:
+        logger.debug('Fetching DOE CODE JSON: %s', doecode_url)
+
+        if doecode_url_key is None:
+            raise ValueError('DOE CODE: API Key "doecode_url_key" value is missing!')
+
+        code_json['releases'].extend(process_doecode_url(doecode_url, doecode_url_key))
 
     # Force certain fields
     if organization:
