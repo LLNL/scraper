@@ -104,7 +104,7 @@ def main():
 
     parser.add_argument('--to-csv', action='store_true', help='Toggle output to CSV')
 
-    parser.add_argument('--doecode-json', type=str, nargs='?', default='', help='Path to DOE CODE .json file')
+    parser.add_argument('--doecode-json', type=str, nargs='?', default=None, help='Path to DOE CODE .json file')
 
     parser.add_argument('--output-path', type=str, nargs='?', default='', help='Output path for .json and .csv files')
 
