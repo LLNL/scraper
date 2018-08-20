@@ -19,7 +19,7 @@ from scraper.github import gov_orgs
 logger = logging.getLogger(__name__)
 
 # TODO: Might not really want this at global scope
-global gh = None
+gh = None
 
 
 def _configure_logging(verbose=False):
@@ -40,6 +40,7 @@ def _configure_logging(verbose=False):
 
 
 def _check_github_token():
+    global gh
     token = os.environ.get('GITHUB_API_TOKEN')
 
     if token is None:
@@ -49,8 +50,6 @@ def _check_github_token():
 
     if gh is None:
         raise RuntimeError('Invalid GITHUB_API_TOKEN in environment')
-
-    return gh
 
 
 def _check_api_limits(gh_session, min_requests_remaining=250, sleep_time=15):
