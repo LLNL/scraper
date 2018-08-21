@@ -16,7 +16,6 @@ from scraper.github import gov_orgs, create_session, _check_api_limits
 from scraper.util import configure_logging
 
 
-configure_logging()
 logger = logging.getLogger(__name__)
 
 # TODO: Might not really want this at global scope
