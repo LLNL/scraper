@@ -6,10 +6,8 @@ import getpass
 import json
 import logging
 import os
-import time
 import requests
 
-import github3
 import stashy
 
 from scraper.code_gov import CodeGovMetadata, CodeGovProject
