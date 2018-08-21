@@ -22,7 +22,7 @@ configure_logging()
 logger = logging.getLogger(__name__)
 
 # TODO: Might not really want this at global scope
-gh = create_session()
+gh = None
 
 
 def process_organization(org_name):
@@ -100,6 +100,8 @@ def process_doecode_url(url, key):
 
 
 def main():
+    global gh
+
     parser = argparse.ArgumentParser(description='Scrape code repositories for Code.gov / DOE CODE')
 
     parser.add_argument('--agency', type=str, nargs='?', default='', help='Agency Label, e.g. "DOE"')
@@ -138,7 +140,7 @@ def main():
 
     # DOE CODE JSON parsing does not currently require GitHub connectivity.
     if doecode_json is None and doecode_url is None:
-        _check_github_token()
+        gh = create_session()
 
     try:
         config_json = json.load(open(args.config))
