@@ -3,19 +3,13 @@
 
 import json
 import logging
-import os
-import re
-import tempfile
 
 import github3
 import gitlab
-import requests
 
-from scraper.util import execute
+from scraper.util import _prune_dict_null_str, labor_hours_from_url
 
 logger = logging.getLogger(__name__)
-
-EFFORT_REGEX = re.compile(r'Effort = ([\d\.]+) Person-months')
 
 
 def _license_obj(license):
@@ -102,124 +96,6 @@ def _license_obj(license):
         raise ValueError('Aborting!')
 
     return obj
-
-
-def _prune_dict_null_str(dictionary):
-    """
-    Prune the "None" or emptry string values from dictionary items
-    """
-    for key, value in list(dictionary.items()):
-        if value is None or str(value) == '':
-            del dictionary[key]
-
-        if isinstance(value, dict):
-            dictionary[key] = _prune_dict_null_str(dictionary[key])
-
-    return dictionary
-
-
-def git_repo_to_sloc(url):
-    """
-    Given a Git repository URL, returns number of lines of code based on cloc
-
-    Reference:
-        - cloc: https://github.com/AlDanial/cloc
-
-    Sample cloc output:
-        {
-            "header": {
-                "cloc_url": "github.com/AlDanial/cloc",
-                "cloc_version": "1.74",
-                "elapsed_seconds": 0.195950984954834,
-                "n_files": 27,
-                "n_lines": 2435,
-                "files_per_second": 137.78956000769,
-                "lines_per_second": 12426.5769858787
-            },
-            "C++": {
-                "nFiles": 7,
-                "blank": 121,
-                "comment": 314,
-                "code": 371
-            },
-            "C/C++ Header": {
-                "nFiles": 8,
-                "blank": 107,
-                "comment": 604,
-                "code": 191
-            },
-            "CMake": {
-                "nFiles": 11,
-                "blank": 49,
-                "comment": 465,
-                "code": 165
-            },
-            "Markdown": {
-                "nFiles": 1,
-                "blank": 18,
-                "comment": 0,
-                "code": 30
-            },
-            "SUM": {
-                "blank": 295,
-                "comment": 1383,
-                "code": 757,
-                "nFiles": 27
-            }
-        }
-    """
-
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        logger.debug('Cloning: url=%s tmp_dir=%s', url, tmp_dir)
-
-        tmp_clone = os.path.join(tmp_dir, 'clone-dir')
-
-        cmd = ['git', 'clone', '--depth=1', url, tmp_clone]
-        execute(cmd)
-
-        cmd = ['cloc', '--json', tmp_clone]
-        out, _ = execute(cmd)
-
-        try:
-            json_start = out.find('{"header"')
-            json_blob = out[json_start:].replace('\\n', '').replace('\'', '')
-            cloc_json = json.loads(json_blob)
-            sloc = cloc_json['SUM']['code']
-        except json.decoder.JSONDecodeError:
-            logger.debug('Error Decoding: url=%s, out=%s', url, out)
-            sloc = 0
-
-    logger.debug('SLOC: url=%s, sloc=%d', url, sloc)
-
-    return sloc
-
-
-def compute_labor_hours(sloc):
-    """
-    Compute the labor hours, given a count of source lines of code
-
-    The intention is to use the COCOMO II model to compute this value.
-
-    References:
-    - http://csse.usc.edu/tools/cocomoii.php
-    - http://docs.python-guide.org/en/latest/scenarios/scrape/
-    """
-    # (40 Hours / week) * (52 weeks / year) / (12 months / year) ~= 173.33
-    HOURS_PER_PERSON_MONTH = 40.0 * 52 / 12
-
-    cocomo_url = 'http://csse.usc.edu/tools/cocomoii.php'
-    page = requests.post(cocomo_url, data={'new_size': sloc})
-
-    try:
-        person_months = float(EFFORT_REGEX.search(page.text).group(1))
-    except AttributeError:
-        # If there is no match, and .search(..) returns None
-        person_months = 0
-
-    labor_hours = person_months * HOURS_PER_PERSON_MONTH
-    logger.debug('sloc=%d labor_hours=%d', sloc, labor_hours)
-
-    return labor_hours
 
 
 class CodeGovMetadata(dict):
@@ -406,11 +282,7 @@ class CodeGovProject(dict):
         project['permissions']['licenses'] = None
         project['permissions']['usageType'] = 'openSource'
 
-        sum_sloc = git_repo_to_sloc(project['repositoryURL'])
-        logger.info('SLOC: %d', sum_sloc)
-        laborHours = compute_labor_hours(sum_sloc)
-        logger.info('laborHours: %d', laborHours)
-        project['laborHours'] = laborHours
+        project['laborHours'] = labor_hours_from_url(project['repositoryURL'])
 
         # TODO: Compute from GitHub
         project['tags'] = ['github']
