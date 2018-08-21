@@ -6,6 +6,7 @@ import os
 
 import requests
 import github3
+import time
 
 logger = logging.getLogger(__name__)
 
