@@ -6,8 +6,8 @@ from setuptools import setup, find_packages
 
 setup(
     name='llnl-scraper',
-    version='0.2.1',
-    description='Package for extracting ',
+    version='0.3.0',
+    description='Package for extracting software repository metadata',
     author='Ian Lee',
     author_email='lee1001@llnl.gov',
     url='https://github.com/llnl/scraper',
@@ -22,9 +22,11 @@ setup(
             'scraper = scraper.gen_code_gov_json:main',
         ]
     },
-    scripts=['scripts/codegov_compute_hours.py'],
+    scripts=[
+        'scripts/codegov_compute_hours.py',
+    ],
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
