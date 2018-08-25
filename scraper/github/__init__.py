@@ -92,3 +92,21 @@ def _check_api_limits(gh_session, min_requests_remaining=250, sleep_time=15):
         now_time = time.time()
 
     return
+
+
+def connect_to_github(url, token=None):
+    """
+    Create a GitHub session for making requests
+    """
+
+    gh_session = None
+    if url = 'https://github.com':
+        gh_session = create_session(token)
+    else:
+        gh_session = create_enterprise_session(url, token)
+
+    if gh_session is None:
+        msg = 'Unable to connect to (%s) with provided token.'
+        raise RuntimeError(msg, url)
+
+    return gh_session
