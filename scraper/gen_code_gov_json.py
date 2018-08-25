@@ -33,7 +33,7 @@ def process_organization(org_name):
     WIGGLE_ROOM = 100
     num_requests_needed = 2 * num_repos + WIGGLE_ROOM
 
-    _check_api_limits(gh, min_requests_remaining=num_requests_needed)
+    _check_api_limits(gh, num_requests_needed)
 
     logger.info('Processing GitHub Org: %s (%d public repos)', org_name, num_repos)
 

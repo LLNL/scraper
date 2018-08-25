@@ -66,7 +66,7 @@ def create_enterprise_session(url, token=None):
     return gh_session
 
 
-def _check_api_limits(gh_session, min_requests_remaining=250, sleep_time=15):
+def _check_api_limits(gh_session, api_required=250, sleep_time=15):
     """
     Simplified check for API limits
 
@@ -80,7 +80,7 @@ def _check_api_limits(gh_session, min_requests_remaining=250, sleep_time=15):
     api_reset = api_rates['rate']['reset']
     logger.debug('Rate Limit - %d requests remaining', api_remaining)
 
-    if api_remaining > min_requests_remaining:
+    if api_remaining > api_required:
         return
 
     now_time = time.time()
