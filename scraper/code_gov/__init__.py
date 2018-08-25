@@ -7,13 +7,14 @@ import logging
 import github3
 import gitlab
 
+from scraper.github import connect_to_github, repos_from_orgs
 from scraper.github.util import _license_obj
 from scraper.util import _prune_dict_null_str, labor_hours_from_url
 
 logger = logging.getLogger(__name__)
 
 
-class CodeGovMetadata(dict):
+class Metadata(dict):
     """
     Defines the entire contents of a Code.gov 's code.json file
 
@@ -48,7 +49,7 @@ class CodeGovMetadata(dict):
         return json.dumps(self, indent=4, sort_keys=True)
 
 
-class CodeGovProject(dict):
+class Project(dict):
     """
     Python representation of Code.gov Metadata Schema
 
@@ -498,3 +499,53 @@ class CodeGovProject(dict):
             }
 
         return project
+
+
+def process_config(config):
+    """
+    Master function to process a Scraper config file
+
+    Returns a Code.gov Metadata file
+    """
+
+    agency = config.get('agency', 'UNKNOWN')
+    logger.debug('Agency: %s', agency)
+
+    method = config.get('method', 'other')
+    logger.debug('Inventory Method: %s', method)
+
+    code_gov_metadata = Metadata(agency, method)
+
+    github_instances = config.get('GitHub', [])
+    for instance in github_instances:
+        url = instance.get('url', 'https://github.com')
+        orgs = instance.get('orgs', [])
+        repos = instance.get('repos', [])
+        public_only = instance.get('public_only', True)
+        token = instance.get('token', None)
+
+        gh_session = connect_to_github(url, token)
+
+        repos = repos_from_orgs(gh_session, orgs, repos, public_only)
+        for repo in repos:
+            code_gov_project = Project.from_github3(repo)
+            code_gov_metadata['releases'].append(code_gov_project)
+
+    organization = config.get('organization', '')
+    logger.debug('Organization: %s', organization)
+
+    contact_email = config.get('contact_email', '')
+    logger.debug('Contact Email: %s', contact_email)
+
+    # Force certain fields
+    if organization:
+        logger.debug('Forcing Organiation to: %s', organization)
+        for release in code_gov_metadata['releases']:
+            release['organization'] = organization
+
+    if contact_email:
+        logger.debug('Forcing Contact Email to: %s', contact_email)
+        for release in code_gov_metadata['releases']:
+            release['contact']['email'] = contact_email
+
+    return code_gov_metadata

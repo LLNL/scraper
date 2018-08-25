@@ -6,14 +6,15 @@ import getpass
 import json
 import logging
 import os
-import requests
 
 import stashy
 
-from scraper.code_gov import CodeGovMetadata, CodeGovProject
+from scraper import code_gov
 from scraper.code_gov.doe import to_doe_csv
-from scraper.github import gov_orgs, create_session, _check_api_limits
+# from scraper.github import gov_orgs
+from scraper.github import create_session, _check_api_limits
 from scraper.util import configure_logging
+from scraper import doecode
 
 
 logger = logging.getLogger(__name__)
@@ -37,7 +38,7 @@ def process_organization(org_name):
 
     logger.info('Processing GitHub Org: %s (%d public repos)', org_name, num_repos)
 
-    projects = [CodeGovProject.from_github3(r) for r in repos]
+    projects = [code_gov.Project.from_github3(r) for r in repos]
 
     logger.debug('Setting Contact Email to: %s', org.email)
     for project in projects:
@@ -55,7 +56,7 @@ def process_repository(repository_name):
     org, name = repository_name.split('/')
     repo = gh.repository(org, name)
 
-    project = CodeGovProject.from_github3(repo)
+    project = code_gov.Project.from_github3(repo)
 
     return project
 
@@ -71,27 +72,7 @@ def process_bitbucket(bitbucket):
         raise TypeError('argument must be a Stash Client object')
 
     repos = bitbucket.repos.all()
-    projects = [CodeGovProject.from_stashy(r) for r in repos]
-
-    return projects
-
-
-def process_doecode(doecode_json_filename):
-    """
-    Converts a DOE CODE .json file into DOE CODE projects
-    """
-    doecode_json = json.load(open(doecode_json_filename))
-    projects = [CodeGovProject.from_doecode(p) for p in doecode_json['records']]
-
-    return projects
-
-
-def process_doecode_url(url, key):
-    """
-    Converts a DOE CODE API .json URL response into DOE CODE projects
-    """
-    doecode_json = requests.get(url, headers={"Authorization": "Basic " + key}).json()
-    projects = [CodeGovProject.from_doecode(p) for p in doecode_json['records']]
+    projects = [code_gov.Project.from_stashy(r) for r in repos]
 
     return projects
 
@@ -108,8 +89,8 @@ def main():
 
     parser.add_argument('--config', type=str, nargs='?', default='', help='Configuration File (*.json)')
 
-    parser.add_argument('--github-orgs', type=str, nargs='+', default=[], help='GitHub Organizations')
-    parser.add_argument('--github-repos', type=str, nargs='+', default=[], help='GitHub Repositories')
+    # parser.add_argument('--github-orgs', type=str, nargs='+', default=[], help='GitHub Organizations')
+    # parser.add_argument('--github-repos', type=str, nargs='+', default=[], help='GitHub Repositories')
     parser.add_argument('--github-gov-orgs', action='store_true', help='Use orgs from government.github.com/community')
 
     parser.add_argument('--to-csv', action='store_true', help='Toggle output to CSV')
@@ -148,44 +129,47 @@ def main():
     if (output_path is not None and not os.path.exists(output_path)):
         raise RuntimeError('Invalid output path argument provided!  Make sure the output path exists and try again.')
 
-    agency = config_json.get('agency', 'UNKNOWN')
-    agency = args.agency or agency
-    logger.debug('Agency: %s', agency)
+    # agency = config_json.get('agency', 'UNKNOWN')
+    # agency = args.agency or agency
+    # logger.debug('Agency: %s', agency)
+    #
+    # method = config_json.get('method', 'other')
+    # method = args.method or method
+    # logger.debug('Inventory Method: %s', method)
+    #
+    # organization = config_json.get('organization', '')
+    # organization = args.organization or organization
+    # logger.debug('Organization: %s', organization)
+    #
+    # contact_email = config_json.get('contact_email', '')
+    # contact_email = args.contact_email or contact_email
+    # logger.debug('Contact Email: %s', contact_email)
 
-    method = config_json.get('method', 'other')
-    method = args.method or method
-    logger.debug('Inventory Method: %s', method)
+    # github_orgs = config_json.get('github_orgs', [])
+    # github_orgs.extend(args.github_orgs)
+    # logger.debug('GitHub.com Organizations: %s', github_orgs)
 
-    organization = config_json.get('organization', '')
-    organization = args.organization or organization
-    logger.debug('Organization: %s', organization)
+    # TODO: Will want to re-work this in as a special demo case
+    # if args.github_gov_orgs:
+    #     github_orgs.extend(gov_orgs())
 
-    contact_email = config_json.get('contact_email', '')
-    contact_email = args.contact_email or contact_email
-    logger.debug('Contact Email: %s', contact_email)
-
-    github_orgs = config_json.get('github_orgs', [])
-    github_orgs.extend(args.github_orgs)
-    logger.debug('GitHub.com Organizations: %s', github_orgs)
-
-    if args.github_gov_orgs:
-        github_orgs.extend(gov_orgs())
-
-    github_repos = config_json.get('github_repos', [])
-    github_repos.extend(args.github_repos)
-    logger.debug('GitHub.com Repositories: %s', github_repos)
+    # github_repos = config_json.get('github_repos', [])
+    # github_repos.extend(args.github_repos)
+    # logger.debug('GitHub.com Repositories: %s', github_repos)
 
     bitbucket_servers = config_json.get('bitbucket_servers', [])
     bitbucket_servers = [connect_to_bitbucket(s) for s in bitbucket_servers]
     logger.debug('Bitbucket Servers: %s', bitbucket_servers)
 
-    code_json = CodeGovMetadata(agency, method)
+    code_json = code_gov.process_config(config_json)
 
-    for org_name in sorted(github_orgs, key=str.lower):
-        code_json['releases'].extend(process_organization(org_name))
-
-    for repo_name in sorted(github_repos, key=str.lower):
-        code_json['releases'].append(process_repository(repo_name))
+    # code_json = CodeGovMetadata(agency, method)
+    #
+    # for org_name in sorted(github_orgs, key=str.lower):
+    #     code_json['releases'].extend(process_organization(org_name))
+    #
+    # for repo_name in sorted(github_repos, key=str.lower):
+    #     code_json['releases'].append(process_repository(repo_name))
 
     for bitbucket in sorted(bitbucket_servers, key=str.lower):
         code_json['releases'].extend(process_bitbucket(bitbucket))
@@ -194,7 +178,9 @@ def main():
         logger.debug('Queuing DOE CODE JSON: %s', doecode_json)
 
         if os.path.isfile(doecode_json):
-            code_json['releases'].extend(process_doecode(doecode_json))
+            records = doecode.process_json(doecode_json)
+            projects = [code_gov.Project.from_doecode() for r in records]
+            code_json['releases'].extend(projects)
         elif doecode_json:
             raise FileNotFoundError('Unable to find DOE CODE json file: %s' % doecode_json)
 
@@ -204,18 +190,20 @@ def main():
         if doecode_url_key is None:
             raise ValueError('DOE CODE: API Key "doecode_url_key" value is missing!')
 
-        code_json['releases'].extend(process_doecode_url(doecode_url, doecode_url_key))
+        records = doecode.process_url(doecode_url, doecode_url_key)
+        projects = [code_gov.Project.from_doecode() for r in records]
+        code_json['releases'].extend(projects)
 
     # Force certain fields
-    if organization:
-        logger.debug('Forcing Organiation to: %s', organization)
-        for release in code_json['releases']:
-            release['organization'] = organization
-
-    if contact_email:
-        logger.debug('Forcing Contact Email to: %s', contact_email)
-        for release in code_json['releases']:
-            release['contact']['email'] = contact_email
+    # if organization:
+    #     logger.debug('Forcing Organiation to: %s', organization)
+    #     for release in code_json['releases']:
+    #         release['organization'] = organization
+    #
+    # if contact_email:
+    #     logger.debug('Forcing Contact Email to: %s', contact_email)
+    #     for release in code_json['releases']:
+    #         release['contact']['email'] = contact_email
 
     str_org_projects = code_json.to_json()
 
