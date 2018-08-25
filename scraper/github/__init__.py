@@ -57,7 +57,7 @@ def create_enterprise_session(url, token=None):
     environment variable if present.
     """
 
-    gh_session = github3.enterprise_login(url=, token=token)
+    gh_session = github3.enterprise_login(url=url, token=token)
 
     if gh_session is None:
         msg = 'Unable to connect to GitHub Enterprise (%s) with provided token.'
@@ -100,7 +100,7 @@ def connect_to_github(url, token=None):
     """
 
     gh_session = None
-    if url = 'https://github.com':
+    if url == 'https://github.com':
         gh_session = create_session(token)
     else:
         gh_session = create_enterprise_session(url, token)
