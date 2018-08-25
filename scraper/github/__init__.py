@@ -13,9 +13,12 @@ logger = logging.getLogger(__name__)
 
 def gov_orgs():
     """
-    Returns a list of US Government GitHub orgs
+    Returns a list of the names of US Government GitHub organizations
 
     Based on: https://government.github.com/community/
+
+    Exmample return:
+        {'llnl', '18f', 'gsa', 'dhs-ncats', 'spack', ...}
     """
     us_gov_github_orgs = set()
 
@@ -51,8 +54,6 @@ def _check_api_limits(gh_session, min_requests_remaining=250, sleep_time=15):
     Simplified check for API limits
 
     If necessary, spin in place waiting for API to reset before returning.
-
-    Returns two-tuple of: ``(# API requests remaining, unix time of reset)``
 
     See: https://developer.github.com/v3/#rate-limiting
     """
