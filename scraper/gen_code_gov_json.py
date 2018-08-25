@@ -127,9 +127,6 @@ def main():
     args = parser.parse_args()
 
     configure_logging(args.verbose)
-    logger.debug('debug -- Testing logging')
-    logger.info('info -- Testing logging')
-    logger.warn('warning -- Testing logging')
 
     doecode_json = args.doecode_json
     doecode_url = args.doecode_url
