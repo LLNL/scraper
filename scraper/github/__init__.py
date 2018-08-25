@@ -33,7 +33,7 @@ def gov_orgs():
 
 def create_session(token=None):
     """
-    Create a github3.py session with GitHub.com for making requests
+    Create a github3.py session connected to GitHub.com
 
     If token is not provided, will attempt to use the GITHUB_API_TOKEN
     environment variable if present.
@@ -45,6 +45,23 @@ def create_session(token=None):
 
     if gh_session is None:
         raise RuntimeError('Invalid or missing GITHUB_API_TOKEN')
+
+    return gh_session
+
+
+def create_enterprise_session(url, token=None):
+    """
+    Create a github3.py session for a GitHub Enterprise instance
+
+    If token is not provided, will attempt to use the GITHUB_API_TOKEN
+    environment variable if present.
+    """
+
+    gh_session = github3.enterprise_login(url=, token=token)
+
+    if gh_session is None:
+        msg = 'Unable to connect to GitHub Enterprise (%s) with provided token.'
+        raise RuntimeError(msg, url)
 
     return gh_session
 
