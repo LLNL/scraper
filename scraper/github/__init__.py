@@ -110,3 +110,41 @@ def connect_to_github(url, token=None):
         raise RuntimeError(msg, url)
 
     return gh_session
+
+
+def repos_from_orgs(gh_session, orgs=None, repos=None, public_only=True):
+    """
+    Yields GitHub3.py repo objects for provided orgs and repo names
+
+    If public_only is True, will return only those repos that are marked as
+    public. Set this to false to return all organizations that the session has
+    permissions to access.
+    """
+
+    if orgs is None:
+        orgs = []
+    if repos is None:
+        repos = []
+    if public_only:
+        privacy = 'public'
+    else:
+        privacy = 'all'
+
+    def _num_requests_needed(num_repos, factor=2, wiggle_room=100):
+        """
+        Helper function to estimate the minimum number of API requests needed
+        """
+        return num_repos * factor + wiggle_room
+
+    for org_name in orgs:
+        org = gh_session.organization(org_name)
+        num_repos = org.public_repos_count
+
+        _check_api_limits(gh_session, _num_requests_needed(num_repos))
+
+        for repo in org.repositories(type=privacy):
+            yield repo
+
+    for repo_name in repos:
+        org, name = repo_name.split('/')
+        yield gh_session.repository(org, name)
