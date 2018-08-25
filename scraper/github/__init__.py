@@ -33,18 +33,18 @@ def gov_orgs():
 
 def create_session(token=None):
     """
-    Create a github3.py session for making requests
+    Create a github3.py session with GitHub.com for making requests
+
+    If token is not provided, will attempt to use the GITHUB_API_TOKEN
+    environment variable if present.
     """
     if token is None:
         token = os.environ.get('GITHUB_API_TOKEN')
 
-    if token is None:
-        raise RuntimeError('GITHUB_API_TOKEN not configured in environment')
-
     gh_session = github3.login(token=token)
 
     if gh_session is None:
-        raise RuntimeError('Invalid GITHUB_API_TOKEN in environment')
+        raise RuntimeError('Invalid or missing GITHUB_API_TOKEN')
 
     return gh_session
 
