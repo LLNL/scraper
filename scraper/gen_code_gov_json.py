@@ -11,54 +11,11 @@ import stashy
 
 from scraper import code_gov
 from scraper.code_gov.doe import to_doe_csv
-# from scraper.github import gov_orgs
-from scraper.github import create_session, _check_api_limits
 from scraper.util import configure_logging
 from scraper import doecode
 
 
 logger = logging.getLogger(__name__)
-
-# TODO: Might not really want this at global scope
-gh = None
-
-
-def process_organization(org_name):
-    """
-    Returns a Code.gov standard JSON of GitHub organization projects
-    """
-    org = gh.organization(org_name)
-    repos = org.repositories(type='public')
-    num_repos = org.public_repos_count
-
-    WIGGLE_ROOM = 100
-    num_requests_needed = 2 * num_repos + WIGGLE_ROOM
-
-    _check_api_limits(gh, num_requests_needed)
-
-    logger.info('Processing GitHub Org: %s (%d public repos)', org_name, num_repos)
-
-    projects = [code_gov.Project.from_github3(r) for r in repos]
-
-    logger.debug('Setting Contact Email to: %s', org.email)
-    for project in projects:
-        project['contact']['email'] = org.email
-
-    return projects
-
-
-def process_repository(repository_name):
-    """
-    Returns a Code.gov standard JSON of GitHub organization projects
-    """
-    logger.info('Processing GitHub Repo: %s', repository_name)
-
-    org, name = repository_name.split('/')
-    repo = gh.repository(org, name)
-
-    project = code_gov.Project.from_github3(repo)
-
-    return project
 
 
 def connect_to_bitbucket(server_url):
@@ -78,8 +35,6 @@ def process_bitbucket(bitbucket):
 
 
 def main():
-    global gh
-
     parser = argparse.ArgumentParser(description='Scrape code repositories for Code.gov / DOE CODE')
 
     parser.add_argument('--agency', type=str, nargs='?', default='', help='Agency Label, e.g. "DOE"')
@@ -111,10 +66,6 @@ def main():
     doecode_url = args.doecode_url
     doecode_url_key = args.doecode_url_key
 
-    # DOE CODE JSON parsing does not currently require GitHub connectivity.
-    if doecode_json is None and doecode_url is None:
-        gh = create_session()
-
     try:
         config_json = json.load(open(args.config))
     except (FileNotFoundError, json.JSONDecodeError):
@@ -129,47 +80,15 @@ def main():
     if (output_path is not None and not os.path.exists(output_path)):
         raise RuntimeError('Invalid output path argument provided!  Make sure the output path exists and try again.')
 
-    # agency = config_json.get('agency', 'UNKNOWN')
-    # agency = args.agency or agency
-    # logger.debug('Agency: %s', agency)
-    #
-    # method = config_json.get('method', 'other')
-    # method = args.method or method
-    # logger.debug('Inventory Method: %s', method)
-    #
-    # organization = config_json.get('organization', '')
-    # organization = args.organization or organization
-    # logger.debug('Organization: %s', organization)
-    #
-    # contact_email = config_json.get('contact_email', '')
-    # contact_email = args.contact_email or contact_email
-    # logger.debug('Contact Email: %s', contact_email)
-
-    # github_orgs = config_json.get('github_orgs', [])
-    # github_orgs.extend(args.github_orgs)
-    # logger.debug('GitHub.com Organizations: %s', github_orgs)
-
     # TODO: Will want to re-work this in as a special demo case
     # if args.github_gov_orgs:
     #     github_orgs.extend(gov_orgs())
-
-    # github_repos = config_json.get('github_repos', [])
-    # github_repos.extend(args.github_repos)
-    # logger.debug('GitHub.com Repositories: %s', github_repos)
 
     bitbucket_servers = config_json.get('bitbucket_servers', [])
     bitbucket_servers = [connect_to_bitbucket(s) for s in bitbucket_servers]
     logger.debug('Bitbucket Servers: %s', bitbucket_servers)
 
     code_json = code_gov.process_config(config_json)
-
-    # code_json = CodeGovMetadata(agency, method)
-    #
-    # for org_name in sorted(github_orgs, key=str.lower):
-    #     code_json['releases'].extend(process_organization(org_name))
-    #
-    # for repo_name in sorted(github_repos, key=str.lower):
-    #     code_json['releases'].append(process_repository(repo_name))
 
     for bitbucket in sorted(bitbucket_servers, key=str.lower):
         code_json['releases'].extend(process_bitbucket(bitbucket))
