@@ -194,16 +194,7 @@ def main():
         projects = [code_gov.Project.from_doecode() for r in records]
         code_json['releases'].extend(projects)
 
-    # Force certain fields
-    # if organization:
-    #     logger.debug('Forcing Organiation to: %s', organization)
-    #     for release in code_json['releases']:
-    #         release['organization'] = organization
-    #
-    # if contact_email:
-    #     logger.debug('Forcing Contact Email to: %s', contact_email)
-    #     for release in code_json['releases']:
-    #         release['contact']['email'] = contact_email
+    code_gov.force_attributes(code_json, config_json)
 
     str_org_projects = code_json.to_json()
 

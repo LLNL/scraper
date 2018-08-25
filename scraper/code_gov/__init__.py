@@ -531,6 +531,14 @@ def process_config(config):
             code_gov_project = Project.from_github3(repo)
             code_gov_metadata['releases'].append(code_gov_project)
 
+    return code_gov_metadata
+
+
+def force_attributes(metadata, config):
+    """
+    Forces certain fields in the Code.gov Metadata json
+    """
+
     organization = config.get('organization', '')
     logger.debug('Organization: %s', organization)
 
@@ -539,13 +547,13 @@ def process_config(config):
 
     # Force certain fields
     if organization:
-        logger.debug('Forcing Organiation to: %s', organization)
-        for release in code_gov_metadata['releases']:
+        logger.debug('Forcing Organization to: %s', organization)
+        for release in metadata['releases']:
             release['organization'] = organization
 
     if contact_email:
         logger.debug('Forcing Contact Email to: %s', contact_email)
-        for release in code_gov_metadata['releases']:
+        for release in metadata['releases']:
             release['contact']['email'] = contact_email
 
-    return code_gov_metadata
+    return metadata
