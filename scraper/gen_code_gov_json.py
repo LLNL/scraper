@@ -18,22 +18,6 @@ from scraper import doecode
 logger = logging.getLogger(__name__)
 
 
-def connect_to_bitbucket(server_url):
-    username = getpass.getuser()
-    password = getpass.getpass('%s Password: ' % (server_url))
-    return stashy.connect(server_url, username, password)
-
-
-def process_bitbucket(bitbucket):
-    if not isinstance(bitbucket, stashy.client.Stash):
-        raise TypeError('argument must be a Stash Client object')
-
-    repos = bitbucket.repos.all()
-    projects = [code_gov.Project.from_stashy(r) for r in repos]
-
-    return projects
-
-
 def main():
     parser = argparse.ArgumentParser(description='Scrape code repositories for Code.gov / DOE CODE')
 
@@ -44,8 +28,6 @@ def main():
 
     parser.add_argument('--config', type=str, nargs='?', default='', help='Configuration File (*.json)')
 
-    # parser.add_argument('--github-orgs', type=str, nargs='+', default=[], help='GitHub Organizations')
-    # parser.add_argument('--github-repos', type=str, nargs='+', default=[], help='GitHub Repositories')
     parser.add_argument('--github-gov-orgs', action='store_true', help='Use orgs from government.github.com/community')
 
     parser.add_argument('--to-csv', action='store_true', help='Toggle output to CSV')
