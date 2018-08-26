@@ -9,7 +9,7 @@ from scraper import github, gitlab, bitbucket
 logger = logging.getLogger(__name__)
 
 
-def process_config(config):
+def process_config(config, compute_labor_hours=True):
     """
     Master function to process a Scraper config file
 
@@ -42,7 +42,7 @@ def process_config(config):
 
         repos = github.repos_from_orgs(gh_session, orgs, repos, public_only)
         for repo in repos:
-            code_gov_project = Project.from_github3(repo)
+            code_gov_project = Project.from_github3(repo, labor_hours=compute_labor_hours)
             code_gov_metadata['releases'].append(code_gov_project)
 
     # Parse config for GitLab repositories
@@ -58,9 +58,8 @@ def process_config(config):
 
         repos = gitlab.all_projects(gl_session)
         for repo in repos:
-            code_gov_project = Project.from_gitlab(repo)
+            code_gov_project = Project.from_gitlab(repo, labor_hours=compute_labor_hours)
             code_gov_metadata['releases'].append(code_gov_project)
-            break
 
     # Parse config for Bitbucket repositories
     bitbucket_instances = config.get('Bitbucket', [])
@@ -76,7 +75,7 @@ def process_config(config):
 
         repos = bitbucket.all_repos(bb_session)
         for repo in repos:
-            code_gov_project = Project.from_stashy(repo)
+            code_gov_project = Project.from_stashy(repo, labor_hours=compute_labor_hours)
             code_gov_metadata['releases'].append(code_gov_project)
 
     return code_gov_metadata
