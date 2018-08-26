@@ -114,7 +114,7 @@ def connect(url='https://github.com', token=None):
     return gh_session
 
 
-def repos_from_orgs(gh_session, orgs=None, repos=None, public_only=True):
+def query_repos(gh_session, orgs=None, repos=None, public_only=True):
     """
     Yields GitHub3.py repo objects for provided orgs and repo names
 

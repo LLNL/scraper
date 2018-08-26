@@ -40,7 +40,7 @@ def process_config(config, compute_labor_hours=True):
 
         gh_session = github.connect(url, token)
 
-        repos = github.repos_from_orgs(gh_session, orgs, repos, public_only)
+        repos = github.query_repos(gh_session, orgs, repos, public_only)
         for repo in repos:
             code_gov_project = Project.from_github3(repo, labor_hours=compute_labor_hours)
             code_gov_metadata['releases'].append(code_gov_project)
