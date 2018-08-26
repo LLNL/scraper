@@ -1,0 +1,49 @@
+{
+    "agency": "DOE",
+    "organization": "Lawrence Livermore National Laboratory",
+    "contact_email": "open-source@llnl.gov",
+
+    "permissions": {
+        "usageType": "exemptByAgencyMission",
+        "exemptionText": "This source code resides on a private server and has not been properly evaluated for releaseability."
+    },
+
+    "GitHub": [
+        {
+            "url": "https://github.com",
+            "token": null,
+            "public_only": true,
+
+            "orgs": [
+                "LLNL",
+                "spack",
+                "xbraid"
+            ],
+            "repos": [
+                "dun/conman",
+                "dun/munge"
+            ],
+            "exclude": [
+                "LLNL",
+                "spack/spack.io"
+            ]
+        }
+    ],
+
+    "GitLab": [
+        {
+            "url": "https://gitlab.com",
+            "token": null,
+
+            "repos": [
+                "IanLee1521/flake8",
+                "gnachman/iterm2",
+                "gitlab-org/gitlab-ce"
+            ],
+            "exclude": [
+                "IanLee1521",
+                "gitlab-org/gitlab-ce"
+            ]
+        }
+    ]
+}

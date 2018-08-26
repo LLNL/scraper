@@ -1,6 +1,8 @@
 # Scraper
 
-Scraper is a tool for scraping and visualizing open source data from GitHub.
+Scraper is a tool for scraping and visualizing open source data from various
+code hosting platforms, such as: GitHub.com, GitHub Enterprise, GitLab.com,
+hosted GitLab, and Bitbucket Server.
 
 ## Getting Started: Code.gov
 
@@ -18,22 +20,92 @@ shell ``rc`` file with the name ``GITHUB_API_TOKEN``:
 
     $ echo "export GITHUB_API_TOKEN=XYZ" >> ~/.bashrc
 
-You will also need to install ``cloc`` into your environment. This is typically
-done with a [Package
+Additionally, to perform the labor hours estimation, you will need to install
+``cloc`` into your environment. This is typically done with a [Package
 Manager](https://github.com/AlDanial/cloc#install-via-package-manager) such as
 ``npm`` or ``homebrew``.
 
-To generate a ``code.json`` file for your GitHub organization:
+Then to generate a ``code.json`` file for your agency, you will need a
+``config.json`` file to coordinate the platforms you will connect to and scrape
+data from. An example config file can be found in [demo.json](/demo.json). Once
+you have your config file, you are ready to install and run the scraper!
 
+    # Install Scraper
     $ pip install -e .
 
-    $ scraper --agency <agency_name> --github-orgs <list of github org usernames ...>
-
-    # Example
-    $ scraper --agency DOE --github-orgs llnl
+    # Run Scraper with your config file ``config.json``
+    $ scraper --config config.json
 
 A full example of the resulting ``code.json`` file can be [found
 here](https://gist.github.com/IanLee1521/b7d7c0c2d8c24b10dd04edd5e8cab6c4).
+
+## Config File Options
+
+The configuration file is a json file that specifies what repository platforms
+to pull projects from  as well as some settings that can be used to override
+incomplete or inaccurate data returned via the scraping.
+
+The basic structure is:
+
+```
+{
+    # REQUIRED
+    "contact_email": "...", # Used when the contact email cannot be found otherwise
+
+    # OPTIONAL
+    "agency": "...",        # Your agency abbreviation here
+    "organization": "...",  # The organization within the agency
+    "permissions": { ... }, # Object containing default values for usageType and exemptionText
+
+    # Platform configurations, described in more detail below
+    "GitHub": [ ... ],
+    "GitLab": [ ... ],
+    "Bitbucket": [ ... ],
+}
+```
+
+```
+"GitHub": [
+    {
+        "url": "https://github.com",    # GitHub.com or GitHub Enterprise URL to inventory
+        "token": null,                  # Private token for accessing this GitHub instance
+        "public_only": true,            # Only inventory public repositories
+
+        "orgs": [ ... ],    # List of organizations to inventory
+        "repos": [ ... ],   # List of single repositories to inventory
+        "exclude": [ ... ]  # List of organizations / repositories to exclude from inventory
+    }
+],
+```
+
+```
+"GitLab": [
+    {
+        "url": "https://gitlab.com",    # GitLab.com or hosted GitLab instance URL to inventory
+        "token": null,                  # Private token for accessing this GitHub instance
+
+        "orgs": [ ... ],    # List of organizations to inventory
+        "repos": [ ... ],   # List of single repositories to inventory
+        "exclude": [ ... ]  # List of organizations / repositories to exclude from inventory
+    }
+]
+```
+
+```
+"Bitbucket": [
+    {
+        "url": "https://bitbucket.internal",  # Base URL for a Bitbucket Server instance
+        "username": "",  # Username to authenticate with
+        "password": "",  # Password to authenticate with
+
+        # To exclude repositories from inventory
+        "exclude": [
+            "PROJECT_KEY",
+            "PROJECT_KEY/REPO_SLUG"
+        ]
+    }
+]
+```
 
 ## License
 
