@@ -85,13 +85,6 @@ def main():
 
     code_gov.force_attributes(code_json, config_json)
 
-    str_org_projects = code_json.to_json()
-
-    # -- I don't believe we need to be outputing to JSON to the console
-    #   -- Maybe if "very verbose" ?
-    # if args.verbose:
-    #     print(str_org_projects)
-
     logger.info('Number of Projects: %s', len(code_json['releases']))
 
     output_filepath = args.output_filename
@@ -99,10 +92,9 @@ def main():
     if output_path is not None:
         output_filepath = os.path.join(output_path, output_filepath)
 
-    logger.info('Writing output to: %s', output_filepath)
-
     with open(output_filepath, 'w') as fp:
-        fp.write(str_org_projects)
+        logger.info('Writing output to: %s', output_filepath)
+        fp.write(code_json.to_json())
 
 
 if __name__ == '__main__':
