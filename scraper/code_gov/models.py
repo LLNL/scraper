@@ -359,7 +359,9 @@ class Project(dict):
                 project['repositoryURL'] = url
                 break
 
-        project['description'] = repository['project']['description']
+        description = repository['project'].get('description', '')
+        if description:
+            project['description'] = 'Project description: %s' % description
 
         project['permissions']['licenses'] = None
 
