@@ -4,6 +4,7 @@
 import json
 import logging
 
+from dateutil.parser import parse as date_parse
 import github3
 import gitlab
 
@@ -11,6 +12,8 @@ from scraper.github.util import _license_obj
 from scraper.util import _prune_dict_null_str, labor_hours_from_url
 
 logger = logging.getLogger(__name__)
+
+POLICY_START_DATE = date_parse('2016-08-08')
 
 
 class Metadata(dict):
@@ -186,14 +189,18 @@ class Project(dict):
         # -- REQUIRED FIELDS --
 
         project['name'] = repository.name
-
-        project['repositoryURL'] = repository.html_url
-
+        project['repositoryURL'] = repository.git_url
         project['description'] = repository.description
 
         # TODO: Update licenses from GitHub API
         project['permissions']['licenses'] = None
-        project['permissions']['usageType'] = 'openSource'
+        if not repository.private:
+            # Repository is public
+            project['permissions']['usageType'] = 'openSource'
+        elif date_parse(repository.created_at) < POLICY_START_DATE:
+            project['permissions']['usageType'] = 'exemptByPolicyDate'
+        else:
+            project['permissions']['usageType'] = 'exemptByAgencyMission'
 
         if labor_hours:
             project['laborHours'] = labor_hours_from_url(project['repositoryURL'])
