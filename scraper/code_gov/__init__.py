@@ -36,12 +36,16 @@ def process_config(config, compute_labor_hours=True):
         orgs = instance.get('orgs', [])
         repos = instance.get('repos', [])
         public_only = instance.get('public_only', True)
+        excluded = instance.get('exclude', [])
         token = instance.get('token', None)
 
         gh_session = github.connect(url, token)
 
-        repos = github.query_repos(gh_session, orgs, repos, public_only)
-        for repo in repos:
+        for repo in github.query_repos(gh_session, orgs, repos, public_only):
+            if repo.owner.login in excluded or repo.full_name in excluded:
+                logger.info('Excluding: %s', repo.full_name)
+                continue
+
             code_gov_project = Project.from_github3(repo, labor_hours=compute_labor_hours)
             code_gov_metadata['releases'].append(code_gov_project)
 
@@ -52,12 +56,18 @@ def process_config(config, compute_labor_hours=True):
         # orgs = instance.get('orgs', [])
         repos = instance.get('repos', [])
         # public_only = instance.get('public_only', True)
+        excluded = instance.get('exclude', [])
         token = instance.get('token', None)
 
         gl_session = gitlab.connect(url, token)
 
-        repos = gitlab.query_repos(gl_session, repos)
-        for repo in repos:
+        for repo in gitlab.query_repos(gl_session, repos):
+            namespace = repo.namespace['path']
+            path_with_namespace = repo.path_with_namespace
+            if namespace in excluded or path_with_namespace in excluded:
+                logger.info('Excluding: %s', repo.path_with_namespace)
+                continue
+
             code_gov_project = Project.from_gitlab(repo, labor_hours=compute_labor_hours)
             code_gov_metadata['releases'].append(code_gov_project)
 
@@ -70,11 +80,17 @@ def process_config(config, compute_labor_hours=True):
         # token = instance.get('token', None)
         username = instance.get('username')
         password = instance.get('password')
+        excluded = instance.get('exclude', [])
 
         bb_session = bitbucket.connect(url, username, password)
 
-        repos = bitbucket.all_repos(bb_session)
-        for repo in repos:
+        for repo in bitbucket.all_repos(bb_session):
+            project = repo['project']['key']
+            project_repo = '%s/%s' % (project, repo['slug'])
+            if project in excluded or project_repo in excluded:
+                logger.info('Excluding: %s', project_repo)
+                continue
+
             code_gov_project = Project.from_stashy(repo, labor_hours=compute_labor_hours)
             code_gov_metadata['releases'].append(code_gov_project)
 
