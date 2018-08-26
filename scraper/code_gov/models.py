@@ -281,7 +281,7 @@ class Project(dict):
         web_url = repository.web_url
         public_server = web_url.startswith('https://gitlab.com')
 
-        if repository.visibility == 'public' and public_server:
+        if repository.visibility in ('public', 'internal') and public_server:
             project['permissions']['usageType'] = 'openSource'
         elif date_parse(repository.created_at) < POLICY_START_DATE:
             project['permissions']['usageType'] = 'exemptByPolicyDate'
