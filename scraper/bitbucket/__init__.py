@@ -1,4 +1,7 @@
+import logging
 import stashy
+
+logger = logging.getLogger(__name__)
 
 
 def connect(url, username, password):
@@ -6,7 +9,11 @@ def connect(url, username, password):
     Return a connected Bitbucket session
     """
 
-    return stashy.connect(url, username, password)
+    bb_session = stashy.connect(url, username, password)
+
+    logger.info('Connected to: %s as %s', url, username)
+
+    return bb_session
 
 
 def all_repos(bb_session):

@@ -109,6 +109,8 @@ def connect(url, token=None):
         msg = 'Unable to connect to (%s) with provided token.'
         raise RuntimeError(msg, url)
 
+    logger.info('Connected to: %s', url)
+
     return gh_session
 
 
