@@ -50,13 +50,13 @@ def process_config(config, compute_labor_hours=True):
     for instance in gitlab_instances:
         url = instance.get('url')
         # orgs = instance.get('orgs', [])
-        # repos = instance.get('repos', [])
+        repos = instance.get('repos', [])
         # public_only = instance.get('public_only', True)
         token = instance.get('token', None)
 
         gl_session = gitlab.connect(url, token)
 
-        repos = gitlab.query_repos(gl_session)
+        repos = gitlab.query_repos(gl_session, repos)
         for repo in repos:
             code_gov_project = Project.from_gitlab(repo, labor_hours=compute_labor_hours)
             code_gov_metadata['releases'].append(code_gov_project)

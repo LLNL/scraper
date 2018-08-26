@@ -28,10 +28,17 @@ def connect(url='https://gitlab.com', token=None):
     return gl_session
 
 
-def query_repos(gl_session):
+def query_repos(gl_session, repos=None):
     """
     Yields Gitlab project objects for all projects in Bitbucket
     """
 
-    for project in gl_session.projects.list(as_list=False):
-        yield project
+    if repos is None:
+        repos = []
+
+    for repo in repos:
+        yield gl_session.projects.get(repo)
+
+    if not repos:
+        for project in gl_session.projects.list(as_list=False):
+            yield project
