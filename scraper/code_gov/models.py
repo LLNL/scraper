@@ -260,7 +260,7 @@ class Project(dict):
         """
         Create CodeGovProject object from GitLab Repository
         """
-        if not isinstance(repository, gitlab.objects.Project):
+        if not isinstance(repository, gitlab.v4.objects.Project):
             raise TypeError('Repository must be a gitlab Repository object')
 
         project = klass()
