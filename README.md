@@ -86,7 +86,7 @@ The basic structure is:
 
         "orgs": [ ... ],    # List of organizations to inventory
         "repos": [ ... ],   # List of single repositories to inventory
-        "exclude": [ ... ]  # List of organizations / repositories to exclude from inventory
+        "exclude": [ ... ]  # List of groups / repositories to exclude from inventory
     }
 ]
 ```
@@ -94,15 +94,11 @@ The basic structure is:
 ```
 "Bitbucket": [
     {
-        "url": "https://bitbucket.internal",  # Base URL for a Bitbucket Server instance
-        "username": "",  # Username to authenticate with
-        "password": "",  # Password to authenticate with
+        "url": "https://bitbucket.internal",    # Base URL for a Bitbucket Server instance
+        "username": "",                         # Username to authenticate with
+        "password": "",                         # Password to authenticate with
 
-        # To exclude repositories from inventory
-        "exclude": [
-            "PROJECT_KEY",
-            "PROJECT_KEY/REPO_SLUG"
-        ]
+        "exclude": [ ... ]  # List of projects / repositories to exclude from inventory
     }
 ]
 ```
