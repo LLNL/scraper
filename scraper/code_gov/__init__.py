@@ -23,6 +23,11 @@ def process_config(config):
     method = config.get('method', 'other')
     logger.debug('Inventory Method: %s', method)
 
+    if config.get('contact_email', None) is None:
+        # A default contact email is required to handle the (frequent) case
+        # where a project / repository has no available contact email.
+        raise RuntimeError('Config file must contain a "contact_email"')
+
     code_gov_metadata = Metadata(agency, method)
 
     # Parse config for GitHub repositories
@@ -84,7 +89,7 @@ def force_attributes(metadata, config):
     organization = config.get('organization', '')
     logger.debug('Organization: %s', organization)
 
-    contact_email = config.get('contact_email', '')
+    contact_email = config.get('contact_email')
     logger.debug('Contact Email: %s', contact_email)
 
     # Force certain fields
