@@ -256,7 +256,7 @@ class Project(dict):
         return project
 
     @classmethod
-    def from_gitlab(klass, repository):
+    def from_gitlab(klass, repository, labor_hours=True):
         """
         Create CodeGovProject object from GitLab Repository
         """
@@ -264,28 +264,59 @@ class Project(dict):
             raise TypeError('Repository must be a gitlab Repository object')
 
         project = klass()
+
+        logger.debug('GitLab: repository=%s', repository)
+
+        # -- REQUIRED FIELDS --
+
         project['name'] = repository.name
+        project['repositoryURL'] = repository.http_url_to_repo
         project['description'] = repository.description
-        project['license'] = None
-        project['openSourceProject'] = 1
-        project['governmentWideReuseProject'] = 1
-        project['tags'] = repository.tag_list
+
+        project['permisssions']['license'] = None
+        project['permisssions']['usageType'] = ''
+
+        if labor_hours:
+            project['laborHours'] = labor_hours_from_url(project['repositoryURL'])
+        else:
+            project['laborHours'] = 0
+
+        project['tags'] = ['gitlab'] + repository.tag_list
+
         project['contact'] = {
             'email': '',
-            'name': '',
-            'URL': '',
-            'phone': '',
+            'URL': repository.web_url,
         }
-        project['status'] = ''
+
+        # -- OPTIONAL FIELDS --
+
+        # project['version'] = ''
+
+        project['organization'] = repository.namespace['name']
+
+        # TODO: Currently, can't be an empty string, see: https://github.com/GSA/code-gov-web/issues/370
+        project['status'] = 'Development'
+
         project['vcs'] = 'git'
-        project['repository'] = repository.web_url
-        project['homepage'] = ''
-        project['downloadURL'] = ''
-        project['languages'] = []
-        project['partners'] = []
-        project['exemption'] = None
-        project['updated']['metadataLastUpdated'] = repository.last_activity_at
-        # project['updated']['lastCommit'] = repository.pushed_at.isoformat()
+
+        project['homepageURL'] = repository.web_url
+
+        api_url = repository.manager.gitlab._url
+        archive_suffix = '/projects/%s/repository/archive' % repository.get_id()
+        project['downloadURL'] = api_url + archive_suffix
+
+        # project['languages'] = [l for l, _ in repository.languages()]
+        # project['partners'] = []
+        # project['relatedCode'] = []
+        # project['reusedCode'] = []
+
+        project['date'] = {
+            'created': repository.created_at,
+            'lastModified': repository.last_activity_at,
+            'metadataLastUpdated': '',
+        }
+
+        _prune_dict_null_str(project)
 
         return project
 
