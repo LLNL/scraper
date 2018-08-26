@@ -2,15 +2,11 @@
 # -*- coding: UTF-8 -*-
 
 import argparse
-import getpass
 import json
 import logging
 import os
 
-import stashy
-
 from scraper import code_gov
-from scraper.code_gov.doe import to_doe_csv
 from scraper.util import configure_logging
 from scraper import doecode
 
@@ -30,13 +26,12 @@ def main():
 
     parser.add_argument('--github-gov-orgs', action='store_true', help='Use orgs from government.github.com/community')
 
-    parser.add_argument('--to-csv', action='store_true', help='Toggle output to CSV')
-
     parser.add_argument('--doecode-json', type=str, nargs='?', default=None, help='Path to DOE CODE .json file')
     parser.add_argument('--doecode-url', type=str, nargs='?', default=None, help='URL to DOE CODE .json data')
     parser.add_argument('--doecode-url-key', type=str, nargs='?', default=None, help='DOE CODE API key for accessing --doecode-url')
 
-    parser.add_argument('--output-path', type=str, nargs='?', default='', help='Output path for .json and .csv files')
+    parser.add_argument('--output-path', type=str, nargs='?', default='', help='Output path for .json file')
+    parser.add_argument('--output-filename', type=str, nargs='?', default='code.json', help='Output filename for .json file')
 
     parser.add_argument('--verbose', action='store_true', help='Enable verbose output')
 
@@ -99,28 +94,15 @@ def main():
 
     logger.info('Number of Projects: %s', len(code_json['releases']))
 
-    json_filename = 'code.json'
+    output_filepath = args.output_filename
 
     if output_path is not None:
-        json_filename = os.path.join(output_path, json_filename)
+        output_filepath = os.path.join(output_path, output_filepath)
 
-    logger.info('Writing output to: %s', json_filename)
+    logger.info('Writing output to: %s', output_filepath)
 
-    with open(json_filename, 'w') as fp:
-        logger.info
+    with open(output_filepath, 'w') as fp:
         fp.write(str_org_projects)
-
-    if args.to_csv:
-        csv_filename = 'code.csv'
-
-        if output_path is not None:
-            csv_filename = os.path.join(output_path, csv_filename)
-
-        logger.info('Writing output to: %s', csv_filename)
-
-        with open(csv_filename, 'w') as fp:
-            for project in code_json['releases']:
-                fp.write(to_doe_csv(project) + '\n')
 
 
 if __name__ == '__main__':
