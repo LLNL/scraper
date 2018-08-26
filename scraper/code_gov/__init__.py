@@ -119,7 +119,7 @@ def force_attributes(metadata, config):
             release['description'] = 'No description available...'
 
         if 'usageType' not in release['permissions']:
-            project['permissions']['usageType'] = default_usage
-            project['permissions']['exemptionText'] = default_exemption_text
+            release['permissions']['usageType'] = default_usage
+            release['permissions']['exemptionText'] = default_exemption_text
 
     return metadata
