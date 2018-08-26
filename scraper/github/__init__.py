@@ -125,6 +125,9 @@ def query_repos(gh_session, orgs=None, repos=None, public_only=True):
     """
     Yields GitHub3.py repo objects for provided orgs and repo names
 
+    If orgs and repos are BOTH empty, execute special mode of getting ALL
+    repositories from the GitHub Server.
+
     If public_only is True, will return only those repos that are marked as
     public. Set this to false to return all organizations that the session has
     permissions to access.
@@ -151,3 +154,7 @@ def query_repos(gh_session, orgs=None, repos=None, public_only=True):
     for repo_name in repos:
         org, name = repo_name.split('/')
         yield gh_session.repository(org, name)
+
+    if not (orgs or repos):
+        for repo in gh_session.all_repositories():
+            yield repo
