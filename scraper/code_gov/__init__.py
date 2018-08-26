@@ -46,7 +46,7 @@ def process_config(config, compute_labor_hours=True):
             code_gov_metadata['releases'].append(code_gov_project)
 
     # Parse config for GitLab repositories
-    gitlab_instances = config.get('Gitlab', [])
+    gitlab_instances = config.get('GitLab', [])
     for instance in gitlab_instances:
         url = instance.get('url')
         # orgs = instance.get('orgs', [])
