@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='llnl-scraper',
-    version='0.4.0-dev',
+    version='0.4.0',
     description='Package for extracting software repository metadata',
     author='Ian Lee',
     author_email='lee1001@llnl.gov',
