@@ -264,7 +264,11 @@ class Project(dict):
 
         project = klass()
 
-        logger.debug('GitLab: repository=%s', repository)
+        logger.debug(
+            'GitLab: repository_id=%d path_with_namespace=%s',
+            repository.id,
+            repository.path_with_namespace,
+        )
 
         # -- REQUIRED FIELDS --
 
@@ -338,7 +342,11 @@ class Project(dict):
 
         project = klass()
 
-        logger.debug('Stashy: repository=%s', repository)
+        logger.debug(
+            'Stashy: project_key=%s repository_slug=%s',
+            repository['name'],
+            repository['project']['key'],
+        )
 
         # -- REQUIRED FIELDS --
 
