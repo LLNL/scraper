@@ -4,8 +4,7 @@
 import logging
 
 from scraper.code_gov.models import Metadata, Project
-from scraper import github
-from scraper import bitbucket
+from scraper import github, gitlab, bitbucket
 
 logger = logging.getLogger(__name__)
 
@@ -47,19 +46,21 @@ def process_config(config):
             code_gov_metadata['releases'].append(code_gov_project)
 
     # Parse config for GitLab repositories
-    gitlab_instances = config.get('GitLab', [])
+    gitlab_instances = config.get('Gitlab', [])
     for instance in gitlab_instances:
-        url = instance.get('url', 'https://gitlab.com')
-        orgs = instance.get('orgs', [])
-        repos = instance.get('repos', [])
+        url = instance.get('url')
+        # orgs = instance.get('orgs', [])
+        # repos = instance.get('repos', [])
         # public_only = instance.get('public_only', True)
         token = instance.get('token', None)
 
-        repos = []  # TODO -- Complete support
+        gl_session = gitlab.connect(url, token)
 
+        repos = gitlab.all_projects(gl_session)
         for repo in repos:
-            code_gov_project = Project.from_stashy(repo)
+            code_gov_project = Project.from_gitlab(repo)
             code_gov_metadata['releases'].append(code_gov_project)
+            break
 
     # Parse config for Bitbucket repositories
     bitbucket_instances = config.get('Bitbucket', [])
