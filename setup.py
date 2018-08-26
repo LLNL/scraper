@@ -3,11 +3,14 @@
 
 from setuptools import setup, find_packages
 
+with open('README.md') as fh:
+    long_description = fh.read()
 
 setup(
     name='llnl-scraper',
     version='0.5.0-dev',
     description='Package for extracting software repository metadata',
+    long_description=long_description,
     author='Ian Lee',
     author_email='lee1001@llnl.gov',
     url='https://github.com/llnl/scraper',
