@@ -25,6 +25,7 @@ def main():
     parser.add_argument('--config', type=str, nargs='?', default='', help='Configuration File (*.json)')
 
     parser.add_argument('--github-gov-orgs', action='store_true', help='Use orgs from government.github.com/community')
+    parser.add_argument('--skip-labor-hours', action='store_true', help='Skip calculation of labor hours, assume "0"')
 
     parser.add_argument('--doecode-json', type=str, nargs='?', default=None, help='Path to DOE CODE .json file')
     parser.add_argument('--doecode-url', type=str, nargs='?', default=None, help='URL to DOE CODE .json data')
@@ -61,7 +62,8 @@ def main():
     # if args.github_gov_orgs:
     #     github_orgs.extend(gov_orgs())
 
-    code_json = code_gov.process_config(config_json)
+    compute_labor_hours = not args.skip_labor_hours
+    code_json = code_gov.process_config(config_json, compute_labor_hours)
 
     if doecode_json is not None:
         logger.debug('Queuing DOE CODE JSON: %s', doecode_json)
