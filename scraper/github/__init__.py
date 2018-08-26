@@ -66,6 +66,13 @@ def create_enterprise_session(url, token=None):
     return gh_session
 
 
+def _num_requests_needed(num_repos, factor=2, wiggle_room=100):
+    """
+    Helper function to estimate the minimum number of API requests needed
+    """
+    return num_repos * factor + wiggle_room
+
+
 def _check_api_limits(gh_session, api_required=250, sleep_time=15):
     """
     Simplified check for API limits
@@ -131,12 +138,6 @@ def query_repos(gh_session, orgs=None, repos=None, public_only=True):
         privacy = 'public'
     else:
         privacy = 'all'
-
-    def _num_requests_needed(num_repos, factor=2, wiggle_room=100):
-        """
-        Helper function to estimate the minimum number of API requests needed
-        """
-        return num_repos * factor + wiggle_room
 
     for org_name in orgs:
         org = gh_session.organization(org_name)
