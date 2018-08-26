@@ -39,7 +39,7 @@ def create_session(token=None):
     environment variable if present.
     """
     if token is None:
-        token = os.environ.get('GITHUB_API_TOKEN')
+        token = os.environ.get('GITHUB_API_TOKEN', None)
 
     gh_session = github3.login(token=token)
 
@@ -94,7 +94,7 @@ def _check_api_limits(gh_session, api_required=250, sleep_time=15):
     return
 
 
-def connect(url, token=None):
+def connect(url='https://github.com', token=None):
     """
     Create a GitHub session for making requests
     """
