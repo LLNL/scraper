@@ -194,13 +194,12 @@ class Project(dict):
 
         # TODO: Update licenses from GitHub API
         project['permissions']['licenses'] = None
-        if not repository.private:
-            # Repository is public
+
+        public_server = repository.html_url.startswith('https://github.com')
+        if not repository.private and public_server:
             project['permissions']['usageType'] = 'openSource'
         elif date_parse(repository.created_at) < POLICY_START_DATE:
             project['permissions']['usageType'] = 'exemptByPolicyDate'
-        else:
-            project['permissions']['usageType'] = 'exemptByAgencyMission'
 
         if labor_hours:
             project['laborHours'] = labor_hours_from_url(project['repositoryURL'])
@@ -273,8 +272,15 @@ class Project(dict):
         project['repositoryURL'] = repository.http_url_to_repo
         project['description'] = repository.description
 
-        project['permisssions']['license'] = None
-        project['permisssions']['usageType'] = ''
+        project['permissions']['license'] = None
+
+        web_url = repository.web_url
+        public_server = web_url.startswith('https://gitlab.com')
+
+        if repository.visibility == 'public' and public_server:
+            project['permissions']['usageType'] = 'openSource'
+        elif date_parse(repository.created_at) < POLICY_START_DATE:
+            project['permissions']['usageType'] = 'exemptByPolicyDate'
 
         if labor_hours:
             project['laborHours'] = labor_hours_from_url(project['repositoryURL'])
@@ -285,7 +291,7 @@ class Project(dict):
 
         project['contact'] = {
             'email': '',
-            'URL': repository.web_url,
+            'URL': web_url,
         }
 
         # -- OPTIONAL FIELDS --
@@ -345,12 +351,14 @@ class Project(dict):
                 project['repositoryURL'] = url
                 break
 
-        description = repository['project'].get('description', 'Unknown')
-        project['description'] = 'Project Description: {}'.format(description)
+        project['description'] = repository['project']['description']
 
         project['permissions']['licenses'] = None
-        project['permissions']['usageType'] = 'exemptByLaw'
-        project['permissions']['exemptionText'] = 'This source code is restricted by patent and / or intellectual property law.'
+
+        web_url = repository['links']['self'][0]['href']
+        public_server = web_url.startswith('https://bitbucket.org')
+        if repository['public'] and public_server:
+            project['permissions']['usageType'] = 'openSource'
 
         if labor_hours:
             project['laborHours'] = labor_hours_from_url(project['repositoryURL'])
