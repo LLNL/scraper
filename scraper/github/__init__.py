@@ -94,7 +94,7 @@ def _check_api_limits(gh_session, api_required=250, sleep_time=15):
     return
 
 
-def connect_to_github(url, token=None):
+def connect(url, token=None):
     """
     Create a GitHub session for making requests
     """

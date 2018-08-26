@@ -84,14 +84,7 @@ def main():
     # if args.github_gov_orgs:
     #     github_orgs.extend(gov_orgs())
 
-    bitbucket_servers = config_json.get('bitbucket_servers', [])
-    bitbucket_servers = [connect_to_bitbucket(s) for s in bitbucket_servers]
-    logger.debug('Bitbucket Servers: %s', bitbucket_servers)
-
     code_json = code_gov.process_config(config_json)
-
-    for bitbucket in sorted(bitbucket_servers, key=str.lower):
-        code_json['releases'].extend(process_bitbucket(bitbucket))
 
     if doecode_json is not None:
         logger.debug('Queuing DOE CODE JSON: %s', doecode_json)
