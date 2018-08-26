@@ -92,6 +92,12 @@ def force_attributes(metadata, config):
     contact_email = config.get('contact_email')
     logger.debug('Contact Email: %s', contact_email)
 
+    permissions = config.get('permissions', {})
+    default_usage = permissions.get('usageType', '')
+    default_exemption_text = permissions.get('exemptionText', '')
+    logger.debug('Default usageType: %s', default_usage)
+    logger.debug('Default exemptionText: %s', default_exemption_text)
+
     # Force certain fields
     if organization:
         logger.debug('Forcing Organization to: %s', organization)
@@ -108,5 +114,12 @@ def force_attributes(metadata, config):
 
         if 'licenses' not in release['permissions']:
             release['permissions']['licenses'] = None
+
+        if 'description' not in release:
+            release['description'] = 'No description available...'
+
+        if 'usageType' not in release['permissions']:
+            project['permissions']['usageType'] = default_usage
+            project['permissions']['exemptionText'] = default_exemption_text
 
     return metadata
