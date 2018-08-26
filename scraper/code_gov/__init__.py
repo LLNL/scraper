@@ -56,7 +56,7 @@ def process_config(config, compute_labor_hours=True):
 
         gl_session = gitlab.connect(url, token)
 
-        repos = gitlab.all_projects(gl_session)
+        repos = gitlab.query_repos(gl_session)
         for repo in repos:
             code_gov_project = Project.from_gitlab(repo, labor_hours=compute_labor_hours)
             code_gov_metadata['releases'].append(code_gov_project)
