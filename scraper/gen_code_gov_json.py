@@ -40,16 +40,33 @@ def main():
 
     configure_logging(args.verbose)
 
-    doecode_json = args.doecode_json
-    doecode_url = args.doecode_url
-    doecode_url_key = args.doecode_url_key
-
     try:
         config_json = json.load(open(args.config))
     except (FileNotFoundError, json.JSONDecodeError):
         if args.config:
             raise
         config_json = {}
+
+    # Update config based on commandline arguments
+    if args.agency:
+        config_json['agency'] = args.agency
+    if args.method:
+        config_json['method'] = args.method
+    if args.organization:
+        config_json['organization'] = args.organization
+    if args.contact_email:
+        config_json['contact_email'] = args.contact_email
+    if args.output_path:
+        config_json['output_path'] = args.output_path
+
+    config_json['DOECode'] = {}
+    config_json['DOECode']['json_file'] = args.doecode_json
+    config_json['DOECode']['url'] = args.doecode_url
+    config_json['DOECode']['url_key'] = args.doecode_url_key
+
+    doecode_json = config_json['DOECode']['json_file']
+    doecode_url = config_json['DOECode']['url']
+    doecode_url_key = config_json['DOECode']['url_key']
 
     output_path = config_json.get('output_path', None)
     output_path = args.output_path or output_path
