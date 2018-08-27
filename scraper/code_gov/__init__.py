@@ -25,7 +25,7 @@ def process_config(config, compute_labor_hours=True):
     if config.get('contact_email', None) is None:
         # A default contact email is required to handle the (frequent) case
         # where a project / repository has no available contact email.
-        raise RuntimeError('Config file must contain a "contact_email"')
+        logger.warning('Config file should contain a "contact_email"')
 
     code_gov_metadata = Metadata(agency, method)
 
