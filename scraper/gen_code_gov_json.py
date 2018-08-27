@@ -70,7 +70,7 @@ def main():
 
         if os.path.isfile(doecode_json):
             records = doecode.process_json(doecode_json)
-            projects = [code_gov.Project.from_doecode() for r in records]
+            projects = [code_gov.Project.from_doecode(r) for r in records]
             code_json['releases'].extend(projects)
         elif doecode_json:
             raise FileNotFoundError('Unable to find DOE CODE json file: %s' % doecode_json)
@@ -82,7 +82,7 @@ def main():
             raise ValueError('DOE CODE: API Key "doecode_url_key" value is missing!')
 
         records = doecode.process_url(doecode_url, doecode_url_key)
-        projects = [code_gov.Project.from_doecode() for r in records]
+        projects = [code_gov.Project.from_doecode(r) for r in records]
         code_json['releases'].extend(projects)
 
     code_gov.force_attributes(code_json, config_json)
