@@ -9,7 +9,6 @@ import os
 from scraper import code_gov
 from scraper.util import configure_logging
 
-
 logger = logging.getLogger(__name__)
 
 
