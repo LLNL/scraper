@@ -29,7 +29,7 @@ def main():
 
     parser.add_argument('--doecode-json', type=str, nargs='?', default=None, help='Path to DOE CODE .json file')
     parser.add_argument('--doecode-url', type=str, nargs='?', default=None, help='URL to DOE CODE .json data')
-    parser.add_argument('--doecode-url-key', type=str, nargs='?', default=None, help='DOE CODE API key for accessing --doecode-url')
+    parser.add_argument('--doecode-api-key', type=str, nargs='?', default=None, help='DOE CODE API key for accessing --doecode-url')
 
     parser.add_argument('--output-path', type=str, nargs='?', default='', help='Output path for .json file')
     parser.add_argument('--output-filename', type=str, nargs='?', default='code.json', help='Output filename for .json file')
@@ -59,14 +59,10 @@ def main():
     if args.output_path:
         config_json['output_path'] = args.output_path
 
-    config_json['DOECode'] = {}
-    config_json['DOECode']['json_file'] = args.doecode_json
-    config_json['DOECode']['url'] = args.doecode_url
-    config_json['DOECode']['url_key'] = args.doecode_url_key
-
-    doecode_json = config_json['DOECode']['json_file']
-    doecode_url = config_json['DOECode']['url']
-    doecode_url_key = config_json['DOECode']['url_key']
+    config_json['DOE CODE'] = {}
+    config_json['DOE CODE']['json'] = args.doecode_json
+    config_json['DOE CODE']['url'] = args.doecode_url
+    config_json['DOE CODE']['api_key'] = args.doecode_api_key
 
     output_path = config_json.get('output_path', None)
     output_path = args.output_path or output_path
@@ -82,25 +78,7 @@ def main():
     compute_labor_hours = not args.skip_labor_hours
     code_json = code_gov.process_config(config_json, compute_labor_hours)
 
-    if doecode_json is not None:
-        logger.debug('Queuing DOE CODE JSON: %s', doecode_json)
 
-        if os.path.isfile(doecode_json):
-            records = doecode.process_json(doecode_json)
-            projects = [code_gov.Project.from_doecode(r) for r in records]
-            code_json['releases'].extend(projects)
-        elif doecode_json:
-            raise FileNotFoundError('Unable to find DOE CODE json file: %s' % doecode_json)
-
-    elif doecode_url is not None:
-        logger.debug('Fetching DOE CODE JSON: %s', doecode_url)
-
-        if doecode_url_key is None:
-            raise ValueError('DOE CODE: API Key "doecode_url_key" value is missing!')
-
-        records = doecode.process_url(doecode_url, doecode_url_key)
-        projects = [code_gov.Project.from_doecode(r) for r in records]
-        code_json['releases'].extend(projects)
 
     code_gov.force_attributes(code_json, config_json)
 

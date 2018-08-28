@@ -4,7 +4,7 @@
 import logging
 
 from scraper.code_gov.models import Metadata, Project
-from scraper import github, gitlab, bitbucket
+from scraper import github, gitlab, bitbucket, doecode
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +27,7 @@ def process_config(config, compute_labor_hours=True):
         # where a project / repository has no available contact email.
         logger.warning('Config file should contain a "contact_email"')
 
+    logger.debug('Creating inventory from config: %s', config)
     code_gov_metadata = Metadata(agency, method)
 
     # Parse config for GitHub repositories
@@ -93,6 +94,17 @@ def process_config(config, compute_labor_hours=True):
 
             code_gov_project = Project.from_stashy(repo, labor_hours=compute_labor_hours)
             code_gov_metadata['releases'].append(code_gov_project)
+
+    # Handle parsing of DOE CODE records
+
+    doecode_config = config.get('DOE CODE', {})
+    doecode_json = doecode_config.get('json', None)
+    doecode_url = doecode_config.get('url', None)
+    doecode_key = doecode_config.get('api_key', None)
+
+    for record in doecode.process(doecode_json, doecode_url, doecode_key):
+        code_gov_project = Project.from_doecode(record)
+        code_gov_metadata['releases'].append(code_gov_project)
 
     return code_gov_metadata
 
