@@ -8,7 +8,6 @@ import os
 
 from scraper import code_gov
 from scraper.util import configure_logging
-from scraper import doecode
 
 
 logger = logging.getLogger(__name__)
@@ -77,8 +76,6 @@ def main():
 
     compute_labor_hours = not args.skip_labor_hours
     code_json = code_gov.process_config(config_json, compute_labor_hours)
-
-
 
     code_gov.force_attributes(code_json, config_json)
 
