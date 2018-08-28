@@ -8,7 +8,7 @@ with open('README.md') as fh:
 
 setup(
     name='llnl-scraper',
-    version='0.5.0-dev',
+    version='0.5.0',
     description='Package for extracting software repository metadata',
     long_description=long_description,
     author='Ian Lee',
