@@ -19,6 +19,7 @@ setup(
         'github3.py==1.0.0a4',
         'python-gitlab>=1.6.0',
         'stashy>=0.3',
+        'python-dateutil>=2.7.3',
     ],
     entry_points={
         'console_scripts': [
