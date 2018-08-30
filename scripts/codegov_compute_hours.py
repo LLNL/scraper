@@ -2,8 +2,9 @@
 
 import argparse
 import json
+import logging
 
-from scraper import code_gov
+from scraper.util import compute_labor_hours, git_repo_to_sloc
 
 
 parser = argparse.ArgumentParser(description='Scrape code repositories for Code.gov / DOECode')
@@ -22,8 +23,8 @@ repo_urls = {
 for url in repo_urls:
     # print(url)
 
-    sloc = code_gov.git_repo_to_sloc(url)
+    sloc = git_repo_to_sloc(url)
     # print(sloc)
 
-    hours = code_gov.compute_labor_hours(sloc)
+    hours = compute_labor_hours(sloc)
     print('-- url=%s, sloc=%d, hours=%d' % (url, sloc, hours))
