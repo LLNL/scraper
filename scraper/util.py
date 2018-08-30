@@ -174,6 +174,7 @@ def compute_labor_hours(sloc):
     try:
         person_months = float(EFFORT_REGEX.search(page.text).group(1))
     except AttributeError:
+        logger.error('Unable to find Person Months in page text: sloc=%s', sloc)
         # If there is no match, and .search(..) returns None
         person_months = 0
 
