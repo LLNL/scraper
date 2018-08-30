@@ -2,7 +2,7 @@ test:
 	bandit -r scraper/
 	flake8 --ignore=E501 scraper/
 
-release:
+release: test
 	python setup.py sdist bdist_wheel
 
 upload:
