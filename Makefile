@@ -6,4 +6,4 @@ release: test
 	python setup.py sdist bdist_wheel
 
 upload:
-	twine upload dist/*
+	twine upload --skip-existing dist/*
