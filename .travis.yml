@@ -3,12 +3,9 @@ language: python
 sudo: false
 
 python:
-    - '2.7'
-    - '3.3'
-    - '3.4'
     - '3.5'
     - '3.6'
-    - '3.7'
+    # - '3.7' -- Failing in Travis CI
 
 install:
     - pip install flake8 bandit
