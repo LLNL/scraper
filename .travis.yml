@@ -12,6 +12,7 @@ python:
 
 install:
     - pip install flake8 bandit
+    - pip install .
 
 script:
     - make test
