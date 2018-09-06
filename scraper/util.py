@@ -155,7 +155,7 @@ def git_repo_to_sloc(url):
     return sloc
 
 
-def compute_labor_hours(sloc):
+def compute_labor_hours(sloc, month_hours='cocomo_book'):
     """
     Compute the labor hours, given a count of source lines of code
 
@@ -165,8 +165,17 @@ def compute_labor_hours(sloc):
     - http://csse.usc.edu/tools/cocomoii.php
     - http://docs.python-guide.org/en/latest/scenarios/scrape/
     """
-    # (40 Hours / week) * (52 weeks / year) / (12 months / year) ~= 173.33
-    HOURS_PER_PERSON_MONTH = 40.0 * 52 / 12
+    # Calculation of hours in a month
+    if month_hours == 'hours_per_year':
+        # Use number of working hours in a year:
+        # (40 Hours / week) * (52 weeks / year) / (12 months / year) ~= 173.33
+        HOURS_PER_PERSON_MONTH = 40.0 * 52 / 12
+    else:
+        # Use value from COCOMO II Book (month_hours=='cocomo_book'):
+        # Reference: https://dl.acm.org/citation.cfm?id=557000
+        # This is the value used by the Code.gov team:
+        # https://github.com/GSA/code-gov/blob/master/LABOR_HOUR_CALC.md
+        HOURS_PER_PERSON_MONTH = 152.0
 
     cocomo_url = 'http://csse.usc.edu/tools/cocomoii.php'
     page = requests.post(cocomo_url, data={'new_size': sloc})
