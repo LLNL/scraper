@@ -84,7 +84,9 @@ def git_repo_to_sloc(url):
     Given a Git repository URL, returns number of lines of code based on cloc
 
     Reference:
-        - cloc: https://github.com/AlDanial/cloc
+    - cloc: https://github.com/AlDanial/cloc
+    - https://www.omg.org/spec/AFP/
+        - Another potential way to calculation effort
 
     Sample cloc output:
         {
