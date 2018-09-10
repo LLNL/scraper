@@ -22,6 +22,7 @@ class Metadata(dict):
 
     For details: https://code.gov/#/policy-guide/docs/compliance/inventory-code
     """
+
     def __init__(self, agency, method, other_method=''):
         # *version: [string] The Code.gov metadata schema version
         self['version'] = '2.0.0'
@@ -193,7 +194,14 @@ class Project(dict):
         project['description'] = repository.description
 
         # TODO: Update licenses from GitHub API
-        project['permissions']['licenses'] = None
+        repo_license = repository.license()
+        if repo_license:
+            license = repo_license.license
+            if license:
+                logger.debug('license spdx=%s; url=%s', license['spdx_id'], license['url'])
+                project['permissions']['licenses'] = [license['url'], license['spdx_id']]
+            else:
+                project['permissions']['licenses'] = None
 
         public_server = repository.html_url.startswith('https://github.com')
         if not repository.private and public_server:
