@@ -193,7 +193,6 @@ class Project(dict):
         project['repositoryURL'] = repository.git_url
         project['description'] = repository.description
 
-        # TODO: Update licenses from GitHub API
         repo_license = repository.license()
         if repo_license:
             license = repo_license.license
@@ -284,6 +283,7 @@ class Project(dict):
         project['repositoryURL'] = repository.http_url_to_repo
         project['description'] = repository.description
 
+        # TODO: Update licenses from GitLab API
         project['permissions']['license'] = None
 
         web_url = repository.web_url
