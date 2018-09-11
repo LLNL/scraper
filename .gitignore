@@ -3,3 +3,4 @@ code.json
 build/
 dist/
 *.pyc
+llnl_scraper.egg-info/
