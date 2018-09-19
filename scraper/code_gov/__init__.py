@@ -4,6 +4,7 @@
 import logging
 
 from scraper.code_gov.models import Metadata, Project
+from scraper.github import gov_orgs
 from scraper import github, gitlab, bitbucket, doecode
 
 logger = logging.getLogger(__name__)
@@ -34,6 +35,11 @@ def process_config(config):
 
     # Parse config for GitHub repositories
     github_instances = config.get('GitHub', [])
+    if config.get('github_gov_orgs', False):
+        github_instances.append({
+            'url': 'https://github.com',
+            'orgs': gov_orgs(),
+        })
     for instance in github_instances:
         url = instance.get('url', 'https://github.com')
         orgs = instance.get('orgs', [])
