@@ -9,7 +9,7 @@ from scraper import github, gitlab, bitbucket, doecode
 logger = logging.getLogger(__name__)
 
 
-def process_config(config, compute_labor_hours=True):
+def process_config(config):
     """
     Master function to process a Scraper config file
 
@@ -21,6 +21,8 @@ def process_config(config, compute_labor_hours=True):
 
     method = config.get('method', 'other')
     logger.debug('Inventory Method: %s', method)
+
+    compute_labor_hours = config.get('compute_labor_hours', True)
 
     if config.get('contact_email', None) is None:
         # A default contact email is required to handle the (frequent) case
