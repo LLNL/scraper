@@ -4,12 +4,13 @@
 import logging
 
 from scraper.code_gov.models import Metadata, Project
+from scraper.github import gov_orgs
 from scraper import github, gitlab, bitbucket, doecode
 
 logger = logging.getLogger(__name__)
 
 
-def process_config(config, compute_labor_hours=True):
+def process_config(config):
     """
     Master function to process a Scraper config file
 
@@ -22,6 +23,8 @@ def process_config(config, compute_labor_hours=True):
     method = config.get('method', 'other')
     logger.debug('Inventory Method: %s', method)
 
+    compute_labor_hours = config.get('compute_labor_hours', True)
+
     if config.get('contact_email', None) is None:
         # A default contact email is required to handle the (frequent) case
         # where a project / repository has no available contact email.
@@ -32,6 +35,11 @@ def process_config(config, compute_labor_hours=True):
 
     # Parse config for GitHub repositories
     github_instances = config.get('GitHub', [])
+    if config.get('github_gov_orgs', False):
+        github_instances.append({
+            'url': 'https://github.com',
+            'orgs': gov_orgs(),
+        })
     for instance in github_instances:
         url = instance.get('url', 'https://github.com')
         orgs = instance.get('orgs', [])

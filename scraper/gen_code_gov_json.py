@@ -56,6 +56,10 @@ def main():
         config_json['contact_email'] = args.contact_email
     if args.output_path:
         config_json['output_path'] = args.output_path
+    if args.skip_labor_hours:
+        config_json['compute_labor_hours'] = False
+    if args.github_gov_orgs:
+        config_json['github_gov_orgs'] = True
 
     config_json['DOE CODE'] = {}
     config_json['DOE CODE']['json'] = args.doecode_json
@@ -69,12 +73,7 @@ def main():
     if (output_path is not None and not os.path.exists(output_path)):
         raise RuntimeError('Invalid output path argument provided!  Make sure the output path exists and try again.')
 
-    # TODO: Will want to re-work this in as a special demo case
-    # if args.github_gov_orgs:
-    #     github_orgs.extend(gov_orgs())
-
-    compute_labor_hours = not args.skip_labor_hours
-    code_json = code_gov.process_config(config_json, compute_labor_hours)
+    code_json = code_gov.process_config(config_json)
 
     code_gov.force_attributes(code_json, config_json)
 
