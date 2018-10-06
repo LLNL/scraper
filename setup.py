@@ -23,6 +23,7 @@ setup(
     entry_points={
         'console_scripts': [
             'scraper = scraper.gen_code_gov_json:main',
+            'audit-github = scraper.github.audit:main',
         ]
     },
     scripts=[
