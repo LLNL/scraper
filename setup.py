@@ -16,7 +16,7 @@ setup(
     url='https://github.com/llnl/scraper',
     packages=find_packages(),
     install_requires=[
-        'github3.py==1.0.0a4',
+        'github3.py>=1.2.0',
         'python-gitlab>=1.6.0',
         'stashy>=0.3',
         'python-dateutil>=2.7.3',
