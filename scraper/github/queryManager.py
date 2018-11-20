@@ -221,17 +221,21 @@ class GitHubQueryManager:
         pageNum -= 1
 
         # Make sure the query limit didn't run out
-        apiStatus = {
-            "limit": int(response["headDict"]["X-RateLimit-Limit"]),
-            "remaining": int(response["headDict"]["X-RateLimit-Remaining"]),
-            "reset": int(response["headDict"]["X-RateLimit-Reset"])
-        }
-        _vPrint((verbosity >= 0), "API Status %s" % (json.dumps(apiStatus)))
-        if not apiStatus["remaining"] > 0:
-            _vPrint((verbosity >= 0), "API usage limit reached during query.")
-            self._awaitReset(apiStatus["reset"])
-            _vPrint((verbosity >= 0), "Repeating query...")
-            return self.queryGitHub(gitquery, gitvars=gitvars, verbosity=verbosity, paginate=paginate, cursorVar=cursorVar, keysToList=keysToList, rest=rest, requestCount=(requestCount - 1), pageNum=pageNum)
+        try:
+            apiStatus = {
+                "limit": int(response["headDict"]["X-RateLimit-Limit"]),
+                "remaining": int(response["headDict"]["X-RateLimit-Remaining"]),
+                "reset": int(response["headDict"]["X-RateLimit-Reset"])
+            }
+            _vPrint((verbosity >= 0), "API Status %s" % (json.dumps(apiStatus)))
+            if not apiStatus["remaining"] > 0:
+                _vPrint((verbosity >= 0), "API usage limit reached during query.")
+                self._awaitReset(apiStatus["reset"])
+                _vPrint((verbosity >= 0), "Repeating query...")
+                return self.queryGitHub(gitquery, gitvars=gitvars, verbosity=verbosity, paginate=paginate, cursorVar=cursorVar, keysToList=keysToList, rest=rest, requestCount=(requestCount - 1), pageNum=pageNum)
+        except KeyError:
+            # Handles error cases that don't return X-RateLimit data
+            _vPrint((verbosity >= 0), "Failed to check API Status.")
 
         # Check for accepted but not yet processed, usually due to un-cached data
         if statusNum == 202:
