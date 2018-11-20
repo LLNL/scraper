@@ -493,6 +493,8 @@ class DataManager:
             filePath = self.filePath
         if not os.path.isfile(filePath):
             print("Data file '%s' does not exist, will create new file." % (filePath))
+            if not os.path.exists(os.path.split(filePath)[0]):
+                os.makedirs(os.path.split(filePath)[0])
         dataJsonString = json.dumps(self.data, indent=4, sort_keys=True)
         print("Writing to file '%s' ... " % (filePath), end="", flush=True)
         with open(filePath, "w") as fileout:
