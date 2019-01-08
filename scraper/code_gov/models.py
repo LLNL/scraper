@@ -332,8 +332,8 @@ class Project(dict):
         # project['reusedCode'] = []
 
         project['date'] = {
-            'created': repository.created_at,
-            'lastModified': repository.last_activity_at,
+            'created': date_parse(repository.created_at).date().isoformat(),
+            'lastModified': date_parse(repository.last_activity_at).date().isoformat(),
             'metadataLastUpdated': '',
         }
 
