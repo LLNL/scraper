@@ -198,7 +198,10 @@ class Project(dict):
             license = repo_license.license
             if license:
                 logger.debug('license spdx=%s; url=%s', license['spdx_id'], license['url'])
-                project['permissions']['licenses'] = [license['url'], license['spdx_id']]
+                if license['url'] == None:
+                    project['permissions']['licenses'] = [{"name": license['spdx_id']}]
+                else:
+                    project['permissions']['licenses'] = [{"URL": license['url'], "name":license['spdx_id']}]
             else:
                 project['permissions']['licenses'] = None
 
@@ -252,8 +255,8 @@ class Project(dict):
         #   lastModified: [string] The date the release was modified, in YYYY-MM-DD or ISO 8601 format.
         #   metadataLastUpdated: [string] The date the metadata of the release was last updated, in YYYY-MM-DD or ISO 8601 format.
         project['date'] = {
-            'created': repository.pushed_at.isoformat(),
-            'lastModified': repository.updated_at.isoformat(),
+            'created': repository.pushed_at.date().isoformat(),
+            'lastModified': repository.updated_at.date().isoformat(),
             'metadataLastUpdated': '',
         }
 

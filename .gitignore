@@ -1,5 +1,6 @@
 code.csv
 code.json
+config.json
 build/
 dist/
 *.pyc
