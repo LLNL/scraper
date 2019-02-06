@@ -6,8 +6,9 @@ from setuptools import setup, find_packages
 with open('README.md') as fh:
     long_description = fh.read()
 
-for line in open('requirements/production.txt').readlines():
-    install_reqs = [x.strip() for x in line if line and not x.startswith('#')]
+with open('requirements/production.txt') as fp:
+    lines = [x.strip() for x in fp.readlines() if x]
+    install_reqs = [x for x in lines if not x.startswith('#')]
 
 setup(
     name='llnl-scraper',
