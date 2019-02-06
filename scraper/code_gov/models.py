@@ -178,7 +178,7 @@ class Project(dict):
         """
         Create CodeGovProject object from github3 Repository object
         """
-        if not isinstance(repository, github3.repos.repo.Repository):
+        if not isinstance(repository, github3.repos.repo._Repository):
             raise TypeError('Repository must be a github3 Repository object')
 
         logger.info('Processing: %s', repository.full_name)
