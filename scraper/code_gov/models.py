@@ -264,8 +264,8 @@ class Project(dict):
         #   lastModified: [string] The date the release was modified, in YYYY-MM-DD or ISO 8601 format.
         #   metadataLastUpdated: [string] The date the metadata of the release was last updated, in YYYY-MM-DD or ISO 8601 format.
         project['date'] = {
-            'created': repository.pushed_at.isoformat(),
-            'lastModified': repository.updated_at.isoformat(),
+            'created': repository.pushed_at.date().isoformat(),
+            'lastModified': repository.updated_at.date().isoformat(),
             'metadataLastUpdated': '',
         }
 
@@ -341,8 +341,8 @@ class Project(dict):
         # project['reusedCode'] = []
 
         project['date'] = {
-            'created': repository.created_at,
-            'lastModified': repository.last_activity_at,
+            'created': date_parse(repository.created_at).date().isoformat(),
+            'lastModified': date_parse(repository.last_activity_at).date().isoformat(),
             'metadataLastUpdated': '',
         }
 
