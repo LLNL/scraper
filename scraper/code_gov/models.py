@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 # -*- coding: UTF-8 -*-
 
+import datetime
 import json
 import logging
 
@@ -193,12 +194,20 @@ class Project(dict):
         project['repositoryURL'] = repository.git_url
         project['description'] = repository.description
 
-        repo_license = repository.license()
+        try:
+            repo_license = repository.license()
+        except github3.exceptions.NotFoundError:
+            logger.debug('no license found for repo=%s', repository)
+            repo_license = None
+
         if repo_license:
             license = repo_license.license
             if license:
-                logger.debug('license spdx=%s; url=%s', license['spdx_id'], license['url'])
-                project['permissions']['licenses'] = [license['url'], license['spdx_id']]
+                logger.debug('license spdx=%s; url=%s', license.spdx_id, license.url)
+                if license.url is None:
+                    project['permissions']['licenses'] = [{"name": license.spdx_id}]
+                else:
+                    project['permissions']['licenses'] = [{"URL": license.url, "name": license.spdx_id}]
             else:
                 project['permissions']['licenses'] = None
 
@@ -220,15 +229,18 @@ class Project(dict):
         project['tags'].extend(topics['names'])
         repository.session.headers['Accept'] = old_accept
 
-        organization = repository.owner
-        project['contact']['email'] = organization.email
-        project['contact']['URL'] = organization.html_url
+        # Hacky way to get an Organization object back with GitHub3.py >= 1.2.0
+        owner_url = repository.owner.url
+        owner_api_response = repository._get(owner_url)
+        organization = repository._json(owner_api_response, 200)
+        project['contact']['email'] = organization['email']
+        project['contact']['URL'] = organization['html_url']
 
         # -- OPTIONAL FIELDS --
 
         # project['version'] = ''
 
-        project['organization'] = organization.name
+        project['organization'] = organization['name']
 
         # TODO: Currently, can't be an empty string, see: https://github.com/GSA/code-gov-web/issues/370
         project['status'] = 'Development'
@@ -237,7 +249,7 @@ class Project(dict):
 
         project['homepageURL'] = repository.html_url
 
-        project['downloadURL'] = repository.download_url
+        project['downloadURL'] = repository.downloads_url
 
         project['languages'] = [l for l, _ in repository.languages()]
 
