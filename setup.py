@@ -6,6 +6,9 @@ from setuptools import setup, find_packages
 with open('README.md') as fh:
     long_description = fh.read()
 
+for line in open('requirements/production.txt').readlines():
+    install_reqs = [x.strip() for x in line if line and not x.startswith('#')]
+
 setup(
     name='llnl-scraper',
     version='0.6.0-dev',
@@ -15,12 +18,7 @@ setup(
     author_email='lee1001@llnl.gov',
     url='https://github.com/llnl/scraper',
     packages=find_packages(),
-    install_requires=[
-        'github3.py>=1.2.0',
-        'python-gitlab>=1.6.0',
-        'stashy>=0.3',
-        'python-dateutil>=2.7.3',
-    ],
+    install_requires=install_reqs,
     entry_points={
         'console_scripts': [
             'scraper = scraper.gen_code_gov_json:main',
