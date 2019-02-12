@@ -225,7 +225,7 @@ class Project(dict):
         old_accept = repository.session.headers['Accept']
         repository.session.headers['Accept'] = 'application/vnd.github.mercy-preview+json'
         topics = repository._get(repository.url + '/topics').json()
-        project['tags'].extend(topics['names'])
+        project['tags'].extend(topics.get('names', []))
         repository.session.headers['Accept'] = old_accept
 
         # Hacky way to get an Organization object back with GitHub3.py >= 1.2.0
