@@ -262,9 +262,18 @@ class Project(dict):
         #   created: [string] The date the release was originally created, in YYYY-MM-DD or ISO 8601 format.
         #   lastModified: [string] The date the release was modified, in YYYY-MM-DD or ISO 8601 format.
         #   metadataLastUpdated: [string] The date the metadata of the release was last updated, in YYYY-MM-DD or ISO 8601 format.
+        try:
+            pushed_at = repository.pushed_at.date()
+        except AttributeError:
+            pushed_at = date_parse(repository.pushed_at).date()
+        try:
+            updated_at = repository.updated_at.date()
+        except AttributeError:
+            updated_at = date_parse(repository.updated_at).date()
+
         project['date'] = {
-            'created': repository.pushed_at.date().isoformat(),
-            'lastModified': repository.updated_at.date().isoformat(),
+            'created': pushed_at.isoformat(),
+            'lastModified': updated_at.isoformat(),
             'metadataLastUpdated': '',
         }
 
