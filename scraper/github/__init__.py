@@ -142,6 +142,8 @@ def query_repos(gh_session, orgs=None, repos=None, public_only=True):
     else:
         privacy = 'all'
 
+    _check_api_limits(gh_session, 10)
+
     for org_name in orgs:
         org = gh_session.organization(org_name)
         num_repos = org.public_repos_count
@@ -149,9 +151,11 @@ def query_repos(gh_session, orgs=None, repos=None, public_only=True):
         _check_api_limits(gh_session, _num_requests_needed(num_repos))
 
         for repo in org.repositories(type=privacy):
+            _check_api_limits(gh_session, 10)
             yield repo
 
     for repo_name in repos:
+        _check_api_limits(gh_session, 10)
         org, name = repo_name.split('/')
         yield gh_session.repository(org, name)
 
