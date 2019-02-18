@@ -36,7 +36,7 @@ def repo_has_readme(repo):
         logger.error('README missing: repo=%s', repo.full_name)
         return False
 
-    logger.debug('repo=%s readme=%s', repo.full_name, readme)
+    logger.debug('repo=%s readme=%s', repo.full_name, repo.readme)
 
     return True
 
@@ -87,6 +87,7 @@ def main():
 
     gh_session = github.connect()
     llnl_github_io = gh_session.repository('llnl', 'llnl.github.io')
+    global LLNL_NOTICE
     LLNL_NOTICE = llnl_github_io.file_contents('about/licenses/NOTICE')
 
     orgs = [gh_session.organization(args.organization)]
