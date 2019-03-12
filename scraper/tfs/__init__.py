@@ -15,9 +15,11 @@ logger = logging.getLogger(__name__)
 
 HARD_CODED_TOP = 10000
 
+
 def get_projects_metadata(baseurl, token):
     logger.debug('Retrieving TFS Metdata.....')
     return populate_tfs_projects(baseurl, token)
+
 
 def populate_tfs_projects(baseurl, token):
     tfs_project_info_collection = []
@@ -30,6 +32,7 @@ def populate_tfs_projects(baseurl, token):
 
     return tfs_project_info_collection
 
+
 def create_tfs_connection(url, token):
     """
     Creates the TFS Connection Context
@@ -38,8 +41,9 @@ def create_tfs_connection(url, token):
         token = os.environ.get('TFS_API_TOKEN', None)
 
     tfs_credentials = BasicAuthentication('', token)
-    tfs_connection = VssConnection(base_url=url, creds=tfs_credentials)    
+    tfs_connection = VssConnection(base_url=url, creds=tfs_credentials)
     return tfs_connection
+
 
 def create_tfs_project_analysis_client(url, token=None):
     """
@@ -61,6 +65,7 @@ def create_tfs_project_analysis_client(url, token=None):
 
     return project_analysis_client
 
+
 def create_tfs_core_client(url, token=None):
     """
     Create a core_client.py client for a Team Foundation Server Enterprise connection instance
@@ -80,6 +85,7 @@ def create_tfs_core_client(url, token=None):
 
     return tfs_client
 
+
 def create_tfs_git_client(url, token=None):
     """
     Creates a TFS Git Client to pull Git repo info
@@ -95,6 +101,7 @@ def create_tfs_git_client(url, token=None):
         raise RuntimeError(msg, url)
 
     return tfs_git_client
+
 
 def create_tfs_tfvc_client(url, token=None):
     """
@@ -112,6 +119,7 @@ def create_tfs_tfvc_client(url, token=None):
 
     return tfs_tfvc_client
 
+
 def get_all_projects(url, token):
     """
     Returns a list of all projects with their collection info from the server
@@ -124,7 +132,6 @@ def get_all_projects(url, token):
     for collection in collections:
         collection_client = create_tfs_core_client(f'{url}/{collection.name}', token)
 
-
         logger.debug(f'Retrieving Projects for Project Collection: {collection.name}')
         # Retrieves all projects in the project collection
         projects = collection_client.get_projects(top=HARD_CODED_TOP)
@@ -133,11 +140,11 @@ def get_all_projects(url, token):
         collection_history_list = collection_client.get_project_history_entries()
         for project in projects:
 
-            # get_projects only gets team project ref objects, 
+            # get_projects only gets team project ref objects,
             # have to call get_project to get the team project object which includes the TFS Web Url for the project
             logger.debug(f'Retrieving Team Project for Project: {project.name}')
             projectInfo = collection_client.get_project(project.id, True, True)
-            
+
             tfsProject = TFSProject(projectInfo, collection)
 
             logger.debug(f'Retrieving Last Updated and Created Info for Project: {project.name}')
@@ -147,6 +154,7 @@ def get_all_projects(url, token):
 
     return project_list
 
+
 def get_git_repos(url, token, collection, project):
     """
     Returns a list of all git repos for the supplied project within the supplied collection
@@ -154,6 +162,7 @@ def get_git_repos(url, token, collection, project):
     git_client = create_tfs_git_client(f'{url}/{collection.name}', token)
     logger.debug(f'Retrieving Git Repos for Project: {project.name}')
     return git_client.get_repositories(project.id)
+
 
 def get_tfvc_repos(url, token, collection, project):
     """
@@ -168,14 +177,16 @@ def get_tfvc_repos(url, token, collection, project):
         branch_list.extend(branches)
     else:
         logger.debug(f'No Tfvcc Branches in Project: {project.name}')
-    
+
     return branch_list
 
+
 def get_project_last_update_time(collection_history_list, projectId):
-    sorted_history_list = sorted(collection_history_list, key=lambda x: x.last_update_time, reverse = True)
+    sorted_history_list = sorted(collection_history_list, key=lambda x: x.last_update_time, reverse=True)
     project_last_update_info = next((x for x in sorted_history_list if x.id == projectId))
     return project_last_update_info
 
+
 def get_project_create_time(collection_history_list, projectId):
-    sorted_history_list = sorted(collection_history_list, key=lambda x: x.last_update_time, reverse = False)
+    sorted_history_list = sorted(collection_history_list, key=lambda x: x.last_update_time, reverse=False)
     return next((x for x in sorted_history_list if x.id == projectId))
