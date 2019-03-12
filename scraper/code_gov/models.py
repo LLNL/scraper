@@ -602,7 +602,7 @@ class Project(dict):
 
         if labor_hours:
             logger.debug('Sorry labor hour calculation not currently supported.')
-            #project['laborHours'] = labor_hours_from_url(project['repositoryURL'])
+            # project['laborHours'] = labor_hours_from_url(project['repositoryURL'])
         else:
             project['laborHours'] = 0
 

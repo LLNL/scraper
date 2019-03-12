@@ -4,9 +4,6 @@
 import logging
 import os
 
-import vsts
-import time
-
 from vsts.vss_connection import VssConnection
 from msrest.authentication import BasicAuthentication
 from scraper.tfs.models import TFSProject
@@ -26,8 +23,6 @@ def populate_tfs_projects(baseurl, token):
     projects = get_all_projects(baseurl, token)
 
     for project in projects:
-        # project.gitInfo = get_git_repos(baseurl, token, project.collectionInfo, project.projectInfo)
-        # project.tfvcInfo = get_tfvc_repos(baseurl, token, project.collectionInfo, project.projectInfo)
         tfs_project_info_collection.append(project)
 
     return tfs_project_info_collection
@@ -130,9 +125,9 @@ def get_all_projects(url, token):
     collections = tfs_client.get_project_collections(top=HARD_CODED_TOP)
 
     for collection in collections:
-        collection_client = create_tfs_core_client(f'{url}/{collection.name}', token)
+        collection_client = create_tfs_core_client('{url}/{collection_name}'.format(url=url, collection_name=collection.name), token)
 
-        logger.debug(f'Retrieving Projects for Project Collection: {collection.name}')
+        logger.debug('Retrieving Projects for Project Collection: {collection_name}'.format(collection_name=collection.name))
         # Retrieves all projects in the project collection
         projects = collection_client.get_projects(top=HARD_CODED_TOP)
         # get_projects only gets the project references, have to call get_project_history_entries to get last update info for projects
@@ -142,12 +137,12 @@ def get_all_projects(url, token):
 
             # get_projects only gets team project ref objects,
             # have to call get_project to get the team project object which includes the TFS Web Url for the project
-            logger.debug(f'Retrieving Team Project for Project: {project.name}')
+            logger.debug('Retrieving Team Project for Project: {project_name}'.format(project_name=project.name))
             projectInfo = collection_client.get_project(project.id, True, True)
 
             tfsProject = TFSProject(projectInfo, collection)
 
-            logger.debug(f'Retrieving Last Updated and Created Info for Project: {project.name}')
+            logger.debug('Retrieving Last Updated and Created Info for Project: {project_name}'.format(project_name=project.name))
             tfsProject.projectLastUpdateInfo = get_project_last_update_time(collection_history_list, project.id)
             tfsProject.projectCreateInfo = get_project_create_time(collection_history_list, project.id)
             project_list.append(tfsProject)
@@ -159,8 +154,8 @@ def get_git_repos(url, token, collection, project):
     """
     Returns a list of all git repos for the supplied project within the supplied collection
     """
-    git_client = create_tfs_git_client(f'{url}/{collection.name}', token)
-    logger.debug(f'Retrieving Git Repos for Project: {project.name}')
+    git_client = create_tfs_git_client('{url}/{collection_name}'.format(url=url, collection_name=collection.name), token)
+    logger.debug('Retrieving Git Repos for Project: {project_name}'.format(project_name=project.name))
     return git_client.get_repositories(project.id)
 
 
@@ -169,14 +164,14 @@ def get_tfvc_repos(url, token, collection, project):
     Returns a list of all tfvc branches for the supplied project within the supplied collection
     """
     branch_list = []
-    tfvc_client = create_tfs_tfvc_client(f'{url}/{collection.name}', token)
+    tfvc_client = create_tfs_tfvc_client('{url}/{collection_name}'.format(url=url, collection_name=collection.name), token)
 
-    logger.debug(f'Retrieving Tfvc Branches for Project: {project.name}')
+    logger.debug('Retrieving Tfvc Branches for Project: {project_name}'.format(project_name=project.name))
     branches = tfvc_client.get_branches(project.id, True, True, False, True)
     if branches:
         branch_list.extend(branches)
     else:
-        logger.debug(f'No Tfvcc Branches in Project: {project.name}')
+        logger.debug('No Tfvcc Branches in Project: {project_name}'.format(project_name=project.name))
 
     return branch_list
 

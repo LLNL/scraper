@@ -6,4 +6,3 @@ class TFSProject:
         self.projectLastUpdateInfo = {}
         self.gitInfo = []
         self.tfvcInfo = []
-
