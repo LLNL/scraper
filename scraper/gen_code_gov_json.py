@@ -84,7 +84,7 @@ def main():
     if output_path is not None:
         output_filepath = os.path.join(output_path, output_filepath)
 
-    with open(output_filepath, 'w') as fp:
+    with open(output_filepath, 'w', encoding='utf-8') as fp:
         logger.info('Writing output to: %s', output_filepath)
         fp.write(code_json.to_json())
 

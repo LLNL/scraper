@@ -7,3 +7,4 @@ twine
 # Testing tools
 bandit
 flake8
+safety

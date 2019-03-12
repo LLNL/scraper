@@ -5,7 +5,7 @@ import logging
 
 from scraper.code_gov.models import Metadata, Project
 from scraper.github import gov_orgs
-from scraper import github, gitlab, bitbucket, doecode
+from scraper import github, gitlab, bitbucket, doecode, tfs
 
 logger = logging.getLogger(__name__)
 
@@ -101,6 +101,17 @@ def process_config(config):
                 continue
 
             code_gov_project = Project.from_stashy(repo, labor_hours=compute_labor_hours)
+            code_gov_metadata['releases'].append(code_gov_project)
+
+    # Parse config for TFS repositories
+    tfs_instances = config.get('TFS', [])
+    for instance in tfs_instances:
+        url = instance.get('url')
+        token = instance.get('token', None)
+
+        projects = tfs.get_projects_metadata(url, token)
+        for project in projects:
+            code_gov_project = Project.from_tfs(project, labor_hours=compute_labor_hours)
             code_gov_metadata['releases'].append(code_gov_project)
 
     # Handle parsing of DOE CODE records

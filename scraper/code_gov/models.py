@@ -5,6 +5,7 @@ import json
 import logging
 
 from dateutil.parser import parse as date_parse
+from requests.utils import requote_uri
 import github3
 import gitlab
 
@@ -49,7 +50,7 @@ class Metadata(dict):
         self['releases'] = []
 
     def to_json(self):
-        return json.dumps(self, indent=4, sort_keys=True)
+        return json.dumps(self, indent=4, sort_keys=True, ensure_ascii=False)
 
 
 class Project(dict):
@@ -304,7 +305,7 @@ class Project(dict):
         project['description'] = repository.description
 
         # TODO: Update licenses from GitLab API
-        project['permissions']['license'] = None
+        project['permissions']['licenses'] = None
 
         web_url = repository.web_url
         public_server = web_url.startswith('https://gitlab.com')
@@ -568,5 +569,60 @@ class Project(dict):
                 # 'lastModified': '',
                 'metadataLastUpdated': record['date_record_updated']
             }
+
+        return project
+
+    @classmethod
+    def from_tfs(klass, tfs_project, labor_hours=True):
+        """
+        Creates CodeGovProject object from TFS/VSTS/AzureDevOps Instance
+        """
+        project = klass()
+        project_web_url = ''
+
+        # -- REQUIRED FIELDS --
+        project['name'] = tfs_project.projectInfo.name
+
+        if 'web' in tfs_project.projectInfo._links.additional_properties:
+            if 'href' in tfs_project.projectInfo._links.additional_properties['web']:
+                # URL Encodes spaces that are in the Project Name for the Project Web URL
+                project_web_url = requote_uri(tfs_project.projectInfo._links.additional_properties['web']['href'])
+
+        project['repositoryURL'] = project_web_url
+
+        project['homepageURL'] = project_web_url
+
+        project['description'] = tfs_project.projectInfo.description
+
+        project['vcs'] = 'TFS/AzureDevOps'
+
+        project['permissions']['license'] = None
+
+        project['tags'] = []
+
+        if labor_hours:
+            logger.debug('Sorry labor hour calculation not currently supported.')
+            #project['laborHours'] = labor_hours_from_url(project['repositoryURL'])
+        else:
+            project['laborHours'] = 0
+
+        if tfs_project.projectCreateInfo.last_update_time < POLICY_START_DATE:
+            project['permissions']['usageType'] = 'exemptByPolicyDate'
+        else:
+            project['permissions']['usageType'] = 'exemptByAgencyMission'
+            project['permissions']['exemptionText'] = 'This source code resides on a private server and has not been properly evaluated for releaseability.'
+
+        project['contact'] = {
+            'email': '',
+            'URL': project_web_url
+        }
+
+        project['date'] = {
+            'lastModified': tfs_project.projectLastUpdateInfo.last_update_time.date().isoformat(),
+            'created': tfs_project.projectCreateInfo.last_update_time.date().isoformat(),
+            'metadataLastUpdated': ''
+        }
+
+        _prune_dict_null_str(project)
 
         return project
