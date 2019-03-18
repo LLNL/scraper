@@ -15,17 +15,7 @@ HARD_CODED_TOP = 10000
 
 def get_projects_metadata(baseurl, token):
     logger.debug('Retrieving TFS Metdata.....')
-    return populate_tfs_projects(baseurl, token)
-
-
-def populate_tfs_projects(baseurl, token):
-    tfs_project_info_collection = []
-    projects = get_all_projects(baseurl, token)
-
-    for project in projects:
-        tfs_project_info_collection.append(project)
-
-    return tfs_project_info_collection
+    return [project for project in get_all_projects(baseurl, token)]
 
 
 def create_tfs_connection(url, token):
@@ -115,14 +105,15 @@ def create_tfs_tfvc_client(url, token=None):
     return tfs_tfvc_client
 
 
-def get_all_projects(url, token):
+def get_all_projects(url, token, top=HARD_CODED_TOP):
     """
-    Returns a list of all projects with their collection info from the server
+    Returns a list of all projects with their collection info from the server. Currently limited functionality to only return the first 1000 projects.
+    #TODO refactor to add multiple calls to api to retrieve all projects if more exist beyond top.
     """
     project_list = []
     tfs_client = create_tfs_core_client(url, token)
 
-    collections = tfs_client.get_project_collections(top=HARD_CODED_TOP)
+    collections = tfs_client.get_project_collections(top=top)
 
     for collection in collections:
         collection_client = create_tfs_core_client('{url}/{collection_name}'.format(url=url, collection_name=collection.name), token)
@@ -178,8 +169,7 @@ def get_tfvc_repos(url, token, collection, project):
 
 def get_project_last_update_time(collection_history_list, projectId):
     sorted_history_list = sorted(collection_history_list, key=lambda x: x.last_update_time, reverse=True)
-    project_last_update_info = next((x for x in sorted_history_list if x.id == projectId))
-    return project_last_update_info
+    return next((x for x in sorted_history_list if x.id == projectId))
 
 
 def get_project_create_time(collection_history_list, projectId):
