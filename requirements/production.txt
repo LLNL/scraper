@@ -1,4 +1,7 @@
-github3.py>=1.2.0
+github3.py==1.2.0
 python-gitlab>=1.6.0
 stashy>=0.3
 python-dateutil>=2.7.3
+vsts>=0.1.25
+requests>=2.16
+msrest>=0.6.4

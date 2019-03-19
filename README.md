@@ -47,7 +47,7 @@ incomplete or inaccurate data returned via the scraping.
 
 The basic structure is:
 
-```
+```json
 {
     # REQUIRED
     "contact_email": "...", # Used when the contact email cannot be found otherwise
@@ -64,7 +64,7 @@ The basic structure is:
 }
 ```
 
-```
+```json
 "GitHub": [
     {
         "url": "https://github.com",    # GitHub.com or GitHub Enterprise URL to inventory
@@ -78,7 +78,7 @@ The basic structure is:
 ],
 ```
 
-```
+```json
 "GitLab": [
     {
         "url": "https://gitlab.com",    # GitLab.com or hosted GitLab instance URL to inventory
@@ -91,13 +91,23 @@ The basic structure is:
 ]
 ```
 
-```
+```json
 "Bitbucket": [
     {
         "url": "https://bitbucket.internal",    # Base URL for a Bitbucket Server instance
         "username": "",                         # Username to authenticate with
         "password": "",                         # Password to authenticate with
 
+        "exclude": [ ... ]  # List of projects / repositories to exclude from inventory
+    }
+]
+```
+
+```json
+"TFS": [
+    {
+        "url": "https://tfs.internal",  # Base URL for a Team Foundation Server (TFS) or Visual Studio Team Services (VSTS) or Azure DevOps instance
+        "token": null,                  # Private token for accessing this TFS instance
         "exclude": [ ... ]  # List of projects / repositories to exclude from inventory
     }
 ]
