@@ -83,6 +83,7 @@ The basic structure is:
     {
         "url": "https://gitlab.com",    # GitLab.com or hosted GitLab instance URL to inventory
         "token": null,                  # Private token for accessing this GitHub instance
+        "fetch_languages": false,       # Include individual calls to API for language metadata. Very slow, so defaults to false. (eg, for 191 projects on internal server, 5 seconds for False, 12 minutes, 38 seconds for True)
 
         "orgs": [ ... ],    # List of organizations to inventory
         "repos": [ ... ],   # List of single repositories to inventory
