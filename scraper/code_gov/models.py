@@ -345,7 +345,7 @@ class Project(dict):
         project['downloadURL'] = api_url + archive_suffix
 
         # project['languages'] = [l for l, _ in repository.languages()]
-        
+
         if languages:
             project['languages'] = [*repository.languages()]
 
