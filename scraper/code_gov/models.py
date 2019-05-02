@@ -214,7 +214,7 @@ class Project(dict):
         public_server = repository.html_url.startswith('https://github.com')
         if not repository.private and public_server:
             project['permissions']['usageType'] = 'openSource'
-        elif date_parse(repository.created_at) < POLICY_START_DATE:
+        elif repository.created_at < POLICY_START_DATE:
             project['permissions']['usageType'] = 'exemptByPolicyDate'
 
         if labor_hours:
