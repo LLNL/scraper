@@ -34,7 +34,7 @@
         {
             "url": "https://gitlab.com",
             "token": null,
-            "include_languages": false,
+            "fetch_languages": false,
 
             "repos": [
                 "IanLee1521/flake8",
