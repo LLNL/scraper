@@ -283,7 +283,7 @@ class Project(dict):
         return project
 
     @classmethod
-    def from_gitlab(klass, repository, labor_hours=True, languages=False):
+    def from_gitlab(klass, repository, labor_hours=True, fetch_languages=False):
         """
         Create CodeGovProject object from GitLab Repository
         """
@@ -346,7 +346,7 @@ class Project(dict):
 
         # project['languages'] = [l for l, _ in repository.languages()]
 
-        if languages:
+        if fetch_languages:
             project['languages'] = [*repository.languages()]
 
         # project['partners'] = []

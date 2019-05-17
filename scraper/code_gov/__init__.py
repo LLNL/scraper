@@ -78,7 +78,7 @@ def process_config(config):
                 logger.info('Excluding: %s', repo.path_with_namespace)
                 continue
 
-            code_gov_project = Project.from_gitlab(repo, labor_hours=compute_labor_hours, languages=fetch_languages)
+            code_gov_project = Project.from_gitlab(repo, labor_hours=compute_labor_hours, fetch_languages=fetch_languages)
             code_gov_metadata['releases'].append(code_gov_project)
 
     # Parse config for Bitbucket repositories
