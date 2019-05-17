@@ -67,6 +67,7 @@ def process_config(config):
         # public_only = instance.get('public_only', True)
         excluded = instance.get('exclude', [])
         token = instance.get('token', None)
+        fetch_languages = instance.get('fetch_languages', False)
 
         gl_session = gitlab.connect(url, token)
 
@@ -77,7 +78,7 @@ def process_config(config):
                 logger.info('Excluding: %s', repo.path_with_namespace)
                 continue
 
-            code_gov_project = Project.from_gitlab(repo, labor_hours=compute_labor_hours)
+            code_gov_project = Project.from_gitlab(repo, labor_hours=compute_labor_hours, fetch_languages=fetch_languages)
             code_gov_metadata['releases'].append(code_gov_project)
 
     # Parse config for Bitbucket repositories
