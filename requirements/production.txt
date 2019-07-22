@@ -5,3 +5,4 @@ python-dateutil>=2.7.3
 vsts>=0.1.25
 requests>=2.16
 msrest>=0.6.4
+pytz>=2017.3
