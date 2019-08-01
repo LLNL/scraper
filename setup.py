@@ -12,7 +12,7 @@ with open('requirements/production.txt') as fp:
 
 setup(
     name='llnl-scraper',
-    version='0.8.0-dev',
+    version='0.8.0',
     description='Package for extracting software repository metadata',
     long_description=long_description,
     author='Ian Lee',
