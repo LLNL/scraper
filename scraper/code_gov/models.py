@@ -501,8 +501,11 @@ class Project(dict):
 
         project['permissions']['usageType'] = usage_type
 
-        # TODO: Compute from git repo
-        project['laborHours'] = 0
+        labor_hours = record.get('labor_hours')
+        if labor_hours is not None:
+            project['laborHours'] = labor_hours
+        else:
+            project['laborHours'] = 0
 
         project['tags'] = ['DOE CODE']
         lab_name = record.get('lab_display_name')
