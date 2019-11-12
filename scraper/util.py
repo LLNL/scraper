@@ -165,7 +165,7 @@ def compute_labor_hours(sloc, month_hours='cocomo_book'):
     The intention is to use the COCOMO II model to compute this value.
 
     References:
-    - http://csse.usc.edu/tools/cocomoii.php
+    - https://csse.usc.edu/tools/cocomoii.php
     - http://docs.python-guide.org/en/latest/scenarios/scrape/
     """
     # Calculation of hours in a month
@@ -180,7 +180,7 @@ def compute_labor_hours(sloc, month_hours='cocomo_book'):
         # https://github.com/GSA/code-gov/blob/master/LABOR_HOUR_CALC.md
         HOURS_PER_PERSON_MONTH = 152.0
 
-    cocomo_url = 'http://csse.usc.edu/tools/cocomoii.php'
+    cocomo_url = 'https://csse.usc.edu/tools/cocomoii.php'
     page = requests.post(cocomo_url, data={'new_size': sloc})
 
     try:
