@@ -1,6 +1,14 @@
-import github3, datetime, os, errno, getpass, time, csv, math, my_repo, json
-import requests, urllib2, calendar
-from collections import defaultdict
+import github3
+import datetime
+import os
+import errno
+import getpass
+import time
+import csv
+import math
+import json
+import requests
+import calendar
 
 
 class GitHub_Traffic:
@@ -20,14 +28,13 @@ class GitHub_Traffic:
         Retrieves the traffic for the users of the given organization.
         Requires organization admin credentials token to access the data.
         """
-        date = str(datetime.date.today())
         referrers_file_path = "../github_stats_output/referrers.csv"
         views_file_path = "../github_stats_output/views.csv"
         clones_file_path = "../github_stats_output/clones.csv"
         if force or not os.path.isfile(file_path):
             my_github.login(username, password)
             calls_beginning = self.logged_in_gh.ratelimit_remaining + 1
-            print "Rate Limit: " + str(calls_beginning)
+            print("Rate Limit: " + str(calls_beginning))
             my_github.get_org(organization)
             my_github.get_traffic()
             views_row_count = my_github.check_data_redundancy(
@@ -58,7 +65,7 @@ class GitHub_Traffic:
             )
             calls_remaining = self.logged_in_gh.ratelimit_remaining
             calls_used = calls_beginning - calls_remaining
-            print (
+            print(
                 "Rate Limit Remaining: "
                 + str(calls_remaining)
                 + "\nUsed "
@@ -103,13 +110,13 @@ class GitHub_Traffic:
                     self.token = fd.readline().strip()
                     id = fd.readline().strip()
                 fd.close()
-            print "Logging in."
+            print("Logging in.")
             self.logged_in_gh = github3.login(
                 token=self.token, two_factor_callback=self.prompt_2fa
             )
             self.logged_in_gh.user().to_json()
-        except (ValueError, AttributeError, github3.models.GitHubError) as e:
-            print "Bad credentials. Try again."
+        except (ValueError, AttributeError, github3.models.GitHubError):
+            print("Bad credentials. Try again.")
             self.login()
 
     def prompt_2fa(self):
@@ -131,14 +138,14 @@ class GitHub_Traffic:
         self.organization_name = organization_name
         if organization_name == "":
             self.organization_name = raw_input("Organization: ")
-        print "Getting organization."
+        print("Getting organization.")
         self.org_retrieved = self.logged_in_gh.organization(organization_name)
 
     def get_traffic(self):
         """
         Retrieves the traffic for the repositories of the given organization.
         """
-        print "Getting traffic."
+        print("Getting traffic.")
         # Uses the developer API. Note this could change.
         headers = {
             "Accept": "application/vnd.github.spiderman-preview",

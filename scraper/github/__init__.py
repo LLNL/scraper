@@ -17,7 +17,7 @@ def gov_orgs():
 
     Based on: https://government.github.com/community/
 
-    Exmample return:
+    Example return:
         {'llnl', '18f', 'gsa', 'dhs-ncats', 'spack', ...}
     """
     us_gov_github_orgs = set()

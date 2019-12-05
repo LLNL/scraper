@@ -65,7 +65,7 @@ def _license_obj(license):
         }
 
     if obj is None:
-        logger.warn("I dont understand the license: %s", license)
+        logger.warn("I don't understand the license: %s", license)
         raise ValueError("Aborting!")
 
     return obj

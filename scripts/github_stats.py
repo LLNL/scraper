@@ -1,10 +1,19 @@
-import github3, datetime, os, errno, getpass, time, csv, math, my_repo, requests, json
+import github3
+import datetime
+import os
+import errno
+import getpass
+import time
+import csv
+import math
+import my_repo
+import json
 from collections import defaultdict
 
 
 class GitHub_LLNL_Stats:
     def __init__(self):
-        print "Initalizing."
+        print("Initalizing.")
         self.unique_contributors = defaultdict(list)
         self.languages = {}
         self.languages_size = {}
@@ -55,7 +64,7 @@ class GitHub_LLNL_Stats:
         if force or not os.path.isfile(file_path):
             my_github.login(username, password)
             calls_beginning = self.logged_in_gh.ratelimit_remaining + 1
-            print "Rate Limit: " + str(calls_beginning)
+            print("Rate Limit: " + str(calls_beginning))
             my_github.get_org(organization)
             count_members = my_github.get_mems_of_org()
             count_teams = my_github.get_teams_of_org()
@@ -106,7 +115,7 @@ class GitHub_LLNL_Stats:
             )
             calls_remaining = self.logged_in_gh.ratelimit_remaining
             calls_used = calls_beginning - calls_remaining
-            print (
+            print(
                 "Rate Limit Remaining: "
                 + str(calls_remaining)
                 + "\nUsed "
@@ -151,13 +160,13 @@ class GitHub_LLNL_Stats:
                     self.token = fd.readline().strip()
                     id = fd.readline().strip()
                 fd.close()
-            print "Logging in."
+            print("Logging in.")
             self.logged_in_gh = github3.login(
                 token=self.token, two_factor_callback=self.prompt_2fa
             )
             self.logged_in_gh.user().to_json()
-        except (ValueError, AttributeError, github3.models.GitHubError) as e:
-            print "Bad credentials. Try again."
+        except (ValueError, AttributeError, github3.models.GitHubError):
+            print("Bad credentials. Try again.")
             self.login()
 
     def prompt_2fa(self):
@@ -178,14 +187,14 @@ class GitHub_LLNL_Stats:
         """
         if organization_name == "":
             organization_name = raw_input("Organization: ")
-        print "Getting organization."
+        print("Getting organization.")
         self.org_retrieved = self.logged_in_gh.organization(organization_name)
 
     def get_mems_of_org(self):
         """
         Retrieves the number of members of the organization.
         """
-        print "Getting members."
+        print("Getting members.")
         counter = 0
         for member in self.org_retrieved.iter_members():
             self.members_json[member.id] = member.to_json()
@@ -196,7 +205,7 @@ class GitHub_LLNL_Stats:
         """
         Retrieves the number of teams of the organization.
         """
-        print "Getting teams."
+        print("Getting teams.")
         counter = 0
         for team in self.org_retrieved.iter_teams():
             self.teams_json[team.id] = team.to_json()
@@ -207,7 +216,7 @@ class GitHub_LLNL_Stats:
         """
         Retrieves info about the repos of the current organization.
         """
-        print "Getting repos."
+        print("Getting repos.")
         for repo in self.org_retrieved.iter_repos(type=repo_type):
             # JSON
             json = repo.to_json()
@@ -338,7 +347,7 @@ class GitHub_LLNL_Stats:
             self.total_readmes += 1
             return "MD"
         if self.search_limit >= 28:
-            print "Hit search limit. Sleeping for 60 sec."
+            print("Hit search limit. Sleeping for 60 sec.")
             time.sleep(60)
             self.search_limit = 0
         self.search_limit += 1
@@ -352,7 +361,7 @@ class GitHub_LLNL_Stats:
                     self.total_readmes += 1
                     return path
             return "MISS"
-        except (github3.models.GitHubError, StopIteration) as e:
+        except (github3.models.GitHubError, StopIteration):
             return "MISS"
 
     def get_license(self, repo):
@@ -360,7 +369,7 @@ class GitHub_LLNL_Stats:
         Checks to see if the given repo has a top level LICENSE file.
         """
         if self.search_limit >= 28:
-            print "Hit search limit. Sleeping for 60 sec."
+            print("Hit search limit. Sleeping for 60 sec.")
             time.sleep(60)
             self.search_limit = 0
         self.search_limit += 1
@@ -374,7 +383,7 @@ class GitHub_LLNL_Stats:
                     self.total_licenses += 1
                     return path
             return "MISS"
-        except (StopIteration) as e:
+        except (StopIteration):
             return "MISS"
 
     def get_commits(self, repo, organization="llnl"):
@@ -715,7 +724,7 @@ class GitHub_LLNL_Stats:
                         + str(math.log10(int(self.languages_size[language])))
                         + "\n"
                     )
-                except (TypeError, KeyError) as e:
+                except (TypeError, KeyError):
                     out_languages.write(
                         date
                         + ","

@@ -2,7 +2,6 @@
 
 import argparse
 import json
-import logging
 
 from scraper.util import compute_labor_hours, git_repo_to_sloc
 

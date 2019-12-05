@@ -1,5 +1,8 @@
-import github3, datetime, os, errno, getpass, time, csv, math, my_repo
-from collections import defaultdict
+import github3
+import datetime
+import os
+import getpass
+import time
 
 
 class GitHub_LLNL_Year_Commits:
@@ -16,23 +19,22 @@ class GitHub_LLNL_Year_Commits:
         build the commit statistics. Then gets the last year of commits and
         prints them to file.
         """
-        date = str(datetime.date.today())
         file_path = "year_commits.csv"
         if force or not os.path.isfile(file_path):
             my_github.login(username, password)
             calls_beginning = self.logged_in_gh.ratelimit_remaining + 1
-            print "Rate Limit: " + str(calls_beginning)
+            print("Rate Limit: " + str(calls_beginning))
             my_github.get_org(organization)
             my_github.repos(building_stats=True)
-            print "Letting GitHub build statistics."
+            print("Letting GitHub build statistics.")
             time.sleep(30)
-            print "Trying again."
+            print("Trying again.")
             my_github.repos(building_stats=False)
             my_github.calc_total_commits(starting_commits=35163)
             my_github.write_to_file()
             calls_remaining = self.logged_in_gh.ratelimit_remaining
             calls_used = calls_beginning - calls_remaining
-            print (
+            print(
                 "Rate Limit Remaining: "
                 + str(calls_remaining)
                 + "\nUsed "
@@ -77,13 +79,13 @@ class GitHub_LLNL_Year_Commits:
                     token = fd.readline().strip()
                     id = fd.readline().strip()
                 fd.close()
-            print "Logging in."
+            print("Logging in.")
             self.logged_in_gh = github3.login(
                 token=token, two_factor_callback=self.prompt_2fa
             )
             self.logged_in_gh.user().to_json()
-        except (ValueError, AttributeError, github3.models.GitHubError) as e:
-            print "Bad credentials. Try again."
+        except (ValueError, AttributeError, github3.models.GitHubError):
+            print("Bad credentials. Try again.")
             self.login()
 
     def prompt_2fa(self):
@@ -104,7 +106,7 @@ class GitHub_LLNL_Year_Commits:
         """
         if organization_name == "":
             organization_name = raw_input("Organization: ")
-        print "Getting organization."
+        print("Getting organization.")
         self.org_retrieved = self.logged_in_gh.organization(organization_name)
 
     def repos(self, building_stats=False):
@@ -112,7 +114,7 @@ class GitHub_LLNL_Year_Commits:
         Retrieves the last year of commits for the organization and stores them
         in weeks (UNIX time) associated with number of commits that week.
         """
-        print "Getting repos."
+        print("Getting repos.")
         for repo in self.org_retrieved.iter_repos():
             for activity in repo.iter_commit_activity():
                 if not building_stats:

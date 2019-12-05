@@ -1,5 +1,6 @@
-import github3, datetime, os, errno, getpass, time, csv, math, my_repo, requests
-from collections import defaultdict
+import github3
+import os
+import getpass
 
 
 class GitHub_Users_Emails:
@@ -11,18 +12,17 @@ class GitHub_Users_Emails:
         """
         Retrieves the emails for the users of the given organization.
         """
-        date = str(datetime.date.today())
         file_path = "../github_stats_output/users_emails.csv"
         if force or not os.path.isfile(file_path):
             my_github.login(username, password)
             calls_beginning = self.logged_in_gh.ratelimit_remaining + 1
-            print "Rate Limit: " + str(calls_beginning)
+            print("Rate Limit: " + str(calls_beginning))
             my_github.get_org(organization)
             count_members = my_github.get_mems_of_org()
             my_github.write_to_file(file_path)
             calls_remaining = self.logged_in_gh.ratelimit_remaining
             calls_used = calls_beginning - calls_remaining
-            print (
+            print(
                 "Rate Limit Remaining: "
                 + str(calls_remaining)
                 + "\nUsed "
@@ -67,13 +67,13 @@ class GitHub_Users_Emails:
                     token = fd.readline().strip()
                     id = fd.readline().strip()
                 fd.close()
-            print "Logging in."
+            print("Logging in.")
             self.logged_in_gh = github3.login(
                 token=token, two_factor_callback=self.prompt_2fa
             )
             self.logged_in_gh.user().to_json()
-        except (ValueError, AttributeError, github3.models.GitHubError) as e:
-            print "Bad credentials. Try again."
+        except (ValueError, AttributeError, github3.models.GitHubError):
+            print("Bad credentials. Try again.")
             self.login()
 
     def prompt_2fa(self):
@@ -94,7 +94,7 @@ class GitHub_Users_Emails:
         """
         if organization_name == "":
             organization_name = raw_input("Organization: ")
-        print "Getting organization."
+        print("Getting organization.")
         self.org_retrieved = self.logged_in_gh.organization(organization_name)
 
     def get_mems_of_org(self):
@@ -103,7 +103,7 @@ class GitHub_Users_Emails:
         gets public emails. Private emails would need authentication for each
         user.
         """
-        print "Getting members' emails."
+        print("Getting members' emails.")
         for member in self.org_retrieved.iter_members():
             login = member.to_json()["login"]
             user_email = self.logged_in_gh.user(login).to_json()["email"]

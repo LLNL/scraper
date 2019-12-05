@@ -32,7 +32,7 @@ def main():
         type=str,
         nargs="?",
         default="",
-        help="Force all repos to report a particular organzation",
+        help="Force all repos to report a particular organization",
     )
     parser.add_argument(
         "--contact-email",

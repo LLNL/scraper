@@ -40,7 +40,7 @@ def process_url(url, key):
 
 def process(filename=None, url=None, key=None):
     """
-    Yeilds DOE CODE records based on provided input sources
+    Yields DOE CODE records based on provided input sources
 
     param:
         filename (str): Path to a DOE CODE .json file

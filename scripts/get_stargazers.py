@@ -1,6 +1,8 @@
-import github3, datetime, os, errno, getpass, time, csv, math, my_repo, json
-import requests, urllib2, calendar
-from collections import defaultdict
+import github3
+import datetime
+import os
+import getpass
+import requests
 
 
 class GitHub_Stargazers:
@@ -14,19 +16,18 @@ class GitHub_Stargazers:
         Retrieves the traffic for the users of the given organization.
         Requires organization admin credentials token to access the data.
         """
-        date = str(datetime.date.today())
         stargazers_file_path = "../github_stats_output/stargazers.csv"
         if force or not os.path.isfile(file_path):
             my_github.login(username, password)
             calls_beginning = self.logged_in_gh.ratelimit_remaining + 1
-            print "Rate Limit: " + str(calls_beginning)
+            print("Rate Limit: " + str(calls_beginning))
             my_github.get_org(organization)
             my_github.get_repos()
             my_github.write_to_file(file_path=stargazers_file_path)
             # my_github.write_to_file(file_path=stargazers_file_path)
             calls_remaining = self.logged_in_gh.ratelimit_remaining
             calls_used = calls_beginning - calls_remaining
-            print (
+            print(
                 "Rate Limit Remaining: "
                 + str(calls_remaining)
                 + "\nUsed "
@@ -71,13 +72,13 @@ class GitHub_Stargazers:
                     self.token = fd.readline().strip()
                     id = fd.readline().strip()
                 fd.close()
-            print "Logging in."
+            print("Logging in.")
             self.logged_in_gh = github3.login(
                 token=self.token, two_factor_callback=self.prompt_2fa
             )
             self.logged_in_gh.user().to_json()
-        except (ValueError, AttributeError, github3.models.GitHubError) as e:
-            print "Bad credentials. Try again."
+        except (ValueError, AttributeError, github3.models.GitHubError):
+            print("Bad credentials. Try again.")
             self.login()
 
     def prompt_2fa(self):
@@ -99,7 +100,7 @@ class GitHub_Stargazers:
         self.organization_name = organization_name
         if organization_name == "":
             self.organization_name = raw_input("Organization: ")
-        print "Getting organization."
+        print("Getting organization.")
         self.org_retrieved = self.logged_in_gh.organization(organization_name)
 
     def get_repos(self):
@@ -107,7 +108,7 @@ class GitHub_Stargazers:
         Gets the repos for the organization and builds the URL/headers for
         getting timestamps of stargazers.
         """
-        print "Getting repos."
+        print("Getting repos.")
         # Uses the developer API. Note this could change.
 
         headers = {
@@ -125,8 +126,8 @@ class GitHub_Stargazers:
             )
             self.repos[repo.name] = self.get_stargazers(url=url, headers=headers)
         self.calc_stargazers(start_count=650)
-        print "total count: \t" + str(self.total_count)
-        print str(temp_count) + " repos"
+        print("total count: \t" + str(self.total_count))
+        print(str(temp_count) + " repos")
 
     def get_stargazers(self, url, headers={}):
         """
@@ -152,7 +153,7 @@ class GitHub_Stargazers:
     def calc_stargazers(self, date=(datetime.date.today()), start_count=0):
         for repo_json in self.repos:
             for stargazer in self.repos[repo_json]:
-                print stargazer
+                print(stargazer)
                 date = stargazer["starred_at"][:10]
                 try:
                     self.stargazers[date] += 1

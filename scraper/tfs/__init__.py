@@ -198,7 +198,7 @@ def get_tfvc_repos(url, token, collection, project):
         branch_list.extend(branches)
     else:
         logger.debug(
-            "No Tfvcc Branches in Project: {project_name}".format(
+            "No Tfvc Branches in Project: {project_name}".format(
                 project_name=project.name
             )
         )
