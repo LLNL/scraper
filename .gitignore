@@ -6,3 +6,4 @@ dist/
 venv/
 *.pyc
 llnl_scraper.egg-info/
+.vscode/

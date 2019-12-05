@@ -7,13 +7,11 @@ to GitHub, as well as read and write JSON files to store data.
 
 import json
 import os
-import re
-import time
-
-from datetime import datetime
-from subprocess import check_output, DEVNULL  # nosec
-
 import pytz
+import re
+import requests
+import time
+from datetime import datetime
 
 
 def _vPrint(verbose, *args, **kwargs):
@@ -58,16 +56,16 @@ class GitHubQueryManager:
             self.__githubApiToken = apiToken
         else:
             try:
-                self.__githubApiToken = os.environ['GITHUB_API_TOKEN']
+                self.__githubApiToken = os.environ["GITHUB_API_TOKEN"]
             except KeyError as error:
                 raise TypeError("Requires either a string argument or environment variable 'GITHUB_API_TOKEN'.") from error
 
         # Check token validity
         print("Checking GitHub API token... ", end="", flush=True)
-        basicCheck = self._submitQuery('query { viewer { login } }')
+        basicCheck = self._submitQuery("query { viewer { login } }")
         if basicCheck["statusNum"] == 401:
             print("FAILED.")
-            raise ValueError("GitHub API token is not valid.\n" + basicCheck["headDict"]["http"] + " " + basicCheck["result"])
+            raise ValueError("GitHub API token is not valid.\n%s %s" % (basicCheck["headDict"]["Status"], basicCheck["result"]))
         else:
             print("Token validated.")
 
@@ -93,8 +91,7 @@ class GitHubQueryManager:
     @maxRetry.setter
     def maxRetry(self, maxRetry):
         numIn = int(maxRetry)
-        if not numIn > 0:
-            numIn = 1
+        numIn = 1 if not numIn > 0 else numIn
         self.__maxRetry = numIn
         print("Auto-retry limit for requests set to %d." % (self.maxRetry))
 
@@ -126,12 +123,12 @@ class GitHubQueryManager:
         else:
             _vPrint(verbose, "Reading '%s' ... " % (filePath), end="", flush=True)
             with open(filePath, "r") as q:
-                # Strip all comments and newlines.
-                query_in = re.sub(r'#.*(\n|\Z)', '\n', q.read())
-                # Condense extra whitespace.
-                query_in = re.sub(r'\s+', ' ', query_in)
-                # Remove any leading or trailing whitespace.
-                query_in = re.sub(r'(\A\s+)|(\s+\Z)', '', query_in)
+                # Strip comments.
+                query_in = re.sub(r"#.*(\n|\Z)", "\n", q.read())
+                # Condense whitespace.
+                query_in = re.sub(r"\s+", " ", query_in)
+                # Remove leading and trailing whitespace.
+                query_in = query_in.strip()
             _vPrint(verbose, "File read!")
             self.__queryPath = absPath
             self.__queryTimestamp = lastModified
@@ -205,8 +202,7 @@ class GitHubQueryManager:
 
         """
         requestCount += 1
-        if pageNum < 0:  # no negative page numbers
-            pageNum = 0
+        pageNum = 0 if pageNum < 0 else pageNum  # no negative page numbers
         pageNum += 1
 
         if paginate:
@@ -214,7 +210,7 @@ class GitHubQueryManager:
         _vPrint((verbosity >= 0), "Sending %s query..." % ("REST" if rest else "GraphQL"))
         response = self._submitQuery(gitquery, gitvars=gitvars, verbose=(verbosity > 0), rest=rest)
         _vPrint((verbosity >= 0), "Checking response...")
-        _vPrint((verbosity >= 0), response["headDict"]["http"])
+        _vPrint((verbosity >= 0), "HTTP/1.1 " + response["headDict"]["Status"])
         statusNum = response["statusNum"]
 
         # Decrement page count before error checks to properly reflect any repeated queries
@@ -240,20 +236,37 @@ class GitHubQueryManager:
         # Check for accepted but not yet processed, usually due to un-cached data
         if statusNum == 202:
             if requestCount >= self.maxRetry:
-                raise RuntimeError("Query attempted but failed %d times.\n%s\n%s" % (self.maxRetry, response["headDict"]["http"], response["result"]))
+                raise RuntimeError(
+                    "Query attempted but failed %d times.\n%s\n%s"
+                    % (self.maxRetry, response["headDict"]["Status"], response["result"])
+                )
             else:
-                self._countdown(self.__retryDelay, printString="Query accepted but not yet processed. Trying again in %*dsec...", verbose=(verbosity >= 0))
+                self._countdown(
+                    self.__retryDelay,
+                    printString="Query accepted but not yet processed. Trying again in %*dsec...",
+                    verbose=(verbosity >= 0)
+                )
                 return self.queryGitHub(gitquery, gitvars=gitvars, verbosity=verbosity, paginate=paginate, cursorVar=cursorVar, keysToList=keysToList, rest=rest, requestCount=requestCount, pageNum=pageNum)
         # Check for server error responses
         if statusNum == 502 or statusNum == 503:
             if requestCount >= self.maxRetry:
-                raise RuntimeError("Query attempted but failed %d times.\n%s\n%s" % (self.maxRetry, response["headDict"]["http"], response["result"]))
+                raise RuntimeError(
+                    "Query attempted but failed %d times.\n%s\n%s"
+                    % (self.maxRetry, response["headDict"]["Status"], response["result"])
+                )
             else:
-                self._countdown(self.__retryDelay, printString="Server error. Trying again in %*dsec...", verbose=(verbosity >= 0))
+                self._countdown(
+                    self.__retryDelay,
+                    printString="Server error. Trying again in %*dsec...",
+                    verbose=(verbosity >= 0)
+                )
                 return self.queryGitHub(gitquery, gitvars=gitvars, verbosity=verbosity, paginate=paginate, cursorVar=cursorVar, keysToList=keysToList, rest=rest, requestCount=requestCount, pageNum=pageNum)
         # Check for other error responses
         if statusNum >= 400 or statusNum == 204:
-            raise RuntimeError("Request got an Error response.\n%s\n%s" % (response["headDict"]["http"], response["result"]))
+            raise RuntimeError(
+                "Request got an Error response.\n%s\n%s"
+                % (response["headDict"]["Status"], response["result"])
+            )
 
         _vPrint((verbosity >= 0), "Data received!")
         outObj = json.loads(response["result"])
@@ -261,11 +274,18 @@ class GitHubQueryManager:
         # Check for GraphQL API errors (e.g. repo not found)
         if not rest and "errors" in outObj:
             if requestCount >= self.maxRetry:
-                raise RuntimeError("Query attempted but failed %d times.\n%s\n%s" % (self.maxRetry, response["headDict"]["http"], response["result"]))
+                raise RuntimeError(
+                    "Query attempted but failed %d times.\n%s\n%s"
+                    % (self.maxRetry, response["headDict"]["Status"], response["result"])
+                )
             elif len(outObj["errors"]) == 1 and len(outObj["errors"][0]) == 1:
                 # Poorly defined error type, usually intermittent, try again.
                 _vPrint((verbosity >= 0), "GraphQL API error.\n%s" % (json.dumps(outObj["errors"])))
-                self._countdown(self.__retryDelay, printString="Unknown API error. Trying again in %*dsec...", verbose=(verbosity >= 0))
+                self._countdown(
+                    self.__retryDelay,
+                    printString="Unknown API error. Trying again in %*dsec...",
+                    verbose=(verbosity >= 0)
+                )
                 return self.queryGitHub(gitquery, gitvars=gitvars, verbosity=verbosity, paginate=paginate, cursorVar=cursorVar, keysToList=keysToList, rest=rest, requestCount=requestCount, pageNum=pageNum)
             else:
                 raise RuntimeError("GraphQL API error.\n%s" % (json.dumps(outObj["errors"])))
@@ -322,46 +342,39 @@ class GitHubQueryManager:
             }
 
         """
-        errOut = DEVNULL if not verbose else None
-        authhead = 'Authorization: bearer ' + self.__githubApiToken
-
-        bashcurl = 'curl -iH TMPauthhead -X POST -d TMPgitquery https://api.github.com/graphql' if not rest \
-            else 'curl -iH TMPauthhead https://api.github.com' + gitquery
-        bashcurl_list = bashcurl.split()
-        bashcurl_list[2] = authhead
+        authhead = {"Authorization": "bearer " + self.__githubApiToken}
         if not rest:
-            gitqueryJSON = json.dumps({'query': gitquery, 'variables': json.dumps(gitvars)})
-            bashcurl_list[6] = gitqueryJSON
-
-        fullResponse = check_output(bashcurl_list, stderr=errOut).decode()
-        _vPrint(verbose, "\n" + fullResponse)
-        fullResponse = fullResponse.split('\r\n\r\n')
-        heads = fullResponse[0].split('\r\n')
-        if len(fullResponse) > 1:
-            result = fullResponse[1]
+            gitqueryJSON = json.dumps(
+                {"query": gitquery, "variables": json.dumps(gitvars)}
+            )
+            fullResponse = requests.post(
+                "https://api.github.com/graphql", data=gitqueryJSON, headers=authhead
+            )
         else:
-            result = ""
-        http = heads[0].split()
-        statusNum = int(http[1])
-
-        # Parse headers into a useful dictionary
-        headDict = {}
-        headDict["http"] = heads[0]
-        for header in heads[1:]:
-            h = header.split(': ')
-            headDict[h[0]] = h[1]
+            fullResponse = requests.get(
+                "https://api.github.com" + gitquery, headers=authhead
+            )
+        _vPrint(verbose, "\n%s\n%s" % (json.dumps(dict(fullResponse.headers), indent=2), fullResponse.text))
+        result = fullResponse.text
+        headDict = fullResponse.headers
+        statusNum = int(headDict["Status"].split()[0])
 
         # Parse any Link headers even further
         linkDict = None
         if "Link" in headDict:
-            linkProperties = headDict["Link"].split(', ')
+            linkProperties = headDict["Link"].split(", ")
             propDict = {}
             for item in linkProperties:
                 divided = re.split(r'<https://api.github.com|>; rel="|"', item)
                 propDict[divided[2]] = divided[1]
             linkDict = propDict
 
-        return {'statusNum': statusNum, 'headDict': headDict, 'linkDict': linkDict, 'result': result}
+        return {
+            "statusNum": statusNum,
+            "headDict": headDict,
+            "linkDict": linkDict,
+            "result": result
+        }
 
     def _awaitReset(self, utcTimeStamp, verbose=True):
         """Wait until the given UTC timestamp.
@@ -374,14 +387,18 @@ class GitHubQueryManager:
         """
         resetTime = pytz.utc.localize(datetime.utcfromtimestamp(utcTimeStamp))
         _vPrint(verbose, "--- Current Timestamp")
-        _vPrint(verbose, "      %s" % (time.strftime('%c')))
+        _vPrint(verbose, "      %s" % (time.strftime("%c")))
         now = pytz.utc.localize(datetime.utcnow())
         waitTime = round((resetTime - now).total_seconds()) + 1
         _vPrint(verbose, "--- Current UTC Timestamp")
-        _vPrint(verbose, "      %s" % (now.strftime('%c')))
+        _vPrint(verbose, "      %s" % (now.strftime("%c")))
         _vPrint(verbose, "--- GITHUB NEEDS A BREAK Until UTC Timestamp")
-        _vPrint(verbose, "      %s" % (resetTime.strftime('%c')))
-        self._countdown(waitTime, printString="--- Waiting %*d seconds...", verbose=verbose)
+        _vPrint(verbose, "      %s" % (resetTime.strftime("%c")))
+        self._countdown(
+            waitTime,
+            printString="--- Waiting %*d seconds...",
+            verbose=verbose
+        )
         _vPrint(verbose, "--- READY!")
 
     def _countdown(self, waitTime=0, printString="Waiting %*d seconds...", verbose=True):
@@ -477,7 +494,7 @@ class DataManager:
             if updatePath:
                 self.filePath = filePath
 
-    def fileSave(self, filePath=None, updatePath=False):
+    def fileSave(self, filePath=None, updatePath=False, newline=None):
         """Write the internal JSON data dictionary to a JSON data file.
 
         If no file path is provided, the stored data file path will be used.
@@ -487,6 +504,8 @@ class DataManager:
                 '.json' file. Defaults to None.
             updatePath (Optional[bool]): Specifies whether or not to update
                 the stored data file path. Defaults to False.
+            newline (Optional[str]): Specifies the line endings to use when
+                writing the file. Defaults to system default line separator.
 
         """
         if not filePath:
@@ -497,7 +516,7 @@ class DataManager:
                 os.makedirs(os.path.split(filePath)[0])
         dataJsonString = json.dumps(self.data, indent=4, sort_keys=True)
         print("Writing to file '%s' ... " % (filePath), end="", flush=True)
-        with open(filePath, "w") as fileout:
+        with open(filePath, "w", newline=newline) as fileout:
             fileout.write(dataJsonString)
         print("Wrote file!")
         if updatePath:
