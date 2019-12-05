@@ -58,14 +58,19 @@ class GitHubQueryManager:
             try:
                 self.__githubApiToken = os.environ["GITHUB_API_TOKEN"]
             except KeyError as error:
-                raise TypeError("Requires either a string argument or environment variable 'GITHUB_API_TOKEN'.") from error
+                raise TypeError(
+                    "Requires either a string argument or environment variable 'GITHUB_API_TOKEN'."
+                ) from error
 
         # Check token validity
         print("Checking GitHub API token... ", end="", flush=True)
         basicCheck = self._submitQuery("query { viewer { login } }")
         if basicCheck["statusNum"] == 401:
             print("FAILED.")
-            raise ValueError("GitHub API token is not valid.\n%s %s" % (basicCheck["headDict"]["Status"], basicCheck["result"]))
+            raise ValueError(
+                "GitHub API token is not valid.\n%s %s"
+                % (basicCheck["headDict"]["Status"], basicCheck["result"])
+            )
         else:
             print("Token validated.")
 
@@ -118,7 +123,10 @@ class GitHubQueryManager:
         lastModified = os.path.getmtime(filePath)
         absPath = os.path.abspath(filePath)
         if absPath == self.__queryPath and lastModified == self.__queryTimestamp:
-            _vPrint(verbose, "Using cached query '%s'" % (os.path.basename(self.__queryPath)))
+            _vPrint(
+                verbose,
+                "Using cached query '%s'" % (os.path.basename(self.__queryPath)),
+            )
             query_in = self.__query
         else:
             _vPrint(verbose, "Reading '%s' ... " % (filePath), end="", flush=True)
@@ -162,9 +170,22 @@ class GitHubQueryManager:
 
         """
         gitquery = self._readGQL(filePath, verbose=(verbosity >= 0))
-        return self.queryGitHub(gitquery, gitvars=gitvars, verbosity=verbosity, **kwargs)
+        return self.queryGitHub(
+            gitquery, gitvars=gitvars, verbosity=verbosity, **kwargs
+        )
 
-    def queryGitHub(self, gitquery, gitvars={}, verbosity=0, paginate=False, cursorVar=None, keysToList=[], rest=False, requestCount=0, pageNum=0):
+    def queryGitHub(
+        self,
+        gitquery,
+        gitvars={},
+        verbosity=0,
+        paginate=False,
+        cursorVar=None,
+        keysToList=[],
+        rest=False,
+        requestCount=0,
+        pageNum=0,
+    ):
         """Submit a GitHub query.
 
         Args:
@@ -207,8 +228,12 @@ class GitHubQueryManager:
 
         if paginate:
             _vPrint((verbosity >= 0), "Page %d" % (pageNum))
-        _vPrint((verbosity >= 0), "Sending %s query..." % ("REST" if rest else "GraphQL"))
-        response = self._submitQuery(gitquery, gitvars=gitvars, verbose=(verbosity > 0), rest=rest)
+        _vPrint(
+            (verbosity >= 0), "Sending %s query..." % ("REST" if rest else "GraphQL")
+        )
+        response = self._submitQuery(
+            gitquery, gitvars=gitvars, verbose=(verbosity > 0), rest=rest
+        )
         _vPrint((verbosity >= 0), "Checking response...")
         _vPrint((verbosity >= 0), "HTTP/1.1 " + response["headDict"]["Status"])
         statusNum = response["statusNum"]
@@ -221,14 +246,24 @@ class GitHubQueryManager:
             apiStatus = {
                 "limit": int(response["headDict"]["X-RateLimit-Limit"]),
                 "remaining": int(response["headDict"]["X-RateLimit-Remaining"]),
-                "reset": int(response["headDict"]["X-RateLimit-Reset"])
+                "reset": int(response["headDict"]["X-RateLimit-Reset"]),
             }
             _vPrint((verbosity >= 0), "API Status %s" % (json.dumps(apiStatus)))
             if not apiStatus["remaining"] > 0:
                 _vPrint((verbosity >= 0), "API usage limit reached during query.")
                 self._awaitReset(apiStatus["reset"])
                 _vPrint((verbosity >= 0), "Repeating query...")
-                return self.queryGitHub(gitquery, gitvars=gitvars, verbosity=verbosity, paginate=paginate, cursorVar=cursorVar, keysToList=keysToList, rest=rest, requestCount=(requestCount - 1), pageNum=pageNum)
+                return self.queryGitHub(
+                    gitquery,
+                    gitvars=gitvars,
+                    verbosity=verbosity,
+                    paginate=paginate,
+                    cursorVar=cursorVar,
+                    keysToList=keysToList,
+                    rest=rest,
+                    requestCount=(requestCount - 1),
+                    pageNum=pageNum,
+                )
         except KeyError:
             # Handles error cases that don't return X-RateLimit data
             _vPrint((verbosity >= 0), "Failed to check API Status.")
@@ -238,29 +273,57 @@ class GitHubQueryManager:
             if requestCount >= self.maxRetry:
                 raise RuntimeError(
                     "Query attempted but failed %d times.\n%s\n%s"
-                    % (self.maxRetry, response["headDict"]["Status"], response["result"])
+                    % (
+                        self.maxRetry,
+                        response["headDict"]["Status"],
+                        response["result"],
+                    )
                 )
             else:
                 self._countdown(
                     self.__retryDelay,
                     printString="Query accepted but not yet processed. Trying again in %*dsec...",
-                    verbose=(verbosity >= 0)
+                    verbose=(verbosity >= 0),
                 )
-                return self.queryGitHub(gitquery, gitvars=gitvars, verbosity=verbosity, paginate=paginate, cursorVar=cursorVar, keysToList=keysToList, rest=rest, requestCount=requestCount, pageNum=pageNum)
+                return self.queryGitHub(
+                    gitquery,
+                    gitvars=gitvars,
+                    verbosity=verbosity,
+                    paginate=paginate,
+                    cursorVar=cursorVar,
+                    keysToList=keysToList,
+                    rest=rest,
+                    requestCount=requestCount,
+                    pageNum=pageNum,
+                )
         # Check for server error responses
         if statusNum == 502 or statusNum == 503:
             if requestCount >= self.maxRetry:
                 raise RuntimeError(
                     "Query attempted but failed %d times.\n%s\n%s"
-                    % (self.maxRetry, response["headDict"]["Status"], response["result"])
+                    % (
+                        self.maxRetry,
+                        response["headDict"]["Status"],
+                        response["result"],
+                    )
                 )
             else:
                 self._countdown(
                     self.__retryDelay,
                     printString="Server error. Trying again in %*dsec...",
-                    verbose=(verbosity >= 0)
+                    verbose=(verbosity >= 0),
                 )
-                return self.queryGitHub(gitquery, gitvars=gitvars, verbosity=verbosity, paginate=paginate, cursorVar=cursorVar, keysToList=keysToList, rest=rest, requestCount=requestCount, pageNum=pageNum)
+                return self.queryGitHub(
+                    gitquery,
+                    gitvars=gitvars,
+                    verbosity=verbosity,
+                    paginate=paginate,
+                    cursorVar=cursorVar,
+                    keysToList=keysToList,
+                    rest=rest,
+                    requestCount=requestCount,
+                    pageNum=pageNum,
+                )
         # Check for other error responses
         if statusNum >= 400 or statusNum == 204:
             raise RuntimeError(
@@ -276,19 +339,38 @@ class GitHubQueryManager:
             if requestCount >= self.maxRetry:
                 raise RuntimeError(
                     "Query attempted but failed %d times.\n%s\n%s"
-                    % (self.maxRetry, response["headDict"]["Status"], response["result"])
+                    % (
+                        self.maxRetry,
+                        response["headDict"]["Status"],
+                        response["result"],
+                    )
                 )
             elif len(outObj["errors"]) == 1 and len(outObj["errors"][0]) == 1:
                 # Poorly defined error type, usually intermittent, try again.
-                _vPrint((verbosity >= 0), "GraphQL API error.\n%s" % (json.dumps(outObj["errors"])))
+                _vPrint(
+                    (verbosity >= 0),
+                    "GraphQL API error.\n%s" % (json.dumps(outObj["errors"])),
+                )
                 self._countdown(
                     self.__retryDelay,
                     printString="Unknown API error. Trying again in %*dsec...",
-                    verbose=(verbosity >= 0)
+                    verbose=(verbosity >= 0),
                 )
-                return self.queryGitHub(gitquery, gitvars=gitvars, verbosity=verbosity, paginate=paginate, cursorVar=cursorVar, keysToList=keysToList, rest=rest, requestCount=requestCount, pageNum=pageNum)
+                return self.queryGitHub(
+                    gitquery,
+                    gitvars=gitvars,
+                    verbosity=verbosity,
+                    paginate=paginate,
+                    cursorVar=cursorVar,
+                    keysToList=keysToList,
+                    rest=rest,
+                    requestCount=requestCount,
+                    pageNum=pageNum,
+                )
             else:
-                raise RuntimeError("GraphQL API error.\n%s" % (json.dumps(outObj["errors"])))
+                raise RuntimeError(
+                    "GraphQL API error.\n%s" % (json.dumps(outObj["errors"]))
+                )
 
         # Re-increment page count before the next page query
         pageNum += 1
@@ -297,19 +379,43 @@ class GitHubQueryManager:
         if paginate:
             if rest and response["linkDict"]:
                 if "next" in response["linkDict"]:
-                    nextObj = self.queryGitHub(response["linkDict"]["next"], gitvars=gitvars, verbosity=verbosity, paginate=paginate, cursorVar=cursorVar, keysToList=keysToList, rest=rest, requestCount=0, pageNum=pageNum)
+                    nextObj = self.queryGitHub(
+                        response["linkDict"]["next"],
+                        gitvars=gitvars,
+                        verbosity=verbosity,
+                        paginate=paginate,
+                        cursorVar=cursorVar,
+                        keysToList=keysToList,
+                        rest=rest,
+                        requestCount=0,
+                        pageNum=pageNum,
+                    )
                     outObj.extend(nextObj)
             elif not rest:
                 if not cursorVar:
-                    raise ValueError("Must specify argument 'cursorVar' to use GraphQL auto-pagination.")
+                    raise ValueError(
+                        "Must specify argument 'cursorVar' to use GraphQL auto-pagination."
+                    )
                 if not len(keysToList) > 0:
-                    raise ValueError("Must specify argument 'keysToList' as a non-empty list to use GraphQL auto-pagination.")
+                    raise ValueError(
+                        "Must specify argument 'keysToList' as a non-empty list to use GraphQL auto-pagination."
+                    )
                 aPage = outObj
                 for key in keysToList[0:-1]:
                     aPage = aPage[key]
                 gitvars[cursorVar] = aPage["pageInfo"]["endCursor"]
                 if aPage["pageInfo"]["hasNextPage"]:
-                    nextObj = self.queryGitHub(gitquery, gitvars=gitvars, verbosity=verbosity, paginate=paginate, cursorVar=cursorVar, keysToList=keysToList, rest=rest, requestCount=0, pageNum=pageNum)
+                    nextObj = self.queryGitHub(
+                        gitquery,
+                        gitvars=gitvars,
+                        verbosity=verbosity,
+                        paginate=paginate,
+                        cursorVar=cursorVar,
+                        keysToList=keysToList,
+                        rest=rest,
+                        requestCount=0,
+                        pageNum=pageNum,
+                    )
                     newPage = nextObj
                     for key in keysToList[0:-1]:
                         newPage = newPage[key]
@@ -354,7 +460,11 @@ class GitHubQueryManager:
             fullResponse = requests.get(
                 "https://api.github.com" + gitquery, headers=authhead
             )
-        _vPrint(verbose, "\n%s\n%s" % (json.dumps(dict(fullResponse.headers), indent=2), fullResponse.text))
+        _vPrint(
+            verbose,
+            "\n%s\n%s"
+            % (json.dumps(dict(fullResponse.headers), indent=2), fullResponse.text),
+        )
         result = fullResponse.text
         headDict = fullResponse.headers
         statusNum = int(headDict["Status"].split()[0])
@@ -373,7 +483,7 @@ class GitHubQueryManager:
             "statusNum": statusNum,
             "headDict": headDict,
             "linkDict": linkDict,
-            "result": result
+            "result": result,
         }
 
     def _awaitReset(self, utcTimeStamp, verbose=True):
@@ -395,13 +505,13 @@ class GitHubQueryManager:
         _vPrint(verbose, "--- GITHUB NEEDS A BREAK Until UTC Timestamp")
         _vPrint(verbose, "      %s" % (resetTime.strftime("%c")))
         self._countdown(
-            waitTime,
-            printString="--- Waiting %*d seconds...",
-            verbose=verbose
+            waitTime, printString="--- Waiting %*d seconds...", verbose=verbose
         )
         _vPrint(verbose, "--- READY!")
 
-    def _countdown(self, waitTime=0, printString="Waiting %*d seconds...", verbose=True):
+    def _countdown(
+        self, waitTime=0, printString="Waiting %*d seconds...", verbose=True
+    ):
         """Makes a pretty countdown.
 
         Args:
@@ -418,7 +528,12 @@ class GitHubQueryManager:
         if waitTime <= 0:
             waitTime = self.__retryDelay
         for remaining in range(waitTime, 0, -1):
-            _vPrint(verbose, "\r" + printString % (len(str(waitTime)), remaining), end="", flush=True)
+            _vPrint(
+                verbose,
+                "\r" + printString % (len(str(waitTime)), remaining),
+                end="",
+                flush=True,
+            )
             time.sleep(1)
         if verbose:
             _vPrint(verbose, "\r" + printString % (len(str(waitTime)), 0))
@@ -457,7 +572,10 @@ class DataManager:
     def filePath(self, filePath):
         if filePath:
             if not os.path.isfile(filePath):
-                print("Data file '%s' does not currently exist. Saving data will create a new file." % (filePath))
+                print(
+                    "Data file '%s' does not currently exist. Saving data will create a new file."
+                    % (filePath)
+                )
             self.__filePath = os.path.abspath(filePath)
             print("Stored new data file path '%s'" % (self.filePath))
         else:
@@ -486,7 +604,11 @@ class DataManager:
         if not os.path.isfile(filePath):
             raise FileNotFoundError("Data file '%s' does not exist." % (filePath))
         else:
-            print("Importing existing data file '%s' ... " % (filePath), end="", flush=True)
+            print(
+                "Importing existing data file '%s' ... " % (filePath),
+                end="",
+                flush=True,
+            )
             with open(filePath, "r") as q:
                 data_raw = q.read()
             print("Imported!")
