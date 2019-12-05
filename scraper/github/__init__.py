@@ -22,11 +22,11 @@ def gov_orgs():
     """
     us_gov_github_orgs = set()
 
-    gov_orgs = requests.get('https://government.github.com/organizations.json').json()
+    gov_orgs = requests.get("https://government.github.com/organizations.json").json()
 
-    us_gov_github_orgs.update(gov_orgs['governments']['U.S. Federal'])
-    us_gov_github_orgs.update(gov_orgs['governments']['U.S. Military and Intelligence'])
-    us_gov_github_orgs.update(gov_orgs['research']['U.S. Research Labs'])
+    us_gov_github_orgs.update(gov_orgs["governments"]["U.S. Federal"])
+    us_gov_github_orgs.update(gov_orgs["governments"]["U.S. Military and Intelligence"])
+    us_gov_github_orgs.update(gov_orgs["research"]["U.S. Research Labs"])
 
     return list(us_gov_github_orgs)
 
@@ -39,12 +39,12 @@ def create_session(token=None):
     environment variable if present.
     """
     if token is None:
-        token = os.environ.get('GITHUB_API_TOKEN', None)
+        token = os.environ.get("GITHUB_API_TOKEN", None)
 
     gh_session = github3.login(token=token)
 
     if gh_session is None:
-        raise RuntimeError('Invalid or missing GITHUB_API_TOKEN')
+        raise RuntimeError("Invalid or missing GITHUB_API_TOKEN")
 
     return gh_session
 
@@ -60,7 +60,7 @@ def create_enterprise_session(url, token=None):
     gh_session = github3.enterprise_login(url=url, token=token)
 
     if gh_session is None:
-        msg = 'Unable to connect to GitHub Enterprise (%s) with provided token.'
+        msg = "Unable to connect to GitHub Enterprise (%s) with provided token."
         raise RuntimeError(msg, url)
 
     return gh_session
@@ -83,16 +83,16 @@ def _check_api_limits(gh_session, api_required=250, sleep_time=15):
     """
     api_rates = gh_session.rate_limit()
 
-    api_remaining = api_rates['rate']['remaining']
-    api_reset = api_rates['rate']['reset']
-    logger.debug('Rate Limit - %d requests remaining', api_remaining)
+    api_remaining = api_rates["rate"]["remaining"]
+    api_reset = api_rates["rate"]["reset"]
+    logger.debug("Rate Limit - %d requests remaining", api_remaining)
 
     if api_remaining > api_required:
         return
 
     now_time = time.time()
     time_to_reset = int(api_reset - now_time)
-    logger.warn('Rate Limit Depleted - Sleeping for %d seconds', time_to_reset)
+    logger.warn("Rate Limit Depleted - Sleeping for %d seconds", time_to_reset)
 
     while now_time < api_reset:
         time.sleep(10)
@@ -101,22 +101,22 @@ def _check_api_limits(gh_session, api_required=250, sleep_time=15):
     return
 
 
-def connect(url='https://github.com', token=None):
+def connect(url="https://github.com", token=None):
     """
     Create a GitHub session for making requests
     """
 
     gh_session = None
-    if url == 'https://github.com':
+    if url == "https://github.com":
         gh_session = create_session(token)
     else:
         gh_session = create_enterprise_session(url, token)
 
     if gh_session is None:
-        msg = 'Unable to connect to (%s) with provided token.'
+        msg = "Unable to connect to (%s) with provided token."
         raise RuntimeError(msg, url)
 
-    logger.info('Connected to: %s', url)
+    logger.info("Connected to: %s", url)
 
     return gh_session
 
@@ -138,9 +138,9 @@ def query_repos(gh_session, orgs=None, repos=None, public_only=True):
     if repos is None:
         repos = []
     if public_only:
-        privacy = 'public'
+        privacy = "public"
     else:
-        privacy = 'all'
+        privacy = "all"
 
     _check_api_limits(gh_session, 10)
 
@@ -156,7 +156,7 @@ def query_repos(gh_session, orgs=None, repos=None, public_only=True):
 
     for repo_name in repos:
         _check_api_limits(gh_session, 10)
-        org, name = repo_name.split('/')
+        org, name = repo_name.split("/")
         yield gh_session.repository(org, name)
 
     if not (orgs or repos):

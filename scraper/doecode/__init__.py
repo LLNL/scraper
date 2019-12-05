@@ -12,11 +12,11 @@ def process_json(filename):
     Yields DOE CODE records from a DOE CODE .json file
     """
 
-    logger.debug('Processing DOE CODE json: %s', filename)
+    logger.debug("Processing DOE CODE json: %s", filename)
 
     doecode_json = json.load(open(filename))
 
-    for record in doecode_json['records']:
+    for record in doecode_json["records"]:
         yield record
 
 
@@ -26,15 +26,15 @@ def process_url(url, key):
     Converts a DOE CODE API .json URL response into DOE CODE projects
     """
 
-    logger.debug('Fetching DOE CODE JSON: %s', url)
+    logger.debug("Fetching DOE CODE JSON: %s", url)
 
     if key is None:
-        raise ValueError('DOE CODE API Key value is missing!')
+        raise ValueError("DOE CODE API Key value is missing!")
 
     response = requests.get(url, headers={"Authorization": "Basic " + key})
     doecode_json = response.json()
 
-    for record in doecode_json['records']:
+    for record in doecode_json["records"]:
         yield record
 
 
