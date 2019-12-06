@@ -1,11 +1,11 @@
 import datetime
 
-class My_Repo:
 
+class My_Repo:
     def __init__(self):
         self.date = datetime.date.today()
-        self.name = 'N/A'
-        self.organization = 'N/A'
+        self.name = "N/A"
+        self.organization = "N/A"
         self.contributors = 0
         self.forks = 0
         self.stargazers = 0
@@ -16,6 +16,6 @@ class My_Repo:
         self.open_issues = 0
         self.closed_issues = 0
         self.languages = []
-        self.readme = 'MISS'
-        self.license = 'MISS'
+        self.readme = "MISS"
+        self.license = "MISS"
         self.commits = 0

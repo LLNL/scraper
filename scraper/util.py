@@ -10,71 +10,54 @@ from subprocess import Popen, PIPE, STDOUT  # nosec
 
 logger = logging.getLogger(__name__)
 
-EFFORT_REGEX = re.compile(r'Effort = ([\d\.]+) Person-months')
+EFFORT_REGEX = re.compile(r"Effort = ([\d\.]+) Person-months")
 
 
 def execute(command, cwd=None):
-    logger.debug('Forking command: %s', command)
+    logger.debug("Forking command: %s", command)
 
     if cwd is None:
         cwd = os.getcwd()
     elif not os.path.isdir(cwd):
-        raise ValueError('path does not exist: %s', cwd)
+        raise ValueError("path does not exist: %s", cwd)
 
-    process = Popen(
-        command,
-        cwd=cwd,
-        stdout=PIPE,
-        stderr=STDOUT,
-        shell=False)  # nosec
+    process = Popen(command, cwd=cwd, stdout=PIPE, stderr=STDOUT, shell=False)  # nosec
     out, err = process.communicate()
     return str(out), str(err)
 
 
 def configure_logging(verbose=False):
     DEFAULT_LOGGING = {
-        'version': 1,
-        'disable_existing_loggers': False,
-        'formatters': {
-            'standard': {
+        "version": 1,
+        "disable_existing_loggers": False,
+        "formatters": {
+            "standard": {
                 # 'format': '%(asctime)s [%(levelname)s] %(name)s: %(message)s'
                 # 'format': '%(levelname)s: %(message)s'
-                'format': '%(asctime)s - %(levelname)s: %(message)s'
+                "format": "%(asctime)s - %(levelname)s: %(message)s"
+            }
+        },
+        "handlers": {
+            "default": {
+                "level": "INFO",
+                "formatter": "standard",
+                "class": "logging.StreamHandler",
+            },
+            "null": {
+                "level": "INFO",
+                "formatter": "standard",
+                "class": "logging.NullHandler",
             },
         },
-        'handlers': {
-            'default': {
-                'level': 'INFO',
-                'formatter': 'standard',
-                'class': 'logging.StreamHandler',
-            },
-            'null': {
-                'level': 'INFO',
-                'formatter': 'standard',
-                'class': 'logging.NullHandler',
-            },
+        "loggers": {
+            "": {"handlers": ["default"], "level": "DEBUG", "propagate": False},
+            "github3": {"handlers": ["null"], "level": "DEBUG", "propagate": False},
+            "urllib3": {"handlers": ["null"], "level": "DEBUG", "propagate": False},
         },
-        'loggers': {
-            '': {
-                'handlers': ['default'],
-                'level': 'DEBUG',
-                'propagate': False,
-            },
-            'github3': {
-                'handlers': ['null'],
-                'level': 'DEBUG',
-                'propagate': False,
-            },
-            'urllib3': {
-                'handlers': ['null'],
-                'level': 'DEBUG',
-                'propagate': False,
-            },
-        }
     }
 
     if verbose:
-        DEFAULT_LOGGING['handlers']['default']['level'] = 'DEBUG'
+        DEFAULT_LOGGING["handlers"]["default"]["level"] = "DEBUG"
         # DEFAULT_LOGGING['loggers']['']['level'] = 'DEBUG'
 
     logging.config.dictConfig(DEFAULT_LOGGING)
@@ -134,31 +117,31 @@ def git_repo_to_sloc(url):
     """
 
     with tempfile.TemporaryDirectory() as tmp_dir:
-        logger.debug('Cloning: url=%s tmp_dir=%s', url, tmp_dir)
+        logger.debug("Cloning: url=%s tmp_dir=%s", url, tmp_dir)
 
-        tmp_clone = os.path.join(tmp_dir, 'clone-dir')
+        tmp_clone = os.path.join(tmp_dir, "clone-dir")
 
-        cmd = ['git', 'clone', '--depth=1', url, tmp_clone]
+        cmd = ["git", "clone", "--depth=1", url, tmp_clone]
         execute(cmd)
 
-        cmd = ['cloc', '--json', tmp_clone]
+        cmd = ["cloc", "--json", tmp_clone]
         out, _ = execute(cmd)
 
         try:
             json_start = out.find('{"header"')
-            json_blob = out[json_start:].replace('\\n', '').replace('\'', '')
+            json_blob = out[json_start:].replace("\\n", "").replace("'", "")
             cloc_json = json.loads(json_blob)
-            sloc = cloc_json['SUM']['code']
+            sloc = cloc_json["SUM"]["code"]
         except json.decoder.JSONDecodeError:
-            logger.debug('Error Decoding: url=%s, out=%s', url, out)
+            logger.debug("Error Decoding: url=%s, out=%s", url, out)
             sloc = 0
 
-    logger.debug('SLOC: url=%s, sloc=%d', url, sloc)
+    logger.debug("SLOC: url=%s, sloc=%d", url, sloc)
 
     return sloc
 
 
-def compute_labor_hours(sloc, month_hours='cocomo_book'):
+def compute_labor_hours(sloc, month_hours="cocomo_book"):
     """
     Compute the labor hours, given a count of source lines of code
 
@@ -169,7 +152,7 @@ def compute_labor_hours(sloc, month_hours='cocomo_book'):
     - http://docs.python-guide.org/en/latest/scenarios/scrape/
     """
     # Calculation of hours in a month
-    if month_hours == 'hours_per_year':
+    if month_hours == "hours_per_year":
         # Use number of working hours in a year:
         # (40 Hours / week) * (52 weeks / year) / (12 months / year) ~= 173.33
         HOURS_PER_PERSON_MONTH = 40.0 * 52 / 12
@@ -180,28 +163,28 @@ def compute_labor_hours(sloc, month_hours='cocomo_book'):
         # https://github.com/GSA/code-gov/blob/master/LABOR_HOUR_CALC.md
         HOURS_PER_PERSON_MONTH = 152.0
 
-    cocomo_url = 'https://csse.usc.edu/tools/cocomoii.php'
-    page = requests.post(cocomo_url, data={'new_size': sloc})
+    cocomo_url = "https://csse.usc.edu/tools/cocomoii.php"
+    page = requests.post(cocomo_url, data={"new_size": sloc})
 
     try:
         person_months = float(EFFORT_REGEX.search(page.text).group(1))
     except AttributeError:
-        logger.error('Unable to find Person Months in page text: sloc=%s', sloc)
+        logger.error("Unable to find Person Months in page text: sloc=%s", sloc)
         # If there is no match, and .search(..) returns None
         person_months = 0
 
     labor_hours = person_months * HOURS_PER_PERSON_MONTH
-    logger.debug('sloc=%d labor_hours=%d', sloc, labor_hours)
+    logger.debug("sloc=%d labor_hours=%d", sloc, labor_hours)
 
     return labor_hours
 
 
 def labor_hours_from_url(url):
     sum_sloc = git_repo_to_sloc(url)
-    logger.info('SLOC: %d', sum_sloc)
+    logger.info("SLOC: %d", sum_sloc)
 
     labor_hours = compute_labor_hours(sum_sloc)
-    logger.info('labor_hours: %d', labor_hours)
+    logger.info("labor_hours: %d", labor_hours)
 
     return labor_hours
 
@@ -211,7 +194,7 @@ def _prune_dict_null_str(dictionary):
     Prune the "None" or emptry string values from dictionary items
     """
     for key, value in list(dictionary.items()):
-        if value is None or str(value) == '':
+        if value is None or str(value) == "":
             del dictionary[key]
 
         if isinstance(value, dict):
