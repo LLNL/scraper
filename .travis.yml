@@ -9,7 +9,7 @@ python:
     - '3.8'
 
 install:
-    - pip install flake8 bandit
+    - pip install flake8 bandit black
     - pip install .
 
 script:
