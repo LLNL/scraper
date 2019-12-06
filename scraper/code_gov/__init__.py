@@ -36,9 +36,7 @@ def process_config(config):
     # Parse config for GitHub repositories
     github_instances = config.get("GitHub", [])
     if config.get("github_gov_orgs", False):
-        github_instances.append(
-            {"url": "https://github.com", "orgs": gov_orgs(),}
-        )
+        github_instances.append({"url": "https://github.com", "orgs": gov_orgs()})
     for instance in github_instances:
         url = instance.get("url", "https://github.com")
         orgs = instance.get("orgs", [])

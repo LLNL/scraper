@@ -97,9 +97,7 @@ class Project(dict):
         #   name: [string] The name of a contact or department for the project
         #   twitter: [string] The username of the project's Twitter account
         #   phone: [string] The phone number to contact a project.
-        self["contact"] = {
-            "email": "",
-        }
+        self["contact"] = {"email": ""}
         # TODO: Currently, the GSA Harvester requires these fields to not be present if they are empty
         #     'name': '',
         #     'URL': '',
@@ -320,10 +318,7 @@ class Project(dict):
 
         project["tags"] = ["gitlab"] + repository.tag_list
 
-        project["contact"] = {
-            "email": "",
-            "URL": web_url,
-        }
+        project["contact"] = {"email": "", "URL": web_url}
 
         # -- OPTIONAL FIELDS --
 

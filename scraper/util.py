@@ -35,7 +35,7 @@ def configure_logging(verbose=False):
                 # 'format': '%(asctime)s [%(levelname)s] %(name)s: %(message)s'
                 # 'format': '%(levelname)s: %(message)s'
                 "format": "%(asctime)s - %(levelname)s: %(message)s"
-            },
+            }
         },
         "handlers": {
             "default": {
@@ -50,9 +50,9 @@ def configure_logging(verbose=False):
             },
         },
         "loggers": {
-            "": {"handlers": ["default"], "level": "DEBUG", "propagate": False,},
-            "github3": {"handlers": ["null"], "level": "DEBUG", "propagate": False,},
-            "urllib3": {"handlers": ["null"], "level": "DEBUG", "propagate": False,},
+            "": {"handlers": ["default"], "level": "DEBUG", "propagate": False},
+            "github3": {"handlers": ["null"], "level": "DEBUG", "propagate": False},
+            "urllib3": {"handlers": ["null"], "level": "DEBUG", "propagate": False},
         },
     }
 
