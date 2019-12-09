@@ -11,7 +11,7 @@ def connect(url, username, password):
 
     bb_session = stashy.connect(url, username, password)
 
-    logger.info('Connected to: %s as %s', url, username)
+    logger.info("Connected to: %s as %s", url, username)
 
     return bb_session
 

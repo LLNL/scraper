@@ -6,7 +6,7 @@ import gitlab
 logger = logging.getLogger(__name__)
 
 
-def connect(url='https://gitlab.com', token=None):
+def connect(url="https://gitlab.com", token=None):
     """
     Return a connected GitLab session
 
@@ -14,16 +14,16 @@ def connect(url='https://gitlab.com', token=None):
     """
 
     if token is None:
-        token = os.environ.get('GITLAB_API_TOKEN', None)
+        token = os.environ.get("GITLAB_API_TOKEN", None)
 
     gl_session = gitlab.Gitlab(url, token)
 
     try:
         gl_session.version()
-    except (gitlab.execeptions.GitlabAuthenticationError):
-        raise RuntimeError('Invalid or missing GITLAB_API_TOKEN')
+    except (gitlab.exceptions.GitlabAuthenticationError):
+        raise RuntimeError("Invalid or missing GITLAB_API_TOKEN")
 
-    logger.info('Connected to: %s', url)
+    logger.info("Connected to: %s", url)
 
     return gl_session
 

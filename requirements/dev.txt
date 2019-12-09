@@ -6,5 +6,6 @@ twine
 
 # Testing tools
 bandit
+black
 flake8
 safety
