@@ -1,6 +1,6 @@
 test:
 	bandit -r scraper/
-	flake8 --ignore=E231,E501,W503 scraper/
+	flake8 scraper/
 	black --check scraper/
 
 release: test
