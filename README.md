@@ -33,8 +33,11 @@ data from. An example config file can be found in [demo.json](/demo.json). Once
 you have your config file, you are ready to install and run the scraper!
 
 ```shell
-    # Install Scraper
+    # Install Scraper from a local copy of this repository
     $ pip install -e .
+    # OR
+    # Install Scraper from PyPI
+    $ pip install llnl-scraper
 
     # Run Scraper with your config file ``config.json``
     $ scraper --config config.json
