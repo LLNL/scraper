@@ -1,16 +1,22 @@
-language: python
-
-sudo: false
-
-python:
-    - '3.6'
-    - '3.7'
-    - '3.8'
-
-install:
-    - pip install flake8 bandit black
-    - pip install .
-
-script:
-    - make test
-    - scraper -h
+matrix:
+  include:
+    - language: python
+      sudo: false
+      python:
+        - "3.6"
+        - "3.7"
+        - "3.8"
+      install:
+        - pip install flake8 bandit black
+        - pip install .
+      script:
+        - make test
+        - scraper -h
+    - language: node_js
+      node_js:
+        - "12"
+      cache: npm
+      install:
+        - npm install -g markdownlint-cli
+      script:
+        - make test_npm
