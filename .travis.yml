@@ -6,7 +6,7 @@ python:
     - '3.8'
 
 install:
-    - pip install regex==2019.11.1 flake8 bandit black
+    - pip install flake8 bandit black
     - pip install .
     - npm install -g markdownlint-cli
 
