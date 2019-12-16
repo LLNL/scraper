@@ -1,7 +1,5 @@
 language: python
 
-sudo: false
-
 python:
     - '3.6'
     - '3.7'
@@ -10,6 +8,7 @@ python:
 install:
     - pip install flake8 bandit black
     - pip install .
+    - npm install -g markdownlint-cli
 
 script:
     - make test
