@@ -429,15 +429,14 @@ class Project(dict):
 
         # project['reusedCode'] = []
 
-        # date: [object] A date object describing the release.
+        # date: [object] A date object describing the release. Empty if repo has no commits.
         #   created: [string] The date the release was originally created, in YYYY-MM-DD or ISO 8601 format.
         #   lastModified: [string] The date the release was modified, in YYYY-MM-DD or ISO 8601 format.
-        #   metadataLastUpdated: [string] The date the metadata of the release was last updated, in YYYY-MM-DD or ISO 8601 format.
-        # project['date'] = {
-        #     'created': repository.pushed_at.isoformat(),
-        #     'lastModified': repository.updated_at.isoformat(),
-        #     'metadataLastUpdated': '',
-        # }
+        if repository.get("created", None):
+            project["date"] = {
+                "created": repository["created"],
+                "lastModified": repository["lastModified"],
+            }
 
         _prune_dict_null_str(project)
 

@@ -88,12 +88,12 @@ def process_config(config):
         url = instance.get("url")
         # orgs = instance.get('orgs', None)
         # public_only = instance.get('public_only', True)
-        # token = instance.get('token', None)
-        username = instance.get("username")
-        password = instance.get("password")
+        username = instance.get("username", None)
+        password = instance.get("password", None)
+        token = instance.get("token", None)
         excluded = instance.get("exclude", [])
 
-        bb_session = bitbucket.connect(url, username, password)
+        bb_session = bitbucket.connect(url, username, password, token)
 
         for repo in bitbucket.all_repos(bb_session):
             project = repo["project"]["key"]

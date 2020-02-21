@@ -105,6 +105,7 @@ The basic structure is:
         "url": "https://bitbucket.internal",  // Base URL for a Bitbucket Server instance
         "username": "",                       // Username to authenticate with
         "password": "",                       // Password to authenticate with
+        "token": "",                          // Token to authenticate with, if supplied username and password are ignored
 
         "exclude": [ ... ]  // List of projects / repositories to exclude from inventory
     }
