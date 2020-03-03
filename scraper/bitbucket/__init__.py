@@ -14,10 +14,10 @@ def connect(url, username=None, password=None, token=None):
     """
     if token is not None:
         bb_session = Stash(url, token=token)
-        logger.info("Connected to: %s with %s", url, token)
+        logger.info("Connected to: %s with token", url)
     else:
         bb_session = stashy.connect(url, username, password)
-        logger.info("Connected to: %s as %s", url, username)
+        logger.info("Connected to: %s as username %s", url, username)
 
     return bb_session
 
