@@ -156,13 +156,13 @@ def force_attributes(metadata, config):
         logger.debug("Forcing Organization to: %s", organization)
 
     if contact_email:
-        logger.debug("Forcing Contact Email to: %s", contact_email)
+        logger.debug("Forcing Contact Email, as needed, to: %s", contact_email)
 
     for release in metadata["releases"]:
         if organization:
             release["organization"] = organization
 
-        if contact_email:
+        if contact_email and not release["contact"]["email"]:
             release["contact"]["email"] = contact_email
 
         if "licenses" not in release["permissions"]:
