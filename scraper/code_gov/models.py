@@ -462,7 +462,7 @@ class Project(dict):
         link = record.get("repository_link", "")
         if not link:
             link = record.get("landing_page")
-            logger.warning("DOE CODE: No repositoryURL, using landing_page: %s", link)
+            logger.debug("DOE CODE: No repositoryURL, using landing_page: %s", link)
 
         project["repositoryURL"] = link
 

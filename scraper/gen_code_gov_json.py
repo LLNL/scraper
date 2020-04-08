@@ -141,7 +141,7 @@ def main():
 
     code_gov.force_attributes(code_json, config_json)
 
-    logger.info("Number of Projects: %s", len(code_json["releases"]))
+    logger.debug("Number of Projects: %s", len(code_json["releases"]))
 
     output_filepath = args.output_filename
 
@@ -149,7 +149,7 @@ def main():
         output_filepath = os.path.join(output_path, output_filepath)
 
     with open(output_filepath, "w", encoding="utf-8") as fp:
-        logger.info("Writing output to: %s", output_filepath)
+        logger.debug("Writing output to: %s", output_filepath)
         fp.write(code_json.to_json())
 
 
