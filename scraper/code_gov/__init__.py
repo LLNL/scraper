@@ -121,7 +121,6 @@ def process_config(config):
             code_gov_metadata["releases"].append(code_gov_project)
 
     # Handle parsing of DOE CODE records
-
     doecode_config = config.get("DOE CODE", {})
     doecode_json = doecode_config.get("json", None)
     doecode_url = doecode_config.get("url", None)
