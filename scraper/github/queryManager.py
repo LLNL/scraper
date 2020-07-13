@@ -185,6 +185,7 @@ class GitHubQueryManager:
         rest=False,
         requestCount=0,
         pageNum=0,
+        headers={},
     ):
         """Submit a GitHub query.
 
@@ -217,6 +218,8 @@ class GitHubQueryManager:
             requestCount (Optional[int]): Counter for repeated requests.
             pageNum (Optional[int]): Counter for pagination.
                 For user readable log messages only, does not affect data.
+            headers (Optional[Dict]): Additional headers.
+                Defaults to empty.
 
         Returns:
             Dict: A JSON style dictionary.
@@ -232,7 +235,11 @@ class GitHubQueryManager:
             (verbosity >= 0), "Sending %s query..." % ("REST" if rest else "GraphQL")
         )
         response = self._submitQuery(
-            gitquery, gitvars=gitvars, verbose=(verbosity > 0), rest=rest
+            gitquery,
+            gitvars=gitvars,
+            verbose=(verbosity > 0),
+            rest=rest,
+            headers=headers,
         )
         _vPrint((verbosity >= 0), "Checking response...")
         _vPrint((verbosity >= 0), "HTTP/1.1 " + response["headDict"]["Status"])
@@ -263,6 +270,7 @@ class GitHubQueryManager:
                     rest=rest,
                     requestCount=(requestCount - 1),
                     pageNum=pageNum,
+                    headers=headers,
                 )
         except KeyError:
             # Handles error cases that don't return X-RateLimit data
@@ -295,6 +303,7 @@ class GitHubQueryManager:
                     rest=rest,
                     requestCount=requestCount,
                     pageNum=pageNum,
+                    headers=headers,
                 )
         # Check for server error responses
         if statusNum == 502 or statusNum == 503:
@@ -323,6 +332,7 @@ class GitHubQueryManager:
                     rest=rest,
                     requestCount=requestCount,
                     pageNum=pageNum,
+                    headers=headers,
                 )
         # Check for other error responses
         if statusNum >= 400 or statusNum == 204:
@@ -366,6 +376,7 @@ class GitHubQueryManager:
                     rest=rest,
                     requestCount=requestCount,
                     pageNum=pageNum,
+                    headers=headers,
                 )
             else:
                 raise RuntimeError(
@@ -389,6 +400,7 @@ class GitHubQueryManager:
                         rest=rest,
                         requestCount=0,
                         pageNum=pageNum,
+                        headers=headers,
                     )
                     outObj.extend(nextObj)
             elif not rest:
@@ -415,6 +427,7 @@ class GitHubQueryManager:
                         rest=rest,
                         requestCount=0,
                         pageNum=pageNum,
+                        headers=headers,
                     )
                     newPage = nextObj
                     for key in keysToList[0:-1]:
@@ -424,7 +437,7 @@ class GitHubQueryManager:
 
         return outObj
 
-    def _submitQuery(self, gitquery, gitvars={}, verbose=False, rest=False):
+    def _submitQuery(self, gitquery, gitvars={}, verbose=False, rest=False, headers={}):
         """Send a curl request to GitHub.
 
         Args:
@@ -438,6 +451,8 @@ class GitHubQueryManager:
                 suppressed. Defaults to False.
             rest (Optional[bool]): If True, uses the REST API instead
                 of GraphQL. Defaults to False.
+            headers (Optional[Dict]): Additional headers.
+                Defaults to empty.
 
         Returns:
             {
@@ -454,11 +469,13 @@ class GitHubQueryManager:
                 {"query": gitquery, "variables": json.dumps(gitvars)}
             )
             fullResponse = requests.post(
-                "https://api.github.com/graphql", data=gitqueryJSON, headers=authhead
+                "https://api.github.com/graphql",
+                data=gitqueryJSON,
+                headers={**authhead, **headers},
             )
         else:
             fullResponse = requests.get(
-                "https://api.github.com" + gitquery, headers=authhead
+                "https://api.github.com" + gitquery, headers={**authhead, **headers}
             )
         _vPrint(
             verbose,
