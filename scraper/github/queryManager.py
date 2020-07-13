@@ -143,7 +143,7 @@ class GitHubQueryManager:
             self.__query = query_in
         return query_in
 
-    def queryGitHubFromFile(self, filePath, gitvars={}, verbosity=0, **kwargs):
+    def queryGitHubFromFile(self, filePath, gitvars=None, verbosity=0, **kwargs):
         """Submit a GitHub GraphQL query from a file.
 
         Can only be used with GraphQL queries.
@@ -156,7 +156,7 @@ class GitHubQueryManager:
                 .. _GitHub GraphQL Explorer:
                    https://developer.github.com/v4/explorer/
             gitvars (Optional[Dict]): All query variables.
-                Defaults to empty.
+                Defaults to None.
                 GraphQL Only.
             verbosity (Optional[int]): Changes output verbosity levels.
                 If < 0, all extra printouts are suppressed.
@@ -169,6 +169,9 @@ class GitHubQueryManager:
             Dict: A JSON style dictionary.
 
         """
+        if not gitvars:
+            gitvars = {}
+
         gitquery = self._readGQL(filePath, verbose=(verbosity >= 0))
         return self.queryGitHub(
             gitquery, gitvars=gitvars, verbosity=verbosity, **kwargs
@@ -177,14 +180,15 @@ class GitHubQueryManager:
     def queryGitHub(
         self,
         gitquery,
-        gitvars={},
+        gitvars=None,
         verbosity=0,
         paginate=False,
         cursorVar=None,
-        keysToList=[],
+        keysToList=None,
         rest=False,
         requestCount=0,
         pageNum=0,
+        headers=None,
     ):
         """Submit a GitHub query.
 
@@ -194,7 +198,7 @@ class GitHubQueryManager:
                        query: 'query { viewer { login } }'
                     endpoint: '/user'
             gitvars (Optional[Dict]): All query variables.
-                Defaults to empty.
+                Defaults to None.
                 GraphQL Only.
             verbosity (Optional[int]): Changes output verbosity levels.
                 If < 0, all extra printouts are suppressed.
@@ -208,7 +212,7 @@ class GitHubQueryManager:
                 GraphQL Only.
             keysToList (Optional[List[str]]): Ordered list of keys needed to
                 retrieve the list in the query results to be extended by
-                pagination. Defaults to empty.
+                pagination. Defaults to None.
                 Example:
                     ['data', 'viewer', 'repositories', 'nodes']
                 GraphQL Only.
@@ -217,11 +221,20 @@ class GitHubQueryManager:
             requestCount (Optional[int]): Counter for repeated requests.
             pageNum (Optional[int]): Counter for pagination.
                 For user readable log messages only, does not affect data.
+            headers (Optional[Dict]): Additional headers.
+                Defaults to None.
 
         Returns:
             Dict: A JSON style dictionary.
 
         """
+        if not gitvars:
+            gitvars = {}
+        if not keysToList:
+            keysToList = []
+        if not headers:
+            headers = {}
+
         requestCount += 1
         pageNum = 0 if pageNum < 0 else pageNum  # no negative page numbers
         pageNum += 1
@@ -232,7 +245,11 @@ class GitHubQueryManager:
             (verbosity >= 0), "Sending %s query..." % ("REST" if rest else "GraphQL")
         )
         response = self._submitQuery(
-            gitquery, gitvars=gitvars, verbose=(verbosity > 0), rest=rest
+            gitquery,
+            gitvars=gitvars,
+            verbose=(verbosity > 0),
+            rest=rest,
+            headers=headers,
         )
         _vPrint((verbosity >= 0), "Checking response...")
         _vPrint((verbosity >= 0), "HTTP/1.1 " + response["headDict"]["Status"])
@@ -263,6 +280,7 @@ class GitHubQueryManager:
                     rest=rest,
                     requestCount=(requestCount - 1),
                     pageNum=pageNum,
+                    headers=headers,
                 )
         except KeyError:
             # Handles error cases that don't return X-RateLimit data
@@ -295,6 +313,7 @@ class GitHubQueryManager:
                     rest=rest,
                     requestCount=requestCount,
                     pageNum=pageNum,
+                    headers=headers,
                 )
         # Check for server error responses
         if statusNum == 502 or statusNum == 503:
@@ -323,6 +342,7 @@ class GitHubQueryManager:
                     rest=rest,
                     requestCount=requestCount,
                     pageNum=pageNum,
+                    headers=headers,
                 )
         # Check for other error responses
         if statusNum >= 400 or statusNum == 204:
@@ -366,6 +386,7 @@ class GitHubQueryManager:
                     rest=rest,
                     requestCount=requestCount,
                     pageNum=pageNum,
+                    headers=headers,
                 )
             else:
                 raise RuntimeError(
@@ -389,6 +410,7 @@ class GitHubQueryManager:
                         rest=rest,
                         requestCount=0,
                         pageNum=pageNum,
+                        headers=headers,
                     )
                     outObj.extend(nextObj)
             elif not rest:
@@ -415,6 +437,7 @@ class GitHubQueryManager:
                         rest=rest,
                         requestCount=0,
                         pageNum=pageNum,
+                        headers=headers,
                     )
                     newPage = nextObj
                     for key in keysToList[0:-1]:
@@ -424,7 +447,9 @@ class GitHubQueryManager:
 
         return outObj
 
-    def _submitQuery(self, gitquery, gitvars={}, verbose=False, rest=False):
+    def _submitQuery(
+        self, gitquery, gitvars=None, verbose=False, rest=False, headers=None
+    ):
         """Send a curl request to GitHub.
 
         Args:
@@ -433,11 +458,13 @@ class GitHubQueryManager:
                        query: 'query { viewer { login } }'
                     endpoint: '/user'
             gitvars (Optional[Dict]): All query variables.
-                Defaults to empty.
+                Defaults to None.
             verbose (Optional[bool]): If False, stderr prints will be
                 suppressed. Defaults to False.
             rest (Optional[bool]): If True, uses the REST API instead
                 of GraphQL. Defaults to False.
+            headers (Optional[Dict]): Additional headers.
+                Defaults to None.
 
         Returns:
             {
@@ -448,17 +475,24 @@ class GitHubQueryManager:
             }
 
         """
+        if not gitvars:
+            gitvars = {}
+        if not headers:
+            headers = {}
+
         authhead = {"Authorization": "bearer " + self.__githubApiToken}
         if not rest:
             gitqueryJSON = json.dumps(
                 {"query": gitquery, "variables": json.dumps(gitvars)}
             )
             fullResponse = requests.post(
-                "https://api.github.com/graphql", data=gitqueryJSON, headers=authhead
+                "https://api.github.com/graphql",
+                data=gitqueryJSON,
+                headers={**authhead, **headers},
             )
         else:
             fullResponse = requests.get(
-                "https://api.github.com" + gitquery, headers=authhead
+                "https://api.github.com" + gitquery, headers={**authhead, **headers}
             )
         _vPrint(
             verbose,
