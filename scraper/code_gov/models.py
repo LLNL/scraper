@@ -247,7 +247,7 @@ class Project(dict):
 
         project["downloadURL"] = repository.downloads_url
 
-        project["languages"] = [l for l, _ in repository.languages()]
+        project["languages"] = [lang for lang, _ in repository.languages()]
 
         # project['partners'] = []
 
@@ -337,7 +337,7 @@ class Project(dict):
         archive_suffix = "/projects/%s/repository/archive" % repository.get_id()
         project["downloadURL"] = api_url + archive_suffix
 
-        # project['languages'] = [l for l, _ in repository.languages()]
+        # project['languages'] = [lang for lang, _ in repository.languages()]
 
         if fetch_languages:
             project["languages"] = [*repository.languages()]
