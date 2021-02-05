@@ -69,7 +69,7 @@ class GitHubQueryManager:
             print("FAILED.")
             raise ValueError(
                 "GitHub API token is not valid.\n%s %s"
-                % (basicCheck["headDict"]["Status"], basicCheck["result"])
+                % (basicCheck["statusTxt"], basicCheck["result"])
             )
         else:
             print("Token validated.")
@@ -252,7 +252,7 @@ class GitHubQueryManager:
             headers=headers,
         )
         _vPrint((verbosity >= 0), "Checking response...")
-        _vPrint((verbosity >= 0), "HTTP/1.1 " + response["headDict"]["Status"])
+        _vPrint((verbosity >= 0), "HTTP STATUS %s" % (response["statusTxt"]))
         statusNum = response["statusNum"]
 
         # Decrement page count before error checks to properly reflect any repeated queries
@@ -293,7 +293,7 @@ class GitHubQueryManager:
                     "Query attempted but failed %d times.\n%s\n%s"
                     % (
                         self.maxRetry,
-                        response["headDict"]["Status"],
+                        response["statusTxt"],
                         response["result"],
                     )
                 )
@@ -322,7 +322,7 @@ class GitHubQueryManager:
                     "Query attempted but failed %d times.\n%s\n%s"
                     % (
                         self.maxRetry,
-                        response["headDict"]["Status"],
+                        response["statusTxt"],
                         response["result"],
                     )
                 )
@@ -348,7 +348,7 @@ class GitHubQueryManager:
         if statusNum >= 400 or statusNum == 204:
             raise RuntimeError(
                 "Request got an Error response.\n%s\n%s"
-                % (response["headDict"]["Status"], response["result"])
+                % (response["statusTxt"], response["result"])
             )
 
         _vPrint((verbosity >= 0), "Data received!")
@@ -361,7 +361,7 @@ class GitHubQueryManager:
                     "Query attempted but failed %d times.\n%s\n%s"
                     % (
                         self.maxRetry,
-                        response["headDict"]["Status"],
+                        response["statusTxt"],
                         response["result"],
                     )
                 )
@@ -469,6 +469,7 @@ class GitHubQueryManager:
         Returns:
             {
                 'statusNum' (int): The HTTP status code.
+                'statusTxt' (str): The HTTP status message.
                 'headDict' (Dict[str]): The response headers.
                 'linkDict' (Dict[int]): Link based pagination data.
                 'result' (str): The body of the response.
@@ -501,7 +502,8 @@ class GitHubQueryManager:
         )
         result = fullResponse.text
         headDict = fullResponse.headers
-        statusNum = int(headDict["Status"].split()[0])
+        statusNum = int(fullResponse.status_code)
+        statusTxt = "%d %s" % (statusNum, fullResponse.reason)
 
         # Parse any Link headers even further
         linkDict = None
@@ -515,6 +517,7 @@ class GitHubQueryManager:
 
         return {
             "statusNum": statusNum,
+            "statusTxt": statusTxt,
             "headDict": headDict,
             "linkDict": linkDict,
             "result": result,
