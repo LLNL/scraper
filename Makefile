@@ -3,6 +3,7 @@ test:
 	flake8 scraper/
 	black --check scraper/
 	markdownlint '**/*.md'
+	pyflakes scraper
 
 release: test
 	python setup.py sdist bdist_wheel
