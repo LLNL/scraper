@@ -1,0 +1,29 @@
+name: llnl-scraper
+
+on:
+  pull_request: []
+
+jobs:
+  testing:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [ 'pypy3.6', "pypy3.7", "pypy3.8", "pypy3.9"]
+    name: Python ${{ matrix.python-version }} Tests
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: x64
+      - name:  Python Tests
+        run: |
+          conda create --quiet --name test pytest
+          export PATH="/usr/share/miniconda/bin:$PATH"
+          source activate test
+          pip install flake8 bandit black
+          pip install .
+          npm install -g markdownlint-cli@0.23.2        
+          make test
+          scraper -h
