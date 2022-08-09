@@ -1,16 +1,13 @@
+import functools
 import json
 import logging
 import logging.config
 import os
-import re
-import requests
 import tempfile
 
 from subprocess import Popen, PIPE, STDOUT  # nosec
 
 logger = logging.getLogger(__name__)
-
-EFFORT_REGEX = re.compile(r"Effort = ([\d\.]+) Person-months")
 
 
 def execute(command, cwd=None):
@@ -149,7 +146,8 @@ def compute_labor_hours(sloc, month_hours="cocomo_book"):
 
     References:
     - http://csse.usc.edu/tools
-    - http://docs.python-guide.org/en/latest/scenarios/scrape/
+    - http://softwarecost.org/tools/COCOMO/
+    - https://www.rose-hulman.edu/class/csse/csse372/201310/Homework/CII_modelman2000.pdf
     """
     # Calculation of hours in a month
     if month_hours == "hours_per_year":
@@ -163,17 +161,53 @@ def compute_labor_hours(sloc, month_hours="cocomo_book"):
         # https://github.com/GSA/code-gov/blob/master/LABOR_HOUR_CALC.md
         HOURS_PER_PERSON_MONTH = 152.0
 
-    cocomo_url = "http://softwarecost.org/tools/COCOMO/"
-    page = requests.post(cocomo_url, data={"new_size": sloc})
+    # Coefficients for the COCOMO II model (only the two used for person-month
+    # calculation)
+    co_a = 2.94
+    co_b = 0.91
 
-    try:
-        person_months = float(EFFORT_REGEX.search(page.text).group(1))
-    except AttributeError:
-        logger.error("Unable to find Person Months in page text: sloc=%s", sloc)
-        # If there is no match, and .search(..) returns None
-        person_months = 0
+    # These values represent a default of "Nominal" from the established
+    # constant values for the COCOMO II model.
+    scale_factors = [
+        3.72,  # Precedentedness
+        3.04,  # Development Flexibility
+        4.24,  # Architecture / Risk Resolution
+        3.29,  # Team Cohesion
+        4.68,  # Process Maturity
+    ]
+    cost_drivers = [
+        1.00,  # Required Software Reliability
+        1.00,  # Data Base Size
+        1.00,  # Product Complexity
+        1.00,  # Developed for Reusability
+        1.00,  # Documentation Match to Lifecycle Needs
+        1.00,  # Analyst Capability
+        1.00,  # Programmer Capability
+        1.00,  # Personnel Continuity
+        1.00,  # Application Experience
+        1.00,  # Platform Experience
+        1.00,  # Language and Toolset Experience
+        1.00,  # Time Constraint
+        1.00,  # Storage Constraint
+        1.00,  # Platform Volatility
+        1.00,  # Use of Software Tools
+        1.00,  # Multisite Development
+        1.00,  # Required Development Schedule
+    ]
 
-    labor_hours = person_months * HOURS_PER_PERSON_MONTH
+    # The summation (∑) of the scale factors is used in this calculation
+    scale_factor_aggregate = co_b + 0.01 * functools.reduce(
+        lambda x, y: x + y, scale_factors
+    )
+    # The product (∏) of the cost drivers
+    effort_adjustment_factor = functools.reduce(lambda x, y: x * y, cost_drivers)
+    # The calculation of person-months uses KSLOC for the size of a project
+    size = sloc / 1000
+
+    # Calculate PM = A * Size^E * EAF
+    person_months = co_a * size**scale_factor_aggregate * effort_adjustment_factor
+
+    labor_hours = round(person_months * HOURS_PER_PERSON_MONTH, 1)
     logger.debug("sloc=%d labor_hours=%d", sloc, labor_hours)
 
     return labor_hours
