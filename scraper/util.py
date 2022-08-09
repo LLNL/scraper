@@ -158,7 +158,7 @@ def compute_labor_hours(sloc, month_hours="cocomo_book"):
         # Use value from COCOMO II Book (month_hours=='cocomo_book'):
         # Reference: https://dl.acm.org/citation.cfm?id=557000
         # This is the value used by the Code.gov team:
-        # https://github.com/GSA/code-gov/blob/master/LABOR_HOUR_CALC.md
+        # https://github.com/GSA/code-gov/blob/master/docs/labor_hour_calc.md
         HOURS_PER_PERSON_MONTH = 152.0
 
     # Coefficients for the COCOMO II model (only the two used for person-month
