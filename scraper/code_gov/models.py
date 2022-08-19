@@ -183,7 +183,7 @@ class Project(dict):
         # -- REQUIRED FIELDS --
 
         project["name"] = repository.name
-        project["repositoryURL"] = repository.git_url
+        project["repositoryURL"] = repository.clone_url
         project["description"] = repository.description
 
         try:
