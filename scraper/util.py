@@ -20,6 +20,14 @@ def execute(command, cwd=None):
 
     process = Popen(command, cwd=cwd, stdout=PIPE, stderr=STDOUT, shell=False)  # nosec
     out, err = process.communicate()
+
+    if process.returncode:
+        logging.error(
+            "Error Executing: command=%s, returncode=%d",
+            " ".join(command),
+            process.returncode,
+        )
+
     return str(out), str(err)
 
 
@@ -130,7 +138,7 @@ def git_repo_to_sloc(url):
             cloc_json = json.loads(json_blob)
             sloc = cloc_json["SUM"]["code"]
         except json.decoder.JSONDecodeError:
-            logger.debug("Error Decoding: url=%s, out=%s", url, out)
+            logger.error("Error Decoding: url=%s, out=%s", url, out)
             sloc = 0
 
     logger.debug("SLOC: url=%s, sloc=%d", url, sloc)
