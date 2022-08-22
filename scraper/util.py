@@ -17,8 +17,11 @@ def execute(command, cwd=None):
     elif not os.path.isdir(cwd):
         raise ValueError("path does not exist: %s", cwd)
 
-    process = Popen(command, cwd=cwd, stdout=PIPE, stderr=STDOUT, shell=False)  # nosec
-    out, err = process.communicate()
+    with Popen(
+        command, cwd=cwd, stdout=PIPE, stderr=STDOUT, shell=False
+    ) as process:  # nosec
+        # We redirect stderr to stdout so we can safely ignore stderr in the returned tuple
+        out, _ = process.communicate()
 
     if process.returncode:
         logging.error(
@@ -27,7 +30,7 @@ def execute(command, cwd=None):
             process.returncode,
         )
 
-    return str(out), str(err)
+    return out.decode("utf-8")
 
 
 def configure_logging(verbose=False):
@@ -129,7 +132,7 @@ def git_repo_to_sloc(url):
         execute(cmd)
 
         cmd = ["cloc", "--json", tmp_clone]
-        out, _ = execute(cmd)
+        out = execute(cmd)
 
         try:
             json_start = out.find('{"header"')
