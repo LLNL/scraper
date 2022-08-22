@@ -135,9 +135,7 @@ def git_repo_to_sloc(url):
         out = execute(cmd)
 
         try:
-            json_start = out.find('{"header"')
-            json_blob = out[json_start:].replace("\\n", "").replace("'", "")
-            cloc_json = json.loads(json_blob)
+            cloc_json = json.loads(out)
             sloc = cloc_json["SUM"]["code"]
         except json.decoder.JSONDecodeError:
             logger.error("Error Decoding: url=%s, out=%s", url, out)
