@@ -2,6 +2,8 @@ test:
 	bandit -r scraper/
 	flake8 scraper/
 	black --check .
+	isort --check .
+
 	markdownlint '**/*.md'
 	pyflakes scraper
 

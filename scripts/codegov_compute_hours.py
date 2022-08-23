@@ -5,7 +5,6 @@ import json
 
 from scraper.util import compute_labor_hours, git_repo_to_sloc
 
-
 parser = argparse.ArgumentParser(
     description="Scrape code repositories for Code.gov / DOECode"
 )

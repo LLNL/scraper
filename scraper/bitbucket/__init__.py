@@ -1,8 +1,7 @@
-import logging
-import stashy
-
 import datetime
+import logging
 
+import stashy
 from stashy.client import Stash
 
 logger = logging.getLogger(__name__)

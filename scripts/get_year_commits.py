@@ -1,8 +1,9 @@
-import github3
 import datetime
-import os
 import getpass
+import os
 import time
+
+import github3
 
 
 class GitHub_LLNL_Year_Commits:

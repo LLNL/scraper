@@ -1,14 +1,15 @@
-import github3
+import calendar
+import csv
 import datetime
-import os
 import errno
 import getpass
-import time
-import csv
-import math
 import json
+import math
+import os
+import time
+
+import github3
 import requests
-import calendar
 
 
 class GitHub_Traffic:

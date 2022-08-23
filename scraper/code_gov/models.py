@@ -5,9 +5,9 @@ import json
 import logging
 
 from dateutil.parser import parse as date_parse
-from requests.utils import requote_uri
 import github3
 import gitlab
+from requests.utils import requote_uri
 
 from scraper.github.util import _license_obj
 from scraper.util import _prune_dict_null_str, labor_hours_from_url

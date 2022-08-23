@@ -3,9 +3,9 @@
 
 import logging
 
+from scraper import bitbucket, doecode, github, gitlab, tfs
 from scraper.code_gov.models import Metadata, Project
 from scraper.github import gov_orgs
-from scraper import github, gitlab, bitbucket, doecode, tfs
 
 logger = logging.getLogger(__name__)
 

@@ -1,14 +1,15 @@
-import github3
+from collections import defaultdict
+import csv
 import datetime
-import os
 import errno
 import getpass
-import time
-import csv
-import math
-import my_repo
 import json
-from collections import defaultdict
+import math
+import os
+import time
+
+import github3
+import my_repo
 
 
 class GitHub_LLNL_Stats:

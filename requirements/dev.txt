@@ -8,5 +8,6 @@ twine
 bandit
 black
 flake8
-safety
+isort
 pyflakes
+safety
