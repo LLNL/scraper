@@ -1,7 +1,7 @@
 test:
 	bandit -r scraper/
 	flake8 scraper/
-	black --check scraper/
+	black --check .
 	markdownlint '**/*.md'
 	pyflakes scraper
 
