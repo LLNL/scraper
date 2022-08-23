@@ -1,7 +1,8 @@
-import github3
 import datetime
-import os
 import getpass
+import os
+
+import github3
 import requests
 
 

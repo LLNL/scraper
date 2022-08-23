@@ -3,10 +3,10 @@
 
 import logging
 import os
-
-import requests
-import github3
 import time
+
+import github3
+import requests
 
 logger = logging.getLogger(__name__)
 

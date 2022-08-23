@@ -4,8 +4,9 @@
 import logging
 import os
 
-from vsts.vss_connection import VssConnection
 from msrest.authentication import BasicAuthentication
+from vsts.vss_connection import VssConnection
+
 from scraper.tfs.models import TFSProject
 
 logger = logging.getLogger(__name__)

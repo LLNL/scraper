@@ -5,13 +5,14 @@ With this module, you will be able to send GraphQL and REST queries
 to GitHub, as well as read and write JSON files to store data.
 """
 
+from datetime import datetime
 import json
 import os
-import pytz
 import re
-import requests
 import time
-from datetime import datetime
+
+import pytz
+import requests
 
 
 def _vPrint(verbose, *args, **kwargs):

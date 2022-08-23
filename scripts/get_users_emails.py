@@ -1,6 +1,7 @@
-import github3
-import os
 import getpass
+import os
+
+import github3
 
 
 class GitHub_Users_Emails:
