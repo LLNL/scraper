@@ -21,8 +21,14 @@ setup(
     url="https://github.com/llnl/scraper",
     packages=find_packages(),
     install_requires=install_reqs,
-    entry_points={"console_scripts": ["scraper = scraper.gen_code_gov_json:main",]},
-    scripts=["scripts/codegov_compute_hours.py",],
+    entry_points={
+        "console_scripts": [
+            "scraper = scraper.gen_code_gov_json:main",
+        ]
+    },
+    scripts=[
+        "scripts/codegov_compute_hours.py",
+    ],
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",

@@ -11,10 +11,10 @@ def print_org_members_without_2fa(org_name="llnl"):
 
     for user in org.members(filter="2fa_disabled"):
         emails = {
-            c['author']['email']
+            c["author"]["email"]
             for e in user.events()
             if e.type == "PushEvent"
-            for c in e.payload['commits']
+            for c in e.payload["commits"]
         }
         emails = {e for e in emails if "@llnl.gov" in e}
         if emails:
