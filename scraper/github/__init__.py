@@ -22,11 +22,15 @@ def gov_orgs():
     """
     us_gov_github_orgs = set()
 
-    gov_orgs = requests.get("https://government.github.com/organizations.json").json()
+    gov_orgs_json = requests.get(
+        "https://government.github.com/organizations.json"
+    ).json()
 
-    us_gov_github_orgs.update(gov_orgs["governments"]["U.S. Federal"])
-    us_gov_github_orgs.update(gov_orgs["governments"]["U.S. Military and Intelligence"])
-    us_gov_github_orgs.update(gov_orgs["research"]["U.S. Research Labs"])
+    us_gov_github_orgs.update(gov_orgs_json["governments"]["U.S. Federal"])
+    us_gov_github_orgs.update(
+        gov_orgs_json["governments"]["U.S. Military and Intelligence"]
+    )
+    us_gov_github_orgs.update(gov_orgs_json["research"]["U.S. Research Labs"])
 
     return list(us_gov_github_orgs)
 
