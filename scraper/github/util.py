@@ -50,7 +50,7 @@ def _license_obj(license_name):
         obj = {"URL": "https://api.github.com/licenses/epl-2.0", "name": "EPL-2.0"}
 
     if obj is None:
-        logger.warn("I don't understand the license: %s", license_name)
+        logger.warning("I don't understand the license: %s", license_name)
         raise ValueError("Aborting!")
 
     return obj

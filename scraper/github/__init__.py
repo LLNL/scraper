@@ -96,7 +96,7 @@ def _check_api_limits(gh_session, api_required=250):
 
     now_time = time.time()
     time_to_reset = int(api_reset - now_time)
-    logger.warn("Rate Limit Depleted - Sleeping for %d seconds", time_to_reset)
+    logger.warning("Rate Limit Depleted - Sleeping for %d seconds", time_to_reset)
 
     while now_time < api_reset:
         time.sleep(10)
