@@ -77,7 +77,7 @@ def _num_requests_needed(num_repos, factor=2, wiggle_room=100):
     return num_repos * factor + wiggle_room
 
 
-def _check_api_limits(gh_session, api_required=250, sleep_time=15):
+def _check_api_limits(gh_session, api_required=250):
     """
     Simplified check for API limits
 
