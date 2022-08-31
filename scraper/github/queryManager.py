@@ -315,7 +315,7 @@ class GitHubQueryManager:
                 headers=headers,
             )
         # Check for server error responses
-        if statusNum == 502 or statusNum == 503:
+        if statusNum in (502, 503):
             if requestCount >= self.maxRetry:
                 raise RuntimeError(
                     "Query attempted but failed %d times.\n%s\n%s"
