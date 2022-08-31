@@ -25,9 +25,7 @@ def _vPrint(verbose, *args, **kwargs):
 
     """
     if verbose:
-        return print(*args, **kwargs)
-    else:
-        pass
+        print(*args, **kwargs)
 
 
 class GitHubQueryManager:
