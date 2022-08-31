@@ -20,8 +20,8 @@ def connect(url="https://gitlab.com", token=None):
 
     try:
         gl_session.version()
-    except (gitlab.exceptions.GitlabAuthenticationError):
-        raise RuntimeError("Invalid or missing GITLAB_API_TOKEN")
+    except gitlab.exceptions.GitlabAuthenticationError as exc:
+        raise RuntimeError("Invalid or missing GITLAB_API_TOKEN") from exc
 
     logger.info("Connected to: %s", url)
 
