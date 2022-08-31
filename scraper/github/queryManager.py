@@ -70,8 +70,8 @@ class GitHubQueryManager:
                 "GitHub API token is not valid.\n%s %s"
                 % (basicCheck["statusTxt"], basicCheck["result"])
             )
-        else:
-            print("Token validated.")
+
+        print("Token validated.")
 
         # Initialize private variables
         self.__retryDelay = 3  #: Number of seconds to wait between retries.
@@ -296,24 +296,24 @@ class GitHubQueryManager:
                         response["result"],
                     )
                 )
-            else:
-                self._countdown(
-                    self.__retryDelay,
-                    printString="Query accepted but not yet processed. Trying again in %*dsec...",
-                    verbose=(verbosity >= 0),
-                )
-                return self.queryGitHub(
-                    gitquery,
-                    gitvars=gitvars,
-                    verbosity=verbosity,
-                    paginate=paginate,
-                    cursorVar=cursorVar,
-                    keysToList=keysToList,
-                    rest=rest,
-                    requestCount=requestCount,
-                    pageNum=pageNum,
-                    headers=headers,
-                )
+
+            self._countdown(
+                self.__retryDelay,
+                printString="Query accepted but not yet processed. Trying again in %*dsec...",
+                verbose=(verbosity >= 0),
+            )
+            return self.queryGitHub(
+                gitquery,
+                gitvars=gitvars,
+                verbosity=verbosity,
+                paginate=paginate,
+                cursorVar=cursorVar,
+                keysToList=keysToList,
+                rest=rest,
+                requestCount=requestCount,
+                pageNum=pageNum,
+                headers=headers,
+            )
         # Check for server error responses
         if statusNum == 502 or statusNum == 503:
             if requestCount >= self.maxRetry:
@@ -325,24 +325,24 @@ class GitHubQueryManager:
                         response["result"],
                     )
                 )
-            else:
-                self._countdown(
-                    self.__retryDelay,
-                    printString="Server error. Trying again in %*dsec...",
-                    verbose=(verbosity >= 0),
-                )
-                return self.queryGitHub(
-                    gitquery,
-                    gitvars=gitvars,
-                    verbosity=verbosity,
-                    paginate=paginate,
-                    cursorVar=cursorVar,
-                    keysToList=keysToList,
-                    rest=rest,
-                    requestCount=requestCount,
-                    pageNum=pageNum,
-                    headers=headers,
-                )
+
+            self._countdown(
+                self.__retryDelay,
+                printString="Server error. Trying again in %*dsec...",
+                verbose=(verbosity >= 0),
+            )
+            return self.queryGitHub(
+                gitquery,
+                gitvars=gitvars,
+                verbosity=verbosity,
+                paginate=paginate,
+                cursorVar=cursorVar,
+                keysToList=keysToList,
+                rest=rest,
+                requestCount=requestCount,
+                pageNum=pageNum,
+                headers=headers,
+            )
         # Check for other error responses
         if statusNum >= 400 or statusNum == 204:
             raise RuntimeError(
@@ -364,7 +364,8 @@ class GitHubQueryManager:
                         response["result"],
                     )
                 )
-            elif len(outObj["errors"]) == 1 and len(outObj["errors"][0]) == 1:
+
+            if len(outObj["errors"]) == 1 and len(outObj["errors"][0]) == 1:
                 # Poorly defined error type, usually intermittent, try again.
                 _vPrint(
                     (verbosity >= 0),
@@ -387,10 +388,10 @@ class GitHubQueryManager:
                     pageNum=pageNum,
                     headers=headers,
                 )
-            else:
-                raise RuntimeError(
-                    "GraphQL API error.\n%s" % (json.dumps(outObj["errors"]))
-                )
+
+            raise RuntimeError(
+                "GraphQL API error.\n%s" % (json.dumps(outObj["errors"]))
+            )
 
         # Re-increment page count before the next page query
         pageNum += 1
@@ -639,18 +640,18 @@ class DataManager:
             filePath = self.filePath
         if not os.path.isfile(filePath):
             raise FileNotFoundError("Data file '%s' does not exist." % (filePath))
-        else:
-            print(
-                "Importing existing data file '%s' ... " % (filePath),
-                end="",
-                flush=True,
-            )
-            with open(filePath, "r") as q:
-                data_raw = q.read()
-            print("Imported!")
-            self.data = json.loads(data_raw)
-            if updatePath:
-                self.filePath = filePath
+
+        print(
+            "Importing existing data file '%s' ... " % (filePath),
+            end="",
+            flush=True,
+        )
+        with open(filePath, "r") as q:
+            data_raw = q.read()
+        print("Imported!")
+        self.data = json.loads(data_raw)
+        if updatePath:
+            self.filePath = filePath
 
     def fileSave(self, filePath=None, updatePath=False, newline=None):
         """Write the internal JSON data dictionary to a JSON data file.

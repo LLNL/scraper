@@ -524,12 +524,8 @@ class Project(dict):
         status = record.get("ever_announced")
         if status is None:
             raise ValueError('DOE CODE: Unable to determine "ever_announced" value!')
-        elif status:
-            status = "Production"
-        else:
-            status = "Development"
 
-        project["status"] = status
+        project["status"] = "Production" if status else "Development"
 
         vcs = None
         link = project["repositoryURL"]
