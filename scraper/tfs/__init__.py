@@ -16,7 +16,7 @@ HARD_CODED_TOP = 10000
 
 def get_projects_metadata(baseurl, token):
     logger.debug("Retrieving TFS Metdata.....")
-    return [project for project in get_all_projects(baseurl, token)]
+    return get_all_projects(baseurl, token)
 
 
 def create_tfs_connection(url, token):
