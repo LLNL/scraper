@@ -21,6 +21,7 @@ setup(
     url="https://github.com/llnl/scraper",
     packages=find_packages(),
     install_requires=install_reqs,
+    python_requires=">=3.6",
     entry_points={
         "console_scripts": [
             "scraper = scraper.gen_code_gov_json:main",
