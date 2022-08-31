@@ -95,7 +95,7 @@ class GitHubQueryManager:
     @maxRetry.setter
     def maxRetry(self, maxRetry):
         numIn = int(maxRetry)
-        numIn = 1 if not numIn > 0 else numIn
+        numIn = 1 if numIn <= 0 else numIn
         self.__maxRetry = numIn
         print("Auto-retry limit for requests set to %d." % (self.maxRetry))
 
@@ -265,7 +265,7 @@ class GitHubQueryManager:
                 "reset": int(response["headDict"]["X-RateLimit-Reset"]),
             }
             _vPrint((verbosity >= 0), "API Status %s" % (json.dumps(apiStatus)))
-            if not apiStatus["remaining"] > 0:
+            if apiStatus["remaining"] <= 0:
                 _vPrint((verbosity >= 0), "API usage limit reached during query.")
                 self._awaitReset(apiStatus["reset"])
                 _vPrint((verbosity >= 0), "Repeating query...")
