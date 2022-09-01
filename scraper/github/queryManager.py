@@ -129,7 +129,7 @@ class GitHubQueryManager:
             query_in = self.__query
         else:
             _vPrint(verbose, "Reading '%s' ... " % (filePath), end="", flush=True)
-            with open(filePath, "r") as q:
+            with open(filePath, "r", encoding="utf-8") as q:
                 # Strip comments.
                 query_in = re.sub(r"#.*(\n|\Z)", "\n", q.read())
                 # Condense whitespace.
@@ -646,7 +646,7 @@ class DataManager:
             end="",
             flush=True,
         )
-        with open(filePath, "r") as q:
+        with open(filePath, "r", encoding="utf-8") as q:
             data_raw = q.read()
         print("Imported!")
         self.data = json.loads(data_raw)
@@ -675,7 +675,7 @@ class DataManager:
                 os.makedirs(os.path.split(filePath)[0])
         dataJsonString = json.dumps(self.data, indent=4, sort_keys=True)
         print("Writing to file '%s' ... " % (filePath), end="", flush=True)
-        with open(filePath, "w", newline=newline) as fileout:
+        with open(filePath, "w", encoding="utf-8", newline=newline) as fileout:
             fileout.write(dataJsonString)
         print("Wrote file!")
         if updatePath:

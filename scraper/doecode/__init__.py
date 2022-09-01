@@ -14,7 +14,7 @@ def process_json(filename):
 
     logger.debug("Processing DOE CODE json: %s", filename)
 
-    with open(filename) as fd:
+    with open(filename, encoding="utf-8") as fd:
         doecode_json = json.load(fd)
 
     for record in doecode_json["records"]:
