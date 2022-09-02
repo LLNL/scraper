@@ -22,11 +22,15 @@ def gov_orgs():
     """
     us_gov_github_orgs = set()
 
-    gov_orgs = requests.get("https://government.github.com/organizations.json").json()
+    gov_orgs_json = requests.get(
+        "https://government.github.com/organizations.json"
+    ).json()
 
-    us_gov_github_orgs.update(gov_orgs["governments"]["U.S. Federal"])
-    us_gov_github_orgs.update(gov_orgs["governments"]["U.S. Military and Intelligence"])
-    us_gov_github_orgs.update(gov_orgs["research"]["U.S. Research Labs"])
+    us_gov_github_orgs.update(gov_orgs_json["governments"]["U.S. Federal"])
+    us_gov_github_orgs.update(
+        gov_orgs_json["governments"]["U.S. Military and Intelligence"]
+    )
+    us_gov_github_orgs.update(gov_orgs_json["research"]["U.S. Research Labs"])
 
     return list(us_gov_github_orgs)
 
@@ -73,7 +77,7 @@ def _num_requests_needed(num_repos, factor=2, wiggle_room=100):
     return num_repos * factor + wiggle_room
 
 
-def _check_api_limits(gh_session, api_required=250, sleep_time=15):
+def _check_api_limits(gh_session, api_required=250):
     """
     Simplified check for API limits
 
@@ -92,7 +96,7 @@ def _check_api_limits(gh_session, api_required=250, sleep_time=15):
 
     now_time = time.time()
     time_to_reset = int(api_reset - now_time)
-    logger.warn("Rate Limit Depleted - Sleeping for %d seconds", time_to_reset)
+    logger.warning("Rate Limit Depleted - Sleeping for %d seconds", time_to_reset)
 
     while now_time < api_reset:
         time.sleep(10)

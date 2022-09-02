@@ -101,7 +101,8 @@ def main():
     configure_logging(args.verbose)
 
     try:
-        config_json = json.load(open(args.config))
+        with open(args.config, encoding="utf-8") as fd:
+            config_json = json.load(fd)
     except (FileNotFoundError, json.JSONDecodeError):
         if args.config:
             raise

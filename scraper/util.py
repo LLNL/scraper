@@ -15,7 +15,7 @@ def execute(command, cwd=None):
     if cwd is None:
         cwd = os.getcwd()
     elif not os.path.isdir(cwd):
-        raise ValueError("path does not exist: %s", cwd)
+        raise ValueError("path does not exist: %s" % cwd)
 
     with Popen(
         command, cwd=cwd, stdout=PIPE, stderr=STDOUT, shell=False

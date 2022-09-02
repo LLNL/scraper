@@ -193,14 +193,16 @@ class Project(dict):
             repo_license = None
 
         if repo_license:
-            license = repo_license.license
-            if license:
-                logger.debug("license spdx=%s; url=%s", license.spdx_id, license.url)
-                if license.url is None:
-                    project["permissions"]["licenses"] = [{"name": license.spdx_id}]
+            license_obj = repo_license.license
+            if license_obj:
+                logger.debug(
+                    "license spdx=%s; url=%s", license_obj.spdx_id, license_obj.url
+                )
+                if license_obj.url is None:
+                    project["permissions"]["licenses"] = [{"name": license_obj.spdx_id}]
                 else:
                     project["permissions"]["licenses"] = [
-                        {"URL": license.url, "name": license.spdx_id}
+                        {"URL": license_obj.url, "name": license_obj.spdx_id}
                     ]
             else:
                 project["permissions"]["licenses"] = None
@@ -478,7 +480,9 @@ class Project(dict):
             license_objects = [{"name": "Other", "URL": record["proprietary_url"]}]
 
         if licenses:
-            license_objects.extend([_license_obj(license) for license in licenses])
+            license_objects.extend(
+                [_license_obj(license_name) for license_name in licenses]
+            )
 
         project["permissions"]["licenses"] = license_objects
 
@@ -520,12 +524,8 @@ class Project(dict):
         status = record.get("ever_announced")
         if status is None:
             raise ValueError('DOE CODE: Unable to determine "ever_announced" value!')
-        elif status:
-            status = "Production"
-        else:
-            status = "Development"
 
-        project["status"] = status
+        project["status"] = "Production" if status else "Development"
 
         vcs = None
         link = project["repositoryURL"]

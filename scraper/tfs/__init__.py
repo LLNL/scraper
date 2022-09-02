@@ -16,7 +16,7 @@ HARD_CODED_TOP = 10000
 
 def get_projects_metadata(baseurl, token):
     logger.debug("Retrieving TFS Metdata.....")
-    return [project for project in get_all_projects(baseurl, token)]
+    return get_all_projects(baseurl, token)
 
 
 def create_tfs_connection(url, token):
@@ -48,8 +48,9 @@ def create_tfs_project_analysis_client(url, token=None):
     )
 
     if project_analysis_client is None:
-        msg = "Unable to connect to TFS Enterprise (%s) with provided token."
-        raise RuntimeError(msg, url)
+        raise RuntimeError(
+            "Unable to connect to TFS Enterprise (%s) with provided token." % url
+        )
 
     return project_analysis_client
 
@@ -68,8 +69,9 @@ def create_tfs_core_client(url, token=None):
     tfs_client = tfs_connection.get_client("vsts.core.v4_1.core_client.CoreClient")
 
     if tfs_client is None:
-        msg = "Unable to connect to TFS Enterprise (%s) with provided token."
-        raise RuntimeError(msg, url)
+        raise RuntimeError(
+            "Unable to connect to TFS Enterprise (%s) with provided token." % url
+        )
 
     return tfs_client
 
@@ -85,8 +87,10 @@ def create_tfs_git_client(url, token=None):
     tfs_git_client = tfs_connection.get_client("vsts.git.v4_1.git_client.GitClient")
 
     if tfs_git_client is None:
-        msg = "Unable to create TFS Git Client, failed to connect to TFS Enterprise (%s) with provided token."
-        raise RuntimeError(msg, url)
+        raise RuntimeError(
+            "Unable to create TFS Git Client, failed to connect to TFS Enterprise (%s) with provided token."
+            % url
+        )
 
     return tfs_git_client
 
@@ -102,8 +106,10 @@ def create_tfs_tfvc_client(url, token=None):
     tfs_tfvc_client = tfs_connection.get_client("vsts.tfvc.v4_1.tfvc_client.TfvcClient")
 
     if tfs_tfvc_client is None:
-        msg = "Unable to create TFS Git Client, failed to connect to TFS Enterprise (%s) with provided token."
-        raise RuntimeError(msg, url)
+        raise RuntimeError(
+            "Unable to create TFS Git Client, failed to connect to TFS Enterprise (%s) with provided token."
+            % url
+        )
 
     return tfs_tfvc_client
 
@@ -124,11 +130,7 @@ def get_all_projects(url, token, top=HARD_CODED_TOP):
             token,
         )
 
-        logger.debug(
-            "Retrieving Projects for Project Collection: {collection_name}".format(
-                collection_name=collection.name
-            )
-        )
+        logger.debug("Retrieving Projects for Project Collection: %s", collection.name)
         # Retrieves all projects in the project collection
         projects = collection_client.get_projects(top=HARD_CODED_TOP)
         # get_projects only gets the project references, have to call get_project_history_entries to get last update info for projects
@@ -138,19 +140,13 @@ def get_all_projects(url, token, top=HARD_CODED_TOP):
 
             # get_projects only gets team project ref objects,
             # have to call get_project to get the team project object which includes the TFS Web Url for the project
-            logger.debug(
-                "Retrieving Team Project for Project: {project_name}".format(
-                    project_name=project.name
-                )
-            )
+            logger.debug("Retrieving Team Project for Project: %s", project.name)
             projectInfo = collection_client.get_project(project.id, True, True)
 
             tfsProject = TFSProject(projectInfo, collection)
 
             logger.debug(
-                "Retrieving Last Updated and Created Info for Project: {project_name}".format(
-                    project_name=project.name
-                )
+                "Retrieving Last Updated and Created Info for Project: %s", project.name
             )
             tfsProject.projectLastUpdateInfo = get_project_last_update_time(
                 collection_history_list, project.id
@@ -171,11 +167,7 @@ def get_git_repos(url, token, collection, project):
         "{url}/{collection_name}".format(url=url, collection_name=collection.name),
         token,
     )
-    logger.debug(
-        "Retrieving Git Repos for Project: {project_name}".format(
-            project_name=project.name
-        )
-    )
+    logger.debug("Retrieving Git Repos for Project: %s", project.name)
     return git_client.get_repositories(project.id)
 
 
@@ -189,20 +181,12 @@ def get_tfvc_repos(url, token, collection, project):
         token,
     )
 
-    logger.debug(
-        "Retrieving Tfvc Branches for Project: {project_name}".format(
-            project_name=project.name
-        )
-    )
+    logger.debug("Retrieving Tfvc Branches for Project: %s}", project.name)
     branches = tfvc_client.get_branches(project.id, True, True, False, True)
     if branches:
         branch_list.extend(branches)
     else:
-        logger.debug(
-            "No Tfvc Branches in Project: {project_name}".format(
-                project_name=project.name
-            )
-        )
+        logger.debug("No Tfvc Branches in Project: %s", project.name)
 
     return branch_list
 
