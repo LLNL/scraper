@@ -8,3 +8,4 @@ venv/
 llnl_scraper.egg-info/
 .vscode/
 .idea/
+scraper/unf.json
