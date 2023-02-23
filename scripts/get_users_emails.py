@@ -39,7 +39,6 @@ class GitHub_Users_Emails:
         logins. Handles Two Factor Authentication.
         """
         try:
-
             token = ""
             id = ""
             if not os.path.isfile("CREDENTIALS_FILE"):

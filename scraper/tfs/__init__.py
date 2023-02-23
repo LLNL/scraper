@@ -137,7 +137,6 @@ def get_all_projects(url, token, top=HARD_CODED_TOP):
         # Only calling this once per collection as its an expensive API call, wil refactor later if there is a better API call to use
         collection_history_list = collection_client.get_project_history_entries()
         for project in projects:
-
             # get_projects only gets team project ref objects,
             # have to call get_project to get the team project object which includes the TFS Web Url for the project
             logger.debug("Retrieving Team Project for Project: %s", project.name)

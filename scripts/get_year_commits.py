@@ -51,7 +51,6 @@ class GitHub_LLNL_Year_Commits:
         logins. Handles Two Factor Authentication.
         """
         try:
-
             token = ""
             id = ""
             if not os.path.isfile("CREDENTIALS_FILE"):
