@@ -8,6 +8,8 @@ import time
 import github3
 import requests
 
+from scraper.util import DEFAULT_REQUESTS_TIMEOUTS
+
 logger = logging.getLogger(__name__)
 
 
@@ -23,7 +25,8 @@ def gov_orgs():
     us_gov_github_orgs = set()
 
     gov_orgs_json = requests.get(
-        "https://government.github.com/organizations.json"
+        "https://government.github.com/organizations.json",
+        timeout=DEFAULT_REQUESTS_TIMEOUTS,
     ).json()
 
     us_gov_github_orgs.update(gov_orgs_json["governments"]["U.S. Federal"])
