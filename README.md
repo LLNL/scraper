@@ -78,6 +78,9 @@ The basic structure is:
         "token": null,                // Private token for accessing this GitHub instance
         "public_only": true,          // Only inventory public repositories
 
+        "connect_timeout": 4,  // The timeout in seconds for connecting to the server
+        "read_timeout": 10,    // The timeout in seconds to wait for a response from the server
+
         "orgs": [ ... ],    // List of organizations to inventory
         "repos": [ ... ],   // List of single repositories to inventory
         "exclude": [ ... ]  // List of organizations / repositories to exclude from inventory

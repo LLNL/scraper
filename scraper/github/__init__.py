@@ -35,7 +35,7 @@ def gov_orgs():
     return list(us_gov_github_orgs)
 
 
-def create_session(token=None):
+def create_session(token=None, timeouts=None):
     """
     Create a github3.py session connected to GitHub.com
 
@@ -45,7 +45,11 @@ def create_session(token=None):
     if token is None:
         token = os.environ.get("GITHUB_API_TOKEN", None)
 
-    gh_session = github3.login(token=token)
+    if timeouts is None:
+        timeouts = {}
+
+    custom_session = github3.session.GitHubSession(**timeouts)
+    gh_session = github3.GitHub(token=token, session=custom_session)
 
     if gh_session is None:
         raise RuntimeError("Invalid or missing GITHUB_API_TOKEN")
@@ -53,15 +57,18 @@ def create_session(token=None):
     return gh_session
 
 
-def create_enterprise_session(url, token=None):
+def create_enterprise_session(url, token=None, timeouts=None):
     """
     Create a github3.py session for a GitHub Enterprise instance
 
     If token is not provided, will attempt to use the GITHUB_API_TOKEN
     environment variable if present.
     """
+    if timeouts is None:
+        timeouts = {}
 
-    gh_session = github3.enterprise_login(url=url, token=token)
+    custom_session = github3.session.GitHubSession(**timeouts)
+    gh_session = github3.GitHubEnterprise(url=url, token=token, session=custom_session)
 
     if gh_session is None:
         msg = "Unable to connect to GitHub Enterprise (%s) with provided token."
@@ -105,16 +112,19 @@ def _check_api_limits(gh_session, api_required=250):
     return
 
 
-def connect(url="https://github.com", token=None):
+def connect(url="https://github.com", token=None, timeouts=None):
     """
     Create a GitHub session for making requests
     """
 
+    if timeouts is None:
+        timeouts = {}
+
     gh_session = None
     if url == "https://github.com":
-        gh_session = create_session(token)
+        gh_session = create_session(token, timeouts)
     else:
-        gh_session = create_enterprise_session(url, token)
+        gh_session = create_enterprise_session(url, token, timeouts)
 
     if gh_session is None:
         msg = "Unable to connect to (%s) with provided token."

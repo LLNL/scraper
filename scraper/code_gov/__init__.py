@@ -38,14 +38,22 @@ def process_config(config):
     if config.get("github_gov_orgs", False):
         github_instances.append({"url": "https://github.com", "orgs": gov_orgs()})
     for instance in github_instances:
+        timeouts = {}
         url = instance.get("url", "https://github.com")
         orgs = instance.get("orgs", [])
         repos = instance.get("repos", [])
         public_only = instance.get("public_only", True)
         excluded = instance.get("exclude", [])
         token = instance.get("token", None)
+        connect_timeout = instance.get("connect_timeout", None)
+        read_timeout = instance.get("read_timeout", None)
 
-        gh_session = github.connect(url, token)
+        if connect_timeout is not None:
+            timeouts["default_connect_timeout"] = connect_timeout
+        if read_timeout is not None:
+            timeouts["default_read_timeout"] = read_timeout
+
+        gh_session = github.connect(url, token, timeouts)
 
         for repo in github.query_repos(gh_session, orgs, repos, public_only):
             if repo.owner.login in excluded or repo.full_name in excluded:
