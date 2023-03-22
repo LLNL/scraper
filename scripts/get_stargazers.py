@@ -44,7 +44,6 @@ class GitHub_Stargazers:
         logins. Handles Two Factor Authentication.
         """
         try:
-
             self.token = ""
             id = ""
             if not os.path.isfile("CREDENTIALS_FILE"):

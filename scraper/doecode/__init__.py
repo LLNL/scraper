@@ -3,6 +3,8 @@ import logging
 
 import requests
 
+from scraper.util import DEFAULT_REQUESTS_TIMEOUTS
+
 logger = logging.getLogger(__name__)
 
 
@@ -32,7 +34,11 @@ def process_url(url, key):
     if key is None:
         raise ValueError("DOE CODE API Key value is missing!")
 
-    response = requests.get(url, headers={"Authorization": "Basic " + key})
+    response = requests.get(
+        url,
+        headers={"Authorization": "Basic " + key},
+        timeout=DEFAULT_REQUESTS_TIMEOUTS,
+    )
     doecode_json = response.json()
 
     for record in doecode_json["records"]:

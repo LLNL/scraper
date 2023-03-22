@@ -132,7 +132,6 @@ class GitHub_LLNL_Stats:
         logins. Handles Two Factor Authentication.
         """
         try:
-
             self.token = ""
             id = ""
             if not os.path.isfile("CREDENTIALS_FILE"):
@@ -384,7 +383,7 @@ class GitHub_LLNL_Stats:
                     self.total_licenses += 1
                     return path
             return "MISS"
-        except (StopIteration):
+        except StopIteration:
             return "MISS"
 
     def get_commits(self, repo, organization="llnl"):

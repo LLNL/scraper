@@ -14,6 +14,8 @@ import time
 import pytz
 import requests
 
+from scraper.util import DEFAULT_REQUESTS_TIMEOUTS
+
 
 def _vPrint(verbose, *args, **kwargs):
     """Easy verbosity-control print method.
@@ -490,10 +492,13 @@ class GitHubQueryManager:
                 "https://api.github.com/graphql",
                 data=gitqueryJSON,
                 headers={**authhead, **headers},
+                timeout=DEFAULT_REQUESTS_TIMEOUTS,
             )
         else:
             fullResponse = requests.get(
-                "https://api.github.com" + gitquery, headers={**authhead, **headers}
+                "https://api.github.com" + gitquery,
+                headers={**authhead, **headers},
+                timeout=DEFAULT_REQUESTS_TIMEOUTS,
             )
         _vPrint(
             verbose,

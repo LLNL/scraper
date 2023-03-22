@@ -5,20 +5,25 @@ on:
 
 jobs:
   testing:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
+        os:
+          - ubuntu-latest
         python-version:
-          - "3.6"
           - "3.7"
           - "3.8"
           - "3.9"
           - "3.10"
+          - "3.11"
           - pypy3.6
           - pypy3.7
           - pypy3.8
           - pypy3.9
+        include:
+          - os: ubuntu-20.04
+            python-version: "3.6"
     name: Python ${{ matrix.python-version }} Tests
     steps:
       - uses: actions/checkout@v3
@@ -34,6 +39,6 @@ jobs:
           source activate test
           pip install bandit black isort flake8
           pip install .
-          npm install -g markdownlint-cli@0.23.2        
+          npm install -g markdownlint-cli@0.33.0
           make test
           scraper -h

@@ -8,6 +8,10 @@ import tempfile
 
 logger = logging.getLogger(__name__)
 
+# These mirror the defaults in github3.py sessions per:
+# https://github.com/sigmavirus24/github3.py/blob/ce43e6e5fdef6555f5a6b6602e2cc4b66c428aef/src/github3/session.py#L98
+DEFAULT_REQUESTS_TIMEOUTS = (4, 10)
+
 
 def execute(command, cwd=None):
     logger.debug("Forking command: %s", command)
