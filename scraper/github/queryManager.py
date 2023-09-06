@@ -76,7 +76,7 @@ class GitHubQueryManager:
         print("Token validated.")
 
         # Initialize private variables
-        self.__retryDelay = 3  #: Number of seconds to wait between retries.
+        self.__retryDelay = 1  #: Number of seconds to wait between retries.
         self.__query = None  #: Cached query string
         self.__queryPath = None  #: Path to query file
         self.__queryTimestamp = None  #: When query file was last modified
