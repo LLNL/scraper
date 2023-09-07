@@ -318,7 +318,7 @@ class GitHubQueryManager:
 
             self._countdown(
                 self.retryDelay,
-                printString="Query accepted but not yet processed. Trying again in %*dsec...",
+                printString="Query accepted but not yet processed. Trying again in %*d seconds...",
                 verbose=(verbosity >= 0),
             )
             return self.queryGitHub(
@@ -347,7 +347,7 @@ class GitHubQueryManager:
 
             self._countdown(
                 self.retryDelay,
-                printString="Server error. Trying again in %*dsec...",
+                printString="Server error. Trying again in %*d seconds...",
                 verbose=(verbosity >= 0),
             )
             return self.queryGitHub(
@@ -392,7 +392,7 @@ class GitHubQueryManager:
                 )
                 self._countdown(
                     self.retryDelay,
-                    printString="Unknown API error. Trying again in %*dsec...",
+                    printString="Unknown API error. Trying again in %*d seconds...",
                     verbose=(verbosity >= 0),
                 )
                 return self.queryGitHub(
@@ -571,31 +571,20 @@ class GitHubQueryManager:
     def _countdown(
         self, waitTime=0, printString="Waiting %*d seconds...", verbose=True
     ):
-        """Makes a pretty countdown.
+        """Prints a message and waits.
 
         Args:
-            gitquery (str): The query or endpoint itself.
-                Examples:
-                       query: 'query { viewer { login } }'
-                    endpoint: '/user'
+            waitTime (Optional[int]): Number of seconds to wait. Defaults to 0.
             printString (Optional[str]): A counter message to display.
-                Defaults to 'Waiting %*d seconds...'
+                Defaults to "Waiting %*d seconds...".
             verbose (Optional[bool]): If False, all extra printouts will be
                 suppressed. Defaults to True.
 
         """
         if waitTime <= 0:
             waitTime = self.retryDelay
-        for remaining in range(waitTime, 0, -1):
-            _vPrint(
-                verbose,
-                "\r" + printString % (len(str(waitTime)), remaining),
-                end="",
-                flush=True,
-            )
-            time.sleep(1)
-        if verbose:
-            _vPrint(verbose, "\r" + printString % (len(str(waitTime)), 0))
+        _vPrint(verbose, printString % (len(str(waitTime)), waitTime))
+        time.sleep(waitTime)
 
 
 class DataManager:
