@@ -33,7 +33,7 @@ def _vPrint(verbose, *args, **kwargs):
 class GitHubQueryManager:
     """GitHub query API manager."""
 
-    def __init__(self, apiToken=None, maxRetry=10):
+    def __init__(self, apiToken=None, maxRetry=10, retryDelay=3):
         """Initialize the GitHubQueryManager object.
 
         Note:
@@ -45,6 +45,8 @@ class GitHubQueryManager:
                 token. Defaults to None.
             maxRetry (Optional[int]): A limit on how many times to
                 automatically retry requests. Defaults to 10.
+            retryDelay (Optional[int]): Number of seconds to wait between
+                automatic request retries. Defaults to 3.
 
         Raises:
             TypeError: If no GitHub API token is provided either via
@@ -76,13 +78,13 @@ class GitHubQueryManager:
         print("Token validated.")
 
         # Initialize private variables
-        self.__retryDelay = 1  #: Number of seconds to wait between retries.
         self.__query = None  #: Cached query string
         self.__queryPath = None  #: Path to query file
         self.__queryTimestamp = None  #: When query file was last modified
 
         # Initialize public variables
         self.maxRetry = maxRetry
+        self.retryDelay = retryDelay
         self.data = {}
         """Dict: Working data."""
 
@@ -100,6 +102,21 @@ class GitHubQueryManager:
         numIn = 1 if numIn <= 0 else numIn
         self.__maxRetry = numIn
         print("Auto-retry limit for requests set to %d." % (self.maxRetry))
+
+    @property
+    def retryDelay(self):
+        """int: Number of seconds to wait between automatic request retries.
+
+        Must be a whole integer greater than 0.
+        """
+        return self.__retryDelay
+
+    @retryDelay.setter
+    def retryDelay(self, retryDelay):
+        numIn = int(retryDelay)
+        numIn = 1 if numIn <= 0 else numIn
+        self.__retryDelay = numIn
+        print("Auto-retry delay set to %dsec." % (self.retryDelay))
 
     def _readGQL(self, filePath, verbose=False):
         """Read a 'pretty' formatted GraphQL query file into a one-line string.
@@ -300,7 +317,7 @@ class GitHubQueryManager:
                 )
 
             self._countdown(
-                self.__retryDelay,
+                self.retryDelay,
                 printString="Query accepted but not yet processed. Trying again in %*dsec...",
                 verbose=(verbosity >= 0),
             )
@@ -329,7 +346,7 @@ class GitHubQueryManager:
                 )
 
             self._countdown(
-                self.__retryDelay,
+                self.retryDelay,
                 printString="Server error. Trying again in %*dsec...",
                 verbose=(verbosity >= 0),
             )
@@ -374,7 +391,7 @@ class GitHubQueryManager:
                     "GraphQL API error.\n%s" % (json.dumps(outObj["errors"])),
                 )
                 self._countdown(
-                    self.__retryDelay,
+                    self.retryDelay,
                     printString="Unknown API error. Trying again in %*dsec...",
                     verbose=(verbosity >= 0),
                 )
@@ -568,7 +585,7 @@ class GitHubQueryManager:
 
         """
         if waitTime <= 0:
-            waitTime = self.__retryDelay
+            waitTime = self.retryDelay
         for remaining in range(waitTime, 0, -1):
             _vPrint(
                 verbose,
