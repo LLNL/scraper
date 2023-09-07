@@ -8,7 +8,7 @@ test:
 	pyflakes scraper
 
 release: test
-	python setup.py sdist bdist_wheel
+	python3 setup.py sdist bdist_wheel
 
 upload:
 	twine upload --skip-existing dist/*
