@@ -1,3 +1,6 @@
+# NOTICE:
+**This forked repository has been archived and is no longer actively maintained (original project: LLNL/scraper). Please visit [DOE CODE](https://www.osti.gov/doecode/) for more information, or for any questions, please contact [doecoderepositories@osti.gov](doecoderepositories@osti.gov?subject=[DOE%20CODE%20GitHub]%20More%20Information).**
+
 # Scraper
 
 Scraper is a tool for scraping and visualizing open source data from various
