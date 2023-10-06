@@ -123,10 +123,14 @@ def main():
     if args.github_gov_orgs:
         config_json["github_gov_orgs"] = True
 
-    config_json["DOE CODE"] = {}
-    config_json["DOE CODE"]["json"] = args.doecode_json
-    config_json["DOE CODE"]["url"] = args.doecode_url
-    config_json["DOE CODE"]["api_key"] = args.doecode_api_key
+    # Handle DOE CODE overrides
+    doecode_config = config_json.get("DOE CODE", {})
+    if args.doecode_json:
+        doecode_config["json"] = args.doecode_json
+    if args.doecode_url:
+        doecode_config["url"] = args.doecode_url
+    if args.doecode_api_key:
+        doecode_config["api_key"] = args.doecode_api_key
 
     output_path = config_json.get("output_path", None)
     output_path = args.output_path or output_path
@@ -141,7 +145,7 @@ def main():
 
     code_gov.force_attributes(code_json, config_json)
 
-    logger.info("Number of Projects: %s", len(code_json["releases"]))
+    logger.debug("Number of Projects: %s", len(code_json["releases"]))
 
     output_filepath = args.output_filename
 
@@ -149,7 +153,7 @@ def main():
         output_filepath = os.path.join(output_path, output_filepath)
 
     with open(output_filepath, "w", encoding="utf-8") as fp:
-        logger.info("Writing output to: %s", output_filepath)
+        logger.debug("Writing output to: %s", output_filepath)
         fp.write(code_json.to_json())
 
 
