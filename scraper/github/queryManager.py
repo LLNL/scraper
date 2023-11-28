@@ -285,7 +285,7 @@ class GitHubQueryManager:
             }
             _vPrint((verbosity >= 0), "API Status %s" % (json.dumps(apiStatus)))
             if apiStatus["remaining"] <= 0:
-                _vPrint((verbosity >= 0), "API usage limit reached during query.")
+                _vPrint((verbosity >= 0), "API rate limit exceeded.")
                 self._awaitReset(apiStatus["reset"])
                 _vPrint((verbosity >= 0), "Repeating query...")
                 return self.queryGitHub(
@@ -296,14 +296,53 @@ class GitHubQueryManager:
                     cursorVar=cursorVar,
                     keysToList=keysToList,
                     rest=rest,
-                    requestCount=(requestCount - 1),
+                    requestCount=(requestCount - 1),  # not counted against retries
                     pageNum=pageNum,
                     headers=headers,
                 )
-        except KeyError:
-            # Handles error cases that don't return X-RateLimit data
+        except KeyError:  # Handles error responses without X-RateLimit data
             _vPrint((verbosity >= 0), "Failed to check API Status.")
 
+        # Check for explicit API rate limit error responses
+        if statusNum in (403, 429):
+            _vPrint((verbosity >= 0), "API rate limit exceeded.")
+            if requestCount >= self.maxRetry:
+                raise RuntimeError(
+                    "Query attempted but failed %d times.\n%s\n%s"
+                    % (
+                        self.maxRetry,
+                        response["statusTxt"],
+                        response["result"],
+                    )
+                )
+
+            try:  # Use explicit wait time if available
+                waitTime = int(response["headDict"]["Retry-After"])
+                self._countdown(
+                    waitTime,
+                    printString="Waiting %*d seconds...",
+                    verbose=(verbosity >= 0),
+                )
+            except KeyError:  # Handles missing Retry-After header
+                self._countdown(
+                    # wait at least 1 min, longer on continued failure (recommended best practice)
+                    60 * requestCount,
+                    printString="Waiting %*d seconds...",
+                    verbose=(verbosity >= 0),
+                )
+            _vPrint((verbosity >= 0), "Repeating query...")
+            return self.queryGitHub(
+                gitquery,
+                gitvars=gitvars,
+                verbosity=verbosity,
+                paginate=paginate,
+                cursorVar=cursorVar,
+                keysToList=keysToList,
+                rest=rest,
+                requestCount=(requestCount),
+                pageNum=pageNum,
+                headers=headers,
+            )
         # Check for accepted but not yet processed, usually due to un-cached data
         if statusNum == 202:
             if requestCount >= self.maxRetry:
