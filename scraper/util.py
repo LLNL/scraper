@@ -148,6 +148,13 @@ def git_repo_to_sloc(url):
         except json.decoder.JSONDecodeError:
             logger.error("Error Decoding: url=%s, out=%s", url, out)
             sloc = 0
+        except KeyError:
+            logging.error(
+                "Missing LOC information (Is the repository empty?): url=%s, json=%s",
+                url,
+                json.dumps(cloc_json),
+            )
+            sloc = 0
 
     logger.debug("SLOC: url=%s, sloc=%d", url, sloc)
 
