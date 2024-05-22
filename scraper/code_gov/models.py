@@ -220,9 +220,9 @@ class Project(dict):
 
         project["tags"] = ["github"]
         old_accept = repository.session.headers["Accept"]
-        repository.session.headers[
-            "Accept"
-        ] = "application/vnd.github.mercy-preview+json"
+        repository.session.headers["Accept"] = (
+            "application/vnd.github.mercy-preview+json"
+        )
         topics = repository._get(repository.url + "/topics").json()
         project["tags"].extend(topics.get("names", []))
         repository.session.headers["Accept"] = old_accept
