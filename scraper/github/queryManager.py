@@ -262,19 +262,32 @@ class GitHubQueryManager:
         _vPrint(
             (verbosity >= 0), "Sending %s query..." % ("REST" if rest else "GraphQL")
         )
-        response = self._submitQuery(
-            gitquery,
-            gitvars=gitvars,
-            verbose=(verbosity > 0),
-            rest=rest,
-            headers=headers,
-        )
+        try:
+            response = self._submitQuery(
+                gitquery,
+                gitvars=gitvars,
+                verbose=(verbosity > 0),
+                rest=rest,
+                headers=headers,
+            )
+        except requests.exceptions.ReadTimeout:  # Handles intermittent response delays
+            _vPrint((verbosity >= 0), "Read timed out.")
+            _vPrint((verbosity >= 0), "Repeating query...")
+            return self.queryGitHub(
+                gitquery,
+                gitvars=gitvars,
+                verbosity=verbosity,
+                paginate=paginate,
+                cursorVar=cursorVar,
+                keysToList=keysToList,
+                rest=rest,
+                requestCount=requestCount,
+                pageNum=(pageNum - 1),  # retry same page
+                headers=headers,
+            )
         _vPrint((verbosity >= 0), "Checking response...")
         _vPrint((verbosity >= 0), "HTTP STATUS %s" % (response["statusTxt"]))
         statusNum = response["statusNum"]
-
-        # Decrement page count before error checks to properly reflect any repeated queries
-        pageNum -= 1
 
         # Make sure the query limit didn't run out
         try:
@@ -297,7 +310,7 @@ class GitHubQueryManager:
                     keysToList=keysToList,
                     rest=rest,
                     requestCount=(requestCount - 1),  # not counted against retries
-                    pageNum=pageNum,
+                    pageNum=(pageNum - 1),  # retry same page
                     headers=headers,
                 )
         except KeyError:  # Handles error responses without X-RateLimit data
@@ -339,8 +352,8 @@ class GitHubQueryManager:
                 cursorVar=cursorVar,
                 keysToList=keysToList,
                 rest=rest,
-                requestCount=(requestCount),
-                pageNum=pageNum,
+                requestCount=requestCount,
+                pageNum=(pageNum - 1),  # retry same page
                 headers=headers,
             )
         # Check for accepted but not yet processed, usually due to un-cached data
@@ -369,7 +382,7 @@ class GitHubQueryManager:
                 keysToList=keysToList,
                 rest=rest,
                 requestCount=requestCount,
-                pageNum=pageNum,
+                pageNum=(pageNum - 1),  # retry same page
                 headers=headers,
             )
         # Check for server error responses
@@ -398,7 +411,7 @@ class GitHubQueryManager:
                 keysToList=keysToList,
                 rest=rest,
                 requestCount=requestCount,
-                pageNum=pageNum,
+                pageNum=(pageNum - 1),  # retry same page
                 headers=headers,
             )
         # Check for other error responses
@@ -443,16 +456,13 @@ class GitHubQueryManager:
                     keysToList=keysToList,
                     rest=rest,
                     requestCount=requestCount,
-                    pageNum=pageNum,
+                    pageNum=(pageNum - 1),  # retry same page
                     headers=headers,
                 )
 
             raise RuntimeError(
                 "GraphQL API error.\n%s" % (json.dumps(outObj["errors"]))
             )
-
-        # Re-increment page count before the next page query
-        pageNum += 1
 
         # Pagination
         if paginate:
