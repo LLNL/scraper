@@ -6,6 +6,7 @@ import logging
 from scraper import bitbucket, doecode, github, gitlab, tfs
 from scraper.code_gov.models import Metadata, Project
 from scraper.github import gov_orgs
+from scraper.azuredevops import AzureDevOpsClient
 
 logger = logging.getLogger(__name__)
 
@@ -124,6 +125,26 @@ def process_config(config):
         projects = tfs.get_projects_metadata(url, token)
         for project in projects:
             code_gov_project = Project.from_tfs(
+                project, labor_hours=compute_labor_hours
+            )
+            code_gov_metadata["releases"].append(code_gov_project)
+
+    # parse config for AzureDevOps repositories
+    ado_instances = config.get("AzureDevOps", [])
+    for instance in ado_instances:
+        url = instance.get("url")
+        token = instance.get("token", None)
+        api_version = instance.get("apiVersion", "6.1-preview")
+        excluded = instance.get("exclude", [])
+
+        ado_client = AzureDevOpsClient(url, api_version, token)
+        projects = ado_client.get_projects_metadata()
+        for project in projects:
+            if project.project_name in excluded:
+                logger.info("Excluding: %s", project.project_name)
+                continue
+            
+            code_gov_project = Project.from_ado(
                 project, labor_hours=compute_labor_hours
             )
             code_gov_metadata["releases"].append(code_gov_project)
