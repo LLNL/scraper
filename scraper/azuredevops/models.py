@@ -4,8 +4,19 @@ class AzureDevOpsCollection:
         self.name = name
         self.url = url
 
+
 class AzureDevOpsProject:
-    def __init__(self, project_id="", project_name="", project_description="", project_url="", repo_url="", project_create_time="", project_last_update_time="", collection_or_org_name = ""):
+    def __init__(
+        self,
+        project_id="",
+        project_name="",
+        project_description="",
+        project_url="",
+        repo_url="",
+        project_create_time="",
+        project_last_update_time="",
+        collection_or_org_name="",
+    ):
         self.project_id = project_id
         self.project_name = project_name
         self.project_description = project_description
