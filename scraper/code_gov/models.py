@@ -9,6 +9,7 @@ import github3
 import gitlab
 from requests.utils import requote_uri
 
+from scraper.azuredevops.models import AzureDevOpsProject
 from scraper.github.util import _license_obj
 from scraper.util import _prune_dict_null_str, labor_hours_from_url
 
@@ -598,7 +599,7 @@ class Project(dict):
 
         project["description"] = tfs_project.projectInfo.description
 
-        project["vcs"] = "TFS/AzureDevOps"
+        project["vcs"] = "TFS"
 
         project["permissions"]["license"] = None
 
@@ -623,6 +624,56 @@ class Project(dict):
         project["date"] = {
             "lastModified": tfs_project.projectLastUpdateInfo.last_update_time.date().isoformat(),
             "created": tfs_project.projectCreateInfo.last_update_time.date().isoformat(),
+            "metadataLastUpdated": "",
+        }
+
+        _prune_dict_null_str(project)
+
+        return project
+
+    @classmethod
+    def from_ado(klass, ado_project: AzureDevOpsProject, labor_hours=True):
+        """
+        Creates CodeGovProject object from AzureDevOps Instance
+        """
+        project = klass()
+        project_web_url = ""
+
+        # -- REQUIRED FIELDS --
+        project["name"] = ado_project.project_name
+
+        project["repositoryURL"] = requote_uri(ado_project.repo_url)
+
+        project["homepageURL"] = requote_uri(ado_project.project_url)
+
+        project["description"] = ado_project.project_description
+
+        project["vcs"] = "AzureDevOps"
+
+        project["permissions"]["license"] = None
+
+        project["tags"] = []
+
+        if labor_hours:
+            logger.debug("Sorry labor hour calculation not currently supported.")
+            # project['laborHours'] = labor_hours_from_url(project['repositoryURL'])
+        else:
+            project["laborHours"] = 0
+
+        last_update_time_as_date = date_parse(ado_project.project_last_update_time)
+        if last_update_time_as_date < POLICY_START_DATE:
+            project["permissions"]["usageType"] = "exemptByPolicyDate"
+        else:
+            project["permissions"]["usageType"] = "exemptByAgencyMission"
+            project["permissions"][
+                "exemptionText"
+            ] = "This source code resides on a private server and has not been properly evaluated for releaseability."
+
+        project["contact"] = {"email": "", "URL": project_web_url}
+
+        project["date"] = {
+            "lastModified": last_update_time_as_date.isoformat(),
+            "created": "",
             "metadataLastUpdated": "",
         }
 

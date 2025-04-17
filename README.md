@@ -118,10 +118,21 @@ The basic structure is:
 ```jsonc
 "TFS": [
     {
-        "url": "https://tfs.internal",  // Base URL for a Team Foundation Server (TFS) or Visual Studio Team Services (VSTS) or Azure DevOps instance
+        "url": "https://tfs.internal",  // Base URL for a Team Foundation Server (TFS) or Visual Studio Team Services (VSTS)
         "token": null,                  // Private token for accessing this TFS instance
 
         "exclude": [ ... ]  // List of projects / repositories to exclude from inventory
+    }
+]
+```
+
+```jsonc
+"AzureDevOps": [
+    {
+        "url": "https://dev.azure.com",  // Base URL for an Azure Dev Ops Server or Azure Dev Ops Cloud instance
+        "token": null,                  // Personal Access Token for accessing this ADO instance
+        "apiVersion": "",               // API Version
+        "exclude": [ ... ]  // List of projects to exclude from inventory
     }
 ]
 ```
