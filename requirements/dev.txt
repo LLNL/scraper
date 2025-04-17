@@ -3,6 +3,7 @@
 # Development tools
 ipython
 twine
+build
 
 # Testing tools
 bandit
