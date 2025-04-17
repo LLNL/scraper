@@ -27,6 +27,17 @@ classifiers = [
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
 ]
+dependencies = [
+    "github3.py>=2.0.0",
+    "msrest>=0.6.4",
+    "python-dateutil>=2.7.3",
+    "python-gitlab>=1.6.0",
+    "pytz>=2017.3",
+    "requests>=2.16",
+    "setuptools>=24.2.0",
+    "stashy>=0.3",
+    "vsts>=0.1.25",
+]
 
 [project.urls]
 Homepage = "https://github.com/llnl/scraper"
@@ -34,8 +45,15 @@ Homepage = "https://github.com/llnl/scraper"
 [project.scripts]
 scraper = "scraper.gen_code_gov_json:main"
 
-[tool.setuptools]
-packages = ["scraper"]
-
-[tool.setuptools.dynamic]
-dependencies = { file = ["requirements/production.txt"] }
+[project.optional-dependencies]
+dev = [
+    "ipython",
+    "twine",
+    "build",
+    "bandit",
+    "black",
+    "flake8",
+    "isort",
+    "pyflakes",
+    "safety",
+]
