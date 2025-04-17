@@ -631,7 +631,7 @@ class Project(dict):
         _prune_dict_null_str(project)
 
         return project
-    
+
     @classmethod
     def from_ado(klass, ado_project: AzureDevOpsProject, labor_hours=True):
         """
@@ -660,7 +660,7 @@ class Project(dict):
             # project['laborHours'] = labor_hours_from_url(project['repositoryURL'])
         else:
             project["laborHours"] = 0
-        
+
         last_update_time_as_date = date_parse(ado_project.project_last_update_time)
         if last_update_time_as_date < POLICY_START_DATE:
             project["permissions"]["usageType"] = "exemptByPolicyDate"

@@ -143,7 +143,7 @@ def process_config(config):
             if project.project_name in excluded:
                 logger.info("Excluding: %s", project.project_name)
                 continue
-            
+
             code_gov_project = Project.from_ado(
                 project, labor_hours=compute_labor_hours
             )
