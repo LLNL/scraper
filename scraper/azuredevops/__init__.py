@@ -1,11 +1,12 @@
+import base64
 import logging
 import os
-import requests
-import base64
 import re
+from typing import List
+
+import requests
 
 from scraper.azuredevops.models import AzureDevOpsCollection, AzureDevOpsProject
-from typing import List
 
 logger = logging.getLogger(__name__)
 

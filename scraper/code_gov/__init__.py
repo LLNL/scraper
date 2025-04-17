@@ -4,9 +4,9 @@
 import logging
 
 from scraper import bitbucket, doecode, github, gitlab, tfs
+from scraper.azuredevops import AzureDevOpsClient
 from scraper.code_gov.models import Metadata, Project
 from scraper.github import gov_orgs
-from scraper.azuredevops import AzureDevOpsClient
 
 logger = logging.getLogger(__name__)
 

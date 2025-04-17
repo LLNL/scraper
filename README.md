@@ -125,6 +125,7 @@ The basic structure is:
     }
 ]
 ```
+
 ```jsonc
 "AzureDevOps": [
     {

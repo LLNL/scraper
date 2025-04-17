@@ -9,10 +9,9 @@ import github3
 import gitlab
 from requests.utils import requote_uri
 
+from scraper.azuredevops.models import AzureDevOpsProject
 from scraper.github.util import _license_obj
 from scraper.util import _prune_dict_null_str, labor_hours_from_url
-
-from scraper.azuredevops.models import AzureDevOpsProject
 
 logger = logging.getLogger(__name__)
 
